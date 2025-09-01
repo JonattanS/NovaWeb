@@ -21,6 +21,7 @@ import { useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import React from "react";
 import { UserProvider } from "@/contexts/UserContext";
+import { ModuleViewer } from "./components/ModuleViewer";
 
 
 const queryClient = new QueryClient();
@@ -66,7 +67,7 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => {
               <div className="flex items-center space-x-4">
                 <SidebarTrigger className="hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" />
                 <div>
-                  <h2 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                  <h2 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-[#F7722F] bg-clip-text text-transparent">
                     Nova Web
                   </h2>
                 </div>
@@ -141,6 +142,16 @@ const AppRoutes = () => {
         <ProtectedRoute>
           <MainLayout>
             <ConsultaDocumentosPage />
+          </MainLayout>
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/module-viewer"
+      element={
+        <ProtectedRoute>
+          <MainLayout>
+            <ModuleViewer />
           </MainLayout>
         </ProtectedRoute>
       }

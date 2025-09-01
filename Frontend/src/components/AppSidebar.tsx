@@ -1,7 +1,6 @@
-
-import { BarChart3, Users, FileText, Home, CreditCard, Database, Zap, Search } from 'lucide-react';
-import { NavLink } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { Home, Database, Zap, Search, ChevronDown, ChevronRight } from "lucide-react"
+import { NavLink } from "react-router-dom"
+import { useState, useEffect } from "react"
 import {
   Sidebar,
   SidebarContent,
@@ -12,66 +11,72 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from '@/components/ui/sidebar';
-import { moduleService } from '@/services/moduleService';
-import { useUser } from '@/contexts/UserContext';
+} from "@/components/ui/sidebar"
+import { moduleService } from "@/services/moduleService"
+import { useUser } from "@/contexts/UserContext"
 
-
-const staticNavigation = [  
+const staticNavigation = [
   {
-    title: 'Consultas Manuales',
-    url: '/query-manual',
+    title: "Consultas Manuales",
+    url: "/query-manual",
     icon: Database,
   },
-];
+]
 
 const inicioNavigation = [
   {
-    title: 'Inicio',
-    url: '/',
+    title: "Inicio",
+    url: "/",
     icon: Home,
   },
-];
+]
 
-const portafolioNavigation = [
+const testPortfolioNavigation = [
   {
-    title: 'Consulta de Documentos',
-    url: '/ConsultaDocumentosPage',
+    title: "Consulta de Documentos",
+    url: "/ConsultaDocumentosPage",
     icon: Search,
   },
-];
+]
 
 export function AppSidebar() {
-  const { state } = useSidebar();
-  const isCollapsed = state === 'collapsed';
+  const { state } = useSidebar()
+  const isCollapsed = state === "collapsed"
   // Obtener usuario y su compañía desde el contexto
-  const { user } = useUser();
-  const [dynamicFunctions, setDynamicFunctions] = useState(moduleService.getMainFunctions());
+  const { user } = useUser()
+  const [dynamicFunctions, setDynamicFunctions] = useState(moduleService.getMainFunctions())
+  const [isTestPortfolioExpanded, setIsTestPortfolioExpanded] = useState(false)
 
   useEffect(() => {
     const updateDynamicFunctions = () => {
-      const newFunctions = moduleService.getMainFunctions();
-      setDynamicFunctions(newFunctions);
-    };
+      const newFunctions = moduleService.getMainFunctions()
+      setDynamicFunctions(newFunctions)
+    }
 
-    updateDynamicFunctions();
-    const interval = setInterval(updateDynamicFunctions, 2000);
+    updateDynamicFunctions()
+    const interval = setInterval(updateDynamicFunctions, 2000)
 
-    return () => clearInterval(interval);
-  }, []);
+    return () => clearInterval(interval)
+  }, [])
 
   return (
-    <Sidebar className="border-r border-slate-200 dark:border-slate-700 bg-[#002550] dark:bg-[#002550]" collapsible="icon">
+    <Sidebar
+      className="border-r border-slate-200 dark:border-slate-700 bg-[#002550] dark:bg-[#002550]"
+      collapsible="icon"
+    >
       <SidebarContent>
         <div className="p-6">
-          <div className={`${isCollapsed ? 'hidden' : 'block'}`}>
-            <NavLink to="/"
-              className="font-bold text-xl bg-[#F7722F] bg-clip-text text-transparent cursor-pointer no-underline hover:underline">
+          <div className={`${isCollapsed ? "hidden" : "block"}`}>
+            <NavLink
+              to="/"
+              className="font-bold text-xl bg-[#F7722F] bg-clip-text text-transparent cursor-pointer no-underline hover:underline"
+            >
               {/* Si existe ciaraz mostrarlo, sino mostrar 'Nova' */}
-              {user?.ciaraz || 'Nova'}
+              {user?.ciaraz || "Nova"}
             </NavLink>
           </div>
         </div>
+
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -83,8 +88,8 @@ export function AppSidebar() {
                       className={({ isActive }) =>
                         `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group text-slate-700 dark:text-slate-300 ${
                           isActive
-                            ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/25'
-                            : 'hover:bg-slate-100 dark:hover:bg-slate-800 hover:translate-x-1'
+                            ? "bg-blue-600 text-white shadow-lg shadow-blue-600/25"
+                            : "hover:bg-slate-100 dark:hover:bg-slate-800 hover:translate-x-1"
                         }`
                       }
                       end
@@ -100,37 +105,83 @@ export function AppSidebar() {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel className={`${isCollapsed ? 'hidden' : 'block'} text-[#F7722F] dark:text-[#F7722F] font-semibold`}>
+          <SidebarGroupLabel
+            className={`${isCollapsed ? "hidden" : "block"} text-[#F7722F] dark:text-[#F7722F] font-semibold`}
+          >
             Portafolio
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {portafolioNavigation.map((item) => (
-                <SidebarMenuItem key={item.title}>
+              {dynamicFunctions.map((func) => (
+                <SidebarMenuItem key={func.id}>
                   <SidebarMenuButton asChild>
                     <NavLink
-                      to={item.url}
+                      to={`/dynamic-function/${func.id}`}
                       className={({ isActive }) =>
                         `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group text-slate-700 dark:text-slate-300 ${
                           isActive
-                            ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/25'
-                            : 'hover:bg-slate-100 dark:hover:bg-slate-800 hover:translate-x-1'
+                            ? "bg-purple-600 text-white shadow-lg shadow-purple-600/25"
+                            : "hover:bg-slate-100 dark:hover:bg-slate-800 hover:translate-x-1"
                         }`
                       }
-                      end
                     >
-                      <item.icon className="h-5 w-5 transition-transform group-hover:scale-110" />
-                      {!isCollapsed && <span className="font-medium">{item.title}</span>}
+                      <Zap className="h-5 w-5 transition-transform group-hover:scale-110" />
+                      {!isCollapsed && <span className="font-medium">{func.name}</span>}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+
+              {!isCollapsed && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <button
+                      onClick={() => setIsTestPortfolioExpanded(!isTestPortfolioExpanded)}
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group text-[#F7722F] dark:text-[#F7722F] hover:bg-blue-500 dark:hover:bg-[#F7722F] hover:translate-x-1 w-full text-left"
+                    >
+                      {isTestPortfolioExpanded ? (
+                        <ChevronDown className="h-5 w-5 transition-transform group-hover:scale-110" />
+                      ) : (
+                        <ChevronRight className="h-5 w-5 transition-transform group-hover:scale-110" />
+                      )}
+                      <span className="font-medium">Portafolio de Pruebas</span>
+                    </button>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
+
+              {isTestPortfolioExpanded && !isCollapsed && (
+                <>
+                  {testPortfolioNavigation.map((item) => (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton asChild>
+                        <NavLink
+                          to={item.url}
+                          className={({ isActive }) =>
+                            `flex items-center gap-3 px-4 py-3 ml-6 rounded-xl transition-all duration-200 group text-slate-700 dark:text-slate-300 ${
+                              isActive
+                                ? "bg-blue-600 text-white shadow-lg shadow-blue-600/25"
+                                : "hover:bg-slate-100 dark:hover:bg-slate-800 hover:translate-x-1"
+                            }`
+                          }
+                          end
+                        >
+                          <item.icon className="h-4 w-4 transition-transform group-hover:scale-110" />
+                          <span className="font-medium text-sm">{item.title}</span>
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </>
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel className={`${isCollapsed ? 'hidden' : 'block'} text-[#F7722F] dark:text-[#F7722F] font-semibold`}>
+          <SidebarGroupLabel
+            className={`${isCollapsed ? "hidden" : "block"} text-[#F7722F] dark:text-[#F7722F] font-semibold`}
+          >
             Herramientas de Desarrollo
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -143,8 +194,8 @@ export function AppSidebar() {
                       className={({ isActive }) =>
                         `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group text-slate-700 dark:text-slate-300 ${
                           isActive
-                            ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/25'
-                            : 'hover:bg-slate-100 dark:hover:bg-slate-800 hover:translate-x-1'
+                            ? "bg-blue-600 text-white shadow-lg shadow-blue-600/25"
+                            : "hover:bg-slate-100 dark:hover:bg-slate-800 hover:translate-x-1"
                         }`
                       }
                       end
@@ -158,38 +209,7 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-
-        {dynamicFunctions.length > 0 && (
-          <SidebarGroup>
-            <SidebarGroupLabel className={`${isCollapsed ? 'hidden' : 'block'} text-[#F7722F] dark:text-[#F7722F] font-semibold`}>
-              Funciones Personalizadas
-            </SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {dynamicFunctions.map((func) => (
-                  <SidebarMenuItem key={func.id}>
-                    <SidebarMenuButton asChild>
-                      <NavLink
-                        to={`/dynamic-function/${func.id}`}
-                        className={({ isActive }) =>
-                          `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group text-slate-700 dark:text-slate-300 ${
-                            isActive
-                              ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/25'
-                              : 'hover:bg-slate-100 dark:hover:bg-slate-800 hover:translate-x-1'
-                          }`
-                        }
-                      >
-                        <Zap className="h-5 w-5 transition-transform group-hover:scale-110" />
-                        {!isCollapsed && <span className="font-medium">{func.name}</span>}
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
       </SidebarContent>
     </Sidebar>
-  );
+  )
 }

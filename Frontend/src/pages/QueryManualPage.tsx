@@ -1,13 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { databaseService } from '@/services/database';
 import { moduleService, type PersistentModule } from '@/services/moduleService';
 import { schemaService, type QueryConfiguration } from '@/services/schemaService';
 import { useToast } from '@/hooks/use-toast';
-
 import { QueryEditor } from '@/components/query-manual/QueryEditor';
 import { DynamicFilterPanel } from '@/components/query-manual/DynamicFilterPanel';
 import { ModulesPanel } from '@/components/query-manual/ModulesPanel';
@@ -15,7 +13,7 @@ import { ResultsTable } from '@/components/query-manual/ResultsTable';
 import { SaveModuleDialog } from '@/components/query-manual/SaveModuleDialog';
 import { QueryBuilder } from '@/components/query-builder/QueryBuilder';
 import { Card, CardContent } from '@/components/ui/card';
-import { Filter } from 'lucide-react';
+import { ArrowLeft, Filter,  Search, } from 'lucide-react';
 import { FilterConfigDialog } from '@/components/query-manual/FilterConfigDialog';
 import { saveUserModule } from '@/services/userModulesApi';
 import { useUser } from '@/contexts/UserContext';
@@ -392,17 +390,16 @@ const QueryManualPage = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center space-x-4">
-        <Button variant="ghost" size="sm" onClick={() => navigate('/')}>
+      <div className="flex items-center space-x-4 mb-4">
+        <Button variant="ghost" size="sm" onClick={() => navigate("/")} className="hover:bg-white/80">
           <ArrowLeft className="h-4 w-4 mr-2" />
           Volver al inicio
         </Button>
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Query Manual</h1>
-          <p className="text-slate-600 dark:text-slate-400">
-            Construye consultas visualmente o ejecuta SQL personalizado
-          </p>
-        </div>
+        <div className="h-6 w-px bg-gray-300" />
+        <h1 className="text-2xl font-bold text-gray-900 flex items-center">
+          <Search className="h-6 w-6 mr-2 text-blue-600" />
+          Query Manual
+        </h1>
       </div>
 
       <Tabs

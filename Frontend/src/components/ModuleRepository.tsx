@@ -190,7 +190,7 @@ export const ModuleRepository = ({ onClose }: ModuleRepositoryProps) => {
     if (mod.isMainFunction) {
       navigate(`/dynamic-function/${mod.id}`);
     } else {
-      navigate("/query-manual", { state: { loadModule: mod } });
+      navigate("/module-viewer", { state: { loadModule: mod }});
     }
   };
 
@@ -205,7 +205,7 @@ export const ModuleRepository = ({ onClose }: ModuleRepositoryProps) => {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
       <div className="container mx-auto px-4 py-8 space-y-8">
         {/* Header visual destacado */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 p-8 text-white shadow-2xl">
+        <div className="relative overflow-hidden rounded-3xl bg-[#F7722F] p-8 text-white shadow-2xl">
           <div className="absolute inset-0 bg-black/10"></div>
           <div className="relative z-10">
             <div className="flex items-center justify-between">
@@ -226,14 +226,10 @@ export const ModuleRepository = ({ onClose }: ModuleRepositoryProps) => {
                   </div>
                 </div>
               </div>
-              <div className="hidden md:flex items-center space-x-2">
-                <Sparkles className="h-6 w-6 text-yellow-300" />
-                <span className="text-sm font-medium">Gestión Avanzada</span>
-              </div>
+              
             </div>
           </div>
-          <div className="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-white/10"></div>
-          <div className="absolute bottom-0 left-0 -mb-8 -ml-8 h-32 w-32 rounded-full bg-white/5"></div>
+          
         </div>
 
         {!selectedPortafolio ? (
@@ -261,11 +257,11 @@ export const ModuleRepository = ({ onClose }: ModuleRepositoryProps) => {
                   >
                     <CardHeader className="pb-4">
                       <div className="flex items-center space-x-4">
-                        <div className="p-4 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl text-white group-hover:from-purple-500 group-hover:to-indigo-600 transition-all duration-300">
+                        <div className="p-4 bg-gradient-to-br from-blue-500 to-[#F7722F] rounded-2xl text-white group-hover:from-[#F7722F] group-hover:to-blue-500 transition-all duration-300">
                           <Folder className="h-8 w-8" />
                         </div>
                         <div className="flex-1">
-                          <CardTitle className="text-xl font-bold text-slate-800 group-hover:text-blue-600 transition-colors">
+                          <CardTitle className="text-xl font-bold text-slate-800 group-hover:text-[#F7722F] transition-colors">
                             {folder.name}
                           </CardTitle>
                           <p className="text-sm text-slate-500 mt-1">Portafolio de módulos</p>
@@ -320,7 +316,7 @@ export const ModuleRepository = ({ onClose }: ModuleRepositoryProps) => {
               {/* Dialog Crear Carpeta */}
               <Dialog open={showCreateFolder} onOpenChange={setShowCreateFolder}>
                 <DialogTrigger asChild>
-                  <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition-all duration-200">
+                  <Button className="bg-gradient-to-r from-[#F7722F] to-blue-600 hover:from-blue-600 hover:to-[#F7722F] transition-all duration-200">
                     <Plus className="h-4 w-4 mr-2" />
                     Crear Carpeta
                   </Button>
@@ -418,7 +414,7 @@ export const ModuleRepository = ({ onClose }: ModuleRepositoryProps) => {
                       <div className="flex space-x-2">
                         <Button
                           size="sm"
-                          className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition-all duration-200"
+                          className="flex-1 bg-[#F7722F] hover:bg-[#78B437] text-white transition-all duration-200"
                           onClick={() => handleModuleClick(mod)}
                         >
                           <Play className="h-4 w-4 mr-1" />

@@ -59,6 +59,19 @@ class DatabaseService {
     return await response.json();
   }
 
+  async auxiliarCuentas(filtros: any): Promise<any[]> {
+    const response = await fetch(`${BACKEND_URL}/api/auxiliarcuentas`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: JSON.stringify(filtros),
+    });
+    if (!response.ok) throw new Error('Error consultando auxiliar de cuentas');
+    return await response.json();
+  }
+
   // Gestión de módulos guardados desde el localStorage del navegador
   getSavedModules(): SavedModule[] {
     const saved = localStorage.getItem('saved_modules');

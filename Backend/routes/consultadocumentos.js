@@ -16,6 +16,14 @@ function construirWhere(f) {
     where.push(`clc_cod = $${idx++}`);
     values.push(f.clc_cod);
   }
+  if (f.clc_cod_ini) {
+    where.push(`clc_cod >= $${idx++}`);
+    values.push(f.clc_cod_ini);
+  }
+  if (f.clc_cod_fin) {
+    where.push(`clc_cod <= $${idx++}`);
+    values.push(f.clc_cod_fin);
+  }
   if (f.doc_num_ini) {
     where.push(`doc_num >= $${idx++}`);
     values.push(f.doc_num_ini);
@@ -58,45 +66,47 @@ function construirWhere(f) {
 }
 
 router.post('/consultadocumentos', async (req, res) => {
-  const filtros = req.body;
+  const { fuente = 'con_his', ...filtros } = req.body;
 
   const { sql, values } = construirWhere(filtros);
-  const baseQuery = `
-    SELECT id,   suc_cod,
-        clc_cod,
-        doc_num,
-        doc_fec,
-        mov_cons,
-        clc_cod_rel,
-        doc_fec_rel,
-        doc_num_rel,
-        cta_cod,
-        cta_nom,
-        mov_val,
-        mov_val_ext,
-        mov_bas,
-        mnd_cla,
-        mnd_tas_act,
-        doc_num_ref,
-        doc_fec_ref,
-        ter_nit,
-        ter_raz,
-        cto_cod,
-        act_cod,
-        anf_cod,
-        clc_ord,
-        doc_est
-    FROM con_his
-    ${sql}
-    ORDER BY LOWER(clc_cod), doc_num, doc_fec, mov_cons
-  `;
+  
+  let baseQuery;
+  
+  switch (fuente) {
+    case 'con_his':
+    default:
+      baseQuery = `
+        SELECT id, suc_cod, clc_cod, doc_num, doc_fec, mov_cons,
+               clc_cod_rel, doc_fec_rel, doc_num_rel, cta_cod, cta_nom,
+               mov_val, mov_val_ext, mov_bas, mnd_cla, mnd_tas_act,
+               doc_num_ref, doc_fec_ref, ter_nit, ter_raz, cto_cod,
+               act_cod, anf_cod, clc_ord, doc_est
+        FROM con_his
+        ${sql}
+        ORDER BY LOWER(clc_cod), doc_num, doc_fec, mov_cons
+      `;
+      break;
+      
+    case 'otra_tabla':
+      baseQuery = `
+        SELECT campo1, campo2, campo3
+        FROM otra_tabla
+        ${sql}
+        ORDER BY campo1
+      `;
+      break;
+      
+    // Agregar más casos según necesidad
+  }
 
   try {
     const result = await pool.query(baseQuery, values);
     res.json(result.rows);
   } catch (err) {
-    res.status(500).json({ error: 'Error consultando documentos', detalle: err.message });
+    res.status(500).json({ error: `Error consultando ${fuente}`, detalle: err.message });
   }
 });
+
+
 
 module.exports = router;

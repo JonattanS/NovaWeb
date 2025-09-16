@@ -1,4 +1,4 @@
-import { Home, Database, Zap, Search, ChevronDown, ChevronRight } from "lucide-react"
+import { Home, Database, Zap, Search, ChevronDown, ChevronRight, Table } from "lucide-react"
 import { NavLink } from "react-router-dom"
 import { useState, useEffect } from "react"
 import {
@@ -36,6 +36,11 @@ const testPortfolioNavigation = [
     title: "Consulta de Documentos",
     url: "/ConsultaDocumentosPage",
     icon: Search,
+  },
+  {
+    title: "Auxiliar de Cuentas",
+    url: "/AuxiliarDeCuentasPage",
+    icon: Table,
   },
 ]
 

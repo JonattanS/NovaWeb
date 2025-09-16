@@ -15,7 +15,8 @@ import DynamicFunctionPage from "./pages/DynamicFunctionPage";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Login from "./pages/Login";
-import ConsultaDocumentosPage from "./pages/ConsultaDocumentosPage";
+import ConsultaDocumentosPage from "./pages/ProcesoDocumentos/ConsultaDocumentosPage";
+import AuxiliarDeCuentasPage from "./pages/ProcesoDocumentos/AuxiliarDeCuentasPage";
 import { ModuleRepository } from './components/ModuleRepository';
 import { useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -142,6 +143,16 @@ const AppRoutes = () => {
         <ProtectedRoute>
           <MainLayout>
             <ConsultaDocumentosPage />
+          </MainLayout>
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/AuxiliarDeCuentasPage"
+      element={
+        <ProtectedRoute>
+          <MainLayout>
+            <AuxiliarDeCuentasPage />
           </MainLayout>
         </ProtectedRoute>
       }

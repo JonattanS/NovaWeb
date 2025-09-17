@@ -17,12 +17,14 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import Login from "./pages/Login";
 import ConsultaDocumentosPage from "./pages/ProcesoDocumentos/ConsultaDocumentosPage";
 import AuxiliarDeCuentasPage from "./pages/ProcesoDocumentos/AuxiliarDeCuentasPage";
+import ConsultaBalanceComprobacionPage from "./pages/EstadosFinancieros/ConsultaBalanceComprobacionPage";
 import { ModuleRepository } from './components/ModuleRepository';
 import { useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import React from "react";
 import { UserProvider } from "@/contexts/UserContext";
 import { ModuleViewer } from "./components/ModuleViewer";
+import ComprobanteDiarioPage from "./pages/LibrosOficiales/ComprobanteDiarioPage";
 
 
 const queryClient = new QueryClient();
@@ -153,6 +155,26 @@ const AppRoutes = () => {
         <ProtectedRoute>
           <MainLayout>
             <AuxiliarDeCuentasPage />
+          </MainLayout>
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/ComprobanteDiario"
+      element={
+        <ProtectedRoute>
+          <MainLayout>
+            <ComprobanteDiarioPage />
+          </MainLayout>
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/ConsultaBalanceComprobacionPage"
+      element={
+        <ProtectedRoute>
+          <MainLayout>
+            <ConsultaBalanceComprobacionPage />
           </MainLayout>
         </ProtectedRoute>
       }

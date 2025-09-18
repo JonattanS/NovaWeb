@@ -17,6 +17,10 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import Login from "./pages/Login";
 import ConsultaDocumentosPage from "./pages/ProcesoDocumentos/ConsultaDocumentosPage";
 import AuxiliarDeCuentasPage from "./pages/ProcesoDocumentos/AuxiliarDeCuentasPage";
+import AuxiliarDeCuentasExtranjerasPage from "./pages/ProcesoDocumentos/AuxiliarDeCuentasExtranjerasPage";
+import DiarioPorDocumentosPage from "./pages/ProcesoDocumentos/DiarioPorDocumentosPage";
+import ComprobanteDiarioPage from "./pages/LibrosOficiales/ComprobanteDiarioPage";
+import LibroDiarioPorSucursalPage from "./pages/LibrosOficiales/LibroDiarioPorSucursalPage";
 import { ModuleRepository } from './components/ModuleRepository';
 import { useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -153,6 +157,46 @@ const AppRoutes = () => {
         <ProtectedRoute>
           <MainLayout>
             <AuxiliarDeCuentasPage />
+          </MainLayout>
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/AuxiliarDeCuentasExtranjerasPage"
+      element={
+        <ProtectedRoute>
+          <MainLayout>
+            <AuxiliarDeCuentasExtranjerasPage />
+          </MainLayout>
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/DiarioPorDocumentosPage"
+      element={
+        <ProtectedRoute>
+          <MainLayout>
+            <DiarioPorDocumentosPage />
+          </MainLayout>
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/ComprobanteDiarioPage"
+      element={
+        <ProtectedRoute>
+          <MainLayout>
+            <ComprobanteDiarioPage />
+          </MainLayout>
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/LibroDiarioPorSucursalPage"
+      element={
+        <ProtectedRoute>
+          <MainLayout>
+            <LibroDiarioPorSucursalPage />
           </MainLayout>
         </ProtectedRoute>
       }

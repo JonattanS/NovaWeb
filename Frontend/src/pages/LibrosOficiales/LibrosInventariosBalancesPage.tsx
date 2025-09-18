@@ -37,19 +37,25 @@ const getColumnDescription = (key: string): string => {
 };
 
 type Filtros = {
-  suc_cod: string;
+  suc_cod_ini: string;
+  suc_cod_fin: string;
   cmp_cod_ini: string;
   cmp_cod_fin: string;
+  fecha_ini: string;
+  fecha_fin: string;
 };
 
 const ROWS_PER_PAGE = 20;
 
-const ComprobanteDiarioPage = () => {
+const LibrosInventariosBalancesPage = () => {
   const navigate = useNavigate();
   const [filtros, setFiltros] = useState<Filtros>({
-    suc_cod: '',
+    suc_cod_ini: '',
+    suc_cod_fin: '',
     cmp_cod_ini: '',
     cmp_cod_fin: '',
+    fecha_ini: '',
+    fecha_fin: '',
   });
 
   const [resultado, setResultado] = useState<any[]>([]);
@@ -74,7 +80,7 @@ const ComprobanteDiarioPage = () => {
     const url = window.URL.createObjectURL(blob)
     const a = document.createElement("a")
     a.href = url
-    a.download = `comprobante_diario_${new Date().toISOString().split("T")[0]}.csv`
+    a.download = `libros_inventarios_balances_${new Date().toISOString().split("T")[0]}.csv`
     a.click()
   }
 
@@ -93,7 +99,7 @@ const ComprobanteDiarioPage = () => {
     pdf.setFontSize(18)
     pdf.setFont("helvetica", "bold")
     pdf.setTextColor(headerColor[0], headerColor[1], headerColor[2])
-    pdf.text("Comprobante de Diario", 20, 20)
+    pdf.text("Libros de Inventarios y Balances", 20, 20)
 
     pdf.setFontSize(10)
     pdf.setFont("helvetica", "normal")
@@ -161,7 +167,7 @@ const ComprobanteDiarioPage = () => {
       },
     })
 
-    pdf.save(`comprobante_diario_${new Date().toISOString().split("T")[0]}.pdf`)
+    pdf.save(`libros_inventarios_balances_${new Date().toISOString().split("T")[0]}.pdf`)
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -187,13 +193,13 @@ const ComprobanteDiarioPage = () => {
     }
   };
 
-  // Campos específicos para comprobante de diario
-  const camposComprobante = ['cta_cod', 'cta_nom', 'doc_tot_deb', 'doc_tot_crd'];
+  // Campos específicos para libros de inventarios y balances
+  const camposInventariosBalances = ['cta_cod', 'cta_nom', 'cmp_cod', 'cmp_nom', 'doc_tot_deb', 'doc_tot_crd'];
   
-  // Filtrar solo los campos necesarios para comprobante
+  // Filtrar solo los campos necesarios para inventarios y balances
   const resultadoFiltrado = resultado.map(row => {
     const filteredRow: any = {};
-    camposComprobante.forEach(campo => {
+    camposInventariosBalances.forEach(campo => {
       if (row[campo] !== undefined) {
         filteredRow[campo] = row[campo];
       }
@@ -250,7 +256,7 @@ const ComprobanteDiarioPage = () => {
             <div className="h-6 w-px bg-gray-300" />
             <h1 className="text-2xl font-bold text-gray-900 flex items-center">
               <Table className="h-6 w-6 mr-2 text-blue-600" />
-              Comprobante de Diario
+              Libros de Inventarios y Balances
             </h1>
           </div>
 
@@ -305,17 +311,24 @@ const ComprobanteDiarioPage = () => {
                 <form onSubmit={handleSubmit} className="space-y-6">
                   {/* Filtros organizados por categorías */}
                   <div className="grid gap-6">
-                    {/* Información General */}
+                    {/* Rango de Sucursales */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
                         <Building className="h-4 w-4" />
-                        <span>Información General</span>
+                        <span>Rango de Sucursales</span>
                       </div>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <Input
-                          name="suc_cod"
-                          placeholder="Código Sucursal"
-                          value={filtros.suc_cod}
+                          name="suc_cod_ini"
+                          placeholder="Sucursal Inicial"
+                          value={filtros.suc_cod_ini}
+                          onChange={handleChange}
+                          className="bg-white"
+                        />
+                        <Input
+                          name="suc_cod_fin"
+                          placeholder="Sucursal Final"
+                          value={filtros.suc_cod_fin}
                           onChange={handleChange}
                           className="bg-white"
                         />
@@ -345,6 +358,32 @@ const ComprobanteDiarioPage = () => {
                         />
                       </div>
                     </div>
+
+                    {/* Rango de Fechas */}
+                    <div className="space-y-3">
+                      <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+                        <Calendar className="h-4 w-4" />
+                        <span>Rango de Fechas de Comprobante</span>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <Input
+                          type="date"
+                          name="fecha_ini"
+                          placeholder="Fecha Inicial"
+                          value={filtros.fecha_ini}
+                          onChange={handleChange}
+                          className="bg-white"
+                        />
+                        <Input
+                          type="date"
+                          name="fecha_fin"
+                          placeholder="Fecha Final"
+                          value={filtros.fecha_fin}
+                          onChange={handleChange}
+                          className="bg-white"
+                        />
+                      </div>
+                    </div>
                   </div>
 
                   <div className="flex justify-center pt-4 border-t">
@@ -354,7 +393,7 @@ const ComprobanteDiarioPage = () => {
                       className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-2"
                     >
                       <Search className="h-4 w-4 mr-2" />
-                      {loading ? "Consultando..." : "Consultar Comprobante"}
+                      {loading ? "Consultando..." : "Consultar Inventarios y Balances"}
                     </Button>
                   </div>
                 </form>
@@ -379,7 +418,7 @@ const ComprobanteDiarioPage = () => {
               <div className="flex items-center justify-between">
                 <CardTitle className="text-xl flex items-center">
                   <Table className="h-5 w-5 mr-2" />
-                  Resultados del Comprobante
+                  Resultados de Inventarios y Balances
                 </CardTitle>
                 <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
                   {resultadoFiltrado.length} registros
@@ -455,4 +494,4 @@ const ComprobanteDiarioPage = () => {
   );
 };
 
-export default ComprobanteDiarioPage;
+export default LibrosInventariosBalancesPage;

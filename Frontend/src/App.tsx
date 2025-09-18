@@ -21,6 +21,12 @@ import AuxiliarDeCuentasExtranjerasPage from "./pages/ProcesoDocumentos/Auxiliar
 import DiarioPorDocumentosPage from "./pages/ProcesoDocumentos/DiarioPorDocumentosPage";
 import ComprobanteDiarioPage from "./pages/LibrosOficiales/ComprobanteDiarioPage";
 import LibroDiarioPorSucursalPage from "./pages/LibrosOficiales/LibroDiarioPorSucursalPage";
+import LibroMayorBalancesPorSucursalPage from "./pages/LibrosOficiales/LibroMayorBalancesPorSucursalPage";
+import LibroMayorBalancesSimplificadoPage from "./pages/LibrosOficiales/LibroMayorBalancesSimplificadoPage";
+import LibrosInventariosBalancesPage from "./pages/LibrosOficiales/LibrosInventariosBalancesPage";
+import ConsultaBalanceComprobacionPage from "./pages/EstadosFinancieros/ConsultaBalanceComprobacionPage";
+import BalanceComprobacionRangoFechasCentroTercerosPage from "./pages/EstadosFinancieros/BalanceComprobacionRangoFechasCentroTercerosPage";
+import BalanceGeneralPorSucursalPage from "./pages/EstadosFinancieros/BalanceGeneralPorSucursalPage";
 import { ModuleRepository } from './components/ModuleRepository';
 import { useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -197,6 +203,66 @@ const AppRoutes = () => {
         <ProtectedRoute>
           <MainLayout>
             <LibroDiarioPorSucursalPage />
+          </MainLayout>
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/LibroMayorBalancesPorSucursalPage"
+      element={
+        <ProtectedRoute>
+          <MainLayout>
+            <LibroMayorBalancesPorSucursalPage />
+          </MainLayout>
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/LibroMayorBalancesSimplificadoPage"
+      element={
+        <ProtectedRoute>
+          <MainLayout>
+            <LibroMayorBalancesSimplificadoPage />
+          </MainLayout>
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/LibrosInventariosBalancesPage"
+      element={
+        <ProtectedRoute>
+          <MainLayout>
+            <LibrosInventariosBalancesPage />
+          </MainLayout>
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/ConsultaBalanceComprobacionPage"
+      element={
+        <ProtectedRoute>
+          <MainLayout>
+            <ConsultaBalanceComprobacionPage />
+          </MainLayout>
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/BalanceComprobacionRangoFechasCentroTercerosPage"
+      element={
+        <ProtectedRoute>
+          <MainLayout>
+            <BalanceComprobacionRangoFechasCentroTercerosPage />
+          </MainLayout>
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/BalanceGeneralPorSucursalPage"
+      element={
+        <ProtectedRoute>
+          <MainLayout>
+            <BalanceGeneralPorSucursalPage />
           </MainLayout>
         </ProtectedRoute>
       }

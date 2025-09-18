@@ -37,15 +37,10 @@ const getColumnDescription = (key: string): string => {
 };
 
 type Filtros = {
-  suc_cod: string;
-  cta_cod_ini: string;
-  cta_cod_fin: string;
-  cto_cod_ini: string;
-  cto_cod_fin: string;
-  act_cod_ini: string;
-  act_cod_fin: string;
-  ter_nit_ini: string;
-  ter_nit_fin: string;
+  suc_cod_ini: string;
+  suc_cod_fin: string;
+  cmp_cod_ini: string;
+  cmp_cod_fin: string;
   fecha_ini: string;
   fecha_fin: string;
 };
@@ -55,15 +50,10 @@ const ROWS_PER_PAGE = 20;
 const LibroDiarioPorSucursalPage = () => {
   const navigate = useNavigate();
   const [filtros, setFiltros] = useState<Filtros>({
-    suc_cod: '',
-    cta_cod_ini: '',
-    cta_cod_fin: '',
-    cto_cod_ini: '',
-    cto_cod_fin: '',
-    act_cod_ini: '',
-    act_cod_fin: '',
-    ter_nit_ini: '',
-    ter_nit_fin: '',
+    suc_cod_ini: '',
+    suc_cod_fin: '',
+    cmp_cod_ini: '',
+    cmp_cod_fin: '',
     fecha_ini: '',
     fecha_fin: '',
   });
@@ -204,7 +194,7 @@ const LibroDiarioPorSucursalPage = () => {
   };
 
   // Campos específicos para libro diario por sucursal
-  const camposLibroDiario = ['doc_fec', 'clc_cod', 'doc_num', 'cta_cod', 'cta_nom', 'ter_nit', 'ter_raz', 'mov_val', 'cto_cod', 'act_cod'];
+  const camposLibroDiario = ['cta_cod', 'cta_nom', 'cmp_cod', 'cmp_nom', 'doc_tot_deb', 'doc_tot_crd'];
   
   // Filtrar solo los campos necesarios para libro diario
   const resultadoFiltrado = resultado.map(row => {
@@ -321,113 +311,48 @@ const LibroDiarioPorSucursalPage = () => {
                 <form onSubmit={handleSubmit} className="space-y-6">
                   {/* Filtros organizados por categorías */}
                   <div className="grid gap-6">
-                    {/* Información General */}
+                    {/* Rango de Sucursales */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
                         <Building className="h-4 w-4" />
-                        <span>Información General</span>
+                        <span>Rango de Sucursales</span>
                       </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <Input
-                          name="suc_cod"
-                          placeholder="Código Sucursal"
-                          value={filtros.suc_cod}
+                          name="suc_cod_ini"
+                          placeholder="Sucursal Inicial"
+                          value={filtros.suc_cod_ini}
+                          onChange={handleChange}
+                          className="bg-white"
+                        />
+                        <Input
+                          name="suc_cod_fin"
+                          placeholder="Sucursal Final"
+                          value={filtros.suc_cod_fin}
                           onChange={handleChange}
                           className="bg-white"
                         />
                       </div>
                     </div>
 
-                    {/* Rango de Cuentas */}
+                    {/* Rango de Comprobantes */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <CreditCard className="h-4 w-4" />
-                        <span>Rango de Cuentas</span>
+                        <FileText className="h-4 w-4" />
+                        <span>Rango de Comprobantes</span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <Input
-                          name="cta_cod_ini"
-                          placeholder="Cuenta Inicial"
-                          value={filtros.cta_cod_ini}
+                          name="cmp_cod_ini"
+                          placeholder="Comprobante Inicial"
+                          value={filtros.cmp_cod_ini}
                           onChange={handleChange}
                           className="bg-white"
                         />
                         <Input
-                          name="cta_cod_fin"
-                          placeholder="Cuenta Final"
-                          value={filtros.cta_cod_fin}
-                          onChange={handleChange}
-                          className="bg-white"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Rango de Centros */}
-                    <div className="space-y-3">
-                      <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <Target className="h-4 w-4" />
-                        <span>Rango de Centros</span>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <Input
-                          name="cto_cod_ini"
-                          placeholder="Centro Inicial"
-                          value={filtros.cto_cod_ini}
-                          onChange={handleChange}
-                          className="bg-white"
-                        />
-                        <Input
-                          name="cto_cod_fin"
-                          placeholder="Centro Final"
-                          value={filtros.cto_cod_fin}
-                          onChange={handleChange}
-                          className="bg-white"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Rango de Actividades */}
-                    <div className="space-y-3">
-                      <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <Hash className="h-4 w-4" />
-                        <span>Rango de Actividades</span>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <Input
-                          name="act_cod_ini"
-                          placeholder="Actividad Inicial"
-                          value={filtros.act_cod_ini}
-                          onChange={handleChange}
-                          className="bg-white"
-                        />
-                        <Input
-                          name="act_cod_fin"
-                          placeholder="Actividad Final"
-                          value={filtros.act_cod_fin}
-                          onChange={handleChange}
-                          className="bg-white"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Rango de Terceros */}
-                    <div className="space-y-3">
-                      <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <User className="h-4 w-4" />
-                        <span>Rango de Terceros (NIT)</span>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <Input
-                          name="ter_nit_ini"
-                          placeholder="NIT Inicial"
-                          value={filtros.ter_nit_ini}
-                          onChange={handleChange}
-                          className="bg-white"
-                        />
-                        <Input
-                          name="ter_nit_fin"
-                          placeholder="NIT Final"
-                          value={filtros.ter_nit_fin}
+                          name="cmp_cod_fin"
+                          placeholder="Comprobante Final"
+                          value={filtros.cmp_cod_fin}
                           onChange={handleChange}
                           className="bg-white"
                         />
@@ -438,7 +363,7 @@ const LibroDiarioPorSucursalPage = () => {
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
                         <Calendar className="h-4 w-4" />
-                        <span>Rango de Fechas</span>
+                        <span>Rango de Fechas de Comprobante</span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <Input

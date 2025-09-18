@@ -71,7 +71,7 @@ export const ModuleCarousel = ({ modules }: ModuleCarouselProps) => {
       <div className="text-center py-12">
         <Zap className="h-12 w-12 text-slate-400 mx-auto mb-4" />
         <h3 className="text-lg font-semibold text-slate-600 dark:text-slate-400">
-          No hay funciones principales en uso
+          No hay funciones en uso
         </h3>
         <p className="text-sm text-slate-500 dark:text-slate-500 mt-2">
           Crea y promueve módulos para que aparezcan aquí

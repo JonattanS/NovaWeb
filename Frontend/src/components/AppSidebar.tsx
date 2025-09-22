@@ -1,4 +1,4 @@
-import { Home, Database, Zap, Search, ChevronDown, ChevronRight, Table } from "lucide-react"
+import { Home, Database, Zap, Search, ChevronDown, ChevronRight, Table, FileText, Calculator, BookOpen, Book, Receipt, BarChart3 } from "lucide-react"
 import { NavLink } from "react-router-dom"
 import { useState, useEffect } from "react"
 import {
@@ -31,6 +31,75 @@ const inicioNavigation = [
   },
 ]
 
+const librosOficialesNavigation = [
+  {
+    title: "Comprobante Diario",
+    url: "/ComprobanteDiarioPage",
+    icon: Receipt,
+  },
+  {
+    title: "Libro Diario por Sucursal",
+    url: "/LibroDiarioPorSucursalPage",
+    icon: Book,
+  },
+  {
+    title: "Libro Mayor y Balances por Sucursal",
+    url: "/LibroMayorBalancesPorSucursalPage",
+    icon: BookOpen,
+  },
+  {
+    title: "Libro Mayor y Balances Simplificado",
+    url: "/LibroMayorBalancesSimplificadoPage",
+    icon: FileText,
+  },
+  {
+    title: "Libros de Inventarios y Balances",
+    url: "/LibrosInventariosBalancesPage",
+    icon: Table,
+  },
+]
+
+const procesoDocumentosNavigation = [
+  {
+    title: "Consulta de Documentos",
+    url: "/ConsultaDocumentosPage",
+    icon: Search,
+  },
+  {
+    title: "Auxiliar de Cuentas",
+    url: "/AuxiliarDeCuentasPage",
+    icon: Table,
+  },
+  {
+    title: "Auxiliar Cuentas Extranjeras",
+    url: "/AuxiliarDeCuentasExtranjerasPage",
+    icon: Calculator,
+  },
+  {
+    title: "Diario por Documentos",
+    url: "/DiarioPorDocumentosPage",
+    icon: BookOpen,
+  },
+]
+
+const estadosFinancierosNavigation = [
+  {
+    title: "Consulta Balance de Comprobación",
+    url: "/ConsultaBalanceComprobacionPage",
+    icon: BarChart3,
+  },
+  {
+    title: "Balance Comprobación Rango Fechas Centro y Terceros",
+    url: "/BalanceComprobacionRangoFechasCentroTercerosPage",
+    icon: FileText,
+  },
+  {
+    title: "Balance General por Sucursal",
+    url: "/BalanceGeneralPorSucursalPage",
+    icon: Calculator,
+  },
+]
+
 const testPortfolioNavigation = [
   {
     title: "Consulta de Documentos",
@@ -51,6 +120,9 @@ export function AppSidebar() {
   const { user } = useUser()
   const [dynamicFunctions, setDynamicFunctions] = useState(moduleService.getMainFunctions())
   const [isTestPortfolioExpanded, setIsTestPortfolioExpanded] = useState(false)
+  const [isProcesoDocumentosExpanded, setIsProcesoDocumentosExpanded] = useState(false)
+  const [isLibrosOficialesExpanded, setIsLibrosOficialesExpanded] = useState(false)
+  const [isEstadosFinancierosExpanded, setIsEstadosFinancierosExpanded] = useState(false)
 
   useEffect(() => {
     const updateDynamicFunctions = () => {
@@ -141,6 +213,135 @@ export function AppSidebar() {
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
                     <button
+                      onClick={() => setIsLibrosOficialesExpanded(!isLibrosOficialesExpanded)}
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group text-[#F7722F] dark:text-[#F7722F] hover:bg-blue-500 dark:hover:bg-[#F7722F] hover:translate-x-1 w-full text-left"
+                    >
+                      {isLibrosOficialesExpanded ? (
+                        <ChevronDown className="h-5 w-5 transition-transform group-hover:scale-110" />
+                      ) : (
+                        <ChevronRight className="h-5 w-5 transition-transform group-hover:scale-110" />
+                      )}
+                      <span className="font-medium">Libros Oficiales</span>
+                    </button>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
+
+              {isLibrosOficialesExpanded && !isCollapsed && (
+                <>
+                  {librosOficialesNavigation.map((item) => (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton asChild>
+                        <NavLink
+                          to={item.url}
+                          className={({ isActive }) =>
+                            `flex items-center gap-3 px-4 py-3 ml-6 rounded-xl transition-all duration-200 group text-slate-700 dark:text-slate-300 ${
+                              isActive
+                                ? "bg-blue-600 text-white shadow-lg shadow-blue-600/25"
+                                : "hover:bg-slate-100 dark:hover:bg-slate-800 hover:translate-x-1"
+                            }`
+                          }
+                          end
+                        >
+                          <item.icon className="h-4 w-4 transition-transform group-hover:scale-110" />
+                          <span className="font-medium text-sm">{item.title}</span>
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </>
+              )}
+
+              {!isCollapsed && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <button
+                      onClick={() => setIsProcesoDocumentosExpanded(!isProcesoDocumentosExpanded)}
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group text-[#F7722F] dark:text-[#F7722F] hover:bg-blue-500 dark:hover:bg-[#F7722F] hover:translate-x-1 w-full text-left"
+                    >
+                      {isProcesoDocumentosExpanded ? (
+                        <ChevronDown className="h-5 w-5 transition-transform group-hover:scale-110" />
+                      ) : (
+                        <ChevronRight className="h-5 w-5 transition-transform group-hover:scale-110" />
+                      )}
+                      <span className="font-medium">Proceso Documentos</span>
+                    </button>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
+
+              {isProcesoDocumentosExpanded && !isCollapsed && (
+                <>
+                  {procesoDocumentosNavigation.map((item) => (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton asChild>
+                        <NavLink
+                          to={item.url}
+                          className={({ isActive }) =>
+                            `flex items-center gap-3 px-4 py-3 ml-6 rounded-xl transition-all duration-200 group text-slate-700 dark:text-slate-300 ${
+                              isActive
+                                ? "bg-blue-600 text-white shadow-lg shadow-blue-600/25"
+                                : "hover:bg-slate-100 dark:hover:bg-slate-800 hover:translate-x-1"
+                            }`
+                          }
+                          end
+                        >
+                          <item.icon className="h-4 w-4 transition-transform group-hover:scale-110" />
+                          <span className="font-medium text-sm">{item.title}</span>
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </>
+              )}
+
+              {!isCollapsed && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <button
+                      onClick={() => setIsEstadosFinancierosExpanded(!isEstadosFinancierosExpanded)}
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group text-[#F7722F] dark:text-[#F7722F] hover:bg-blue-500 dark:hover:bg-[#F7722F] hover:translate-x-1 w-full text-left"
+                    >
+                      {isEstadosFinancierosExpanded ? (
+                        <ChevronDown className="h-5 w-5 transition-transform group-hover:scale-110" />
+                      ) : (
+                        <ChevronRight className="h-5 w-5 transition-transform group-hover:scale-110" />
+                      )}
+                      <span className="font-medium">Estados Financieros</span>
+                    </button>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
+
+              {isEstadosFinancierosExpanded && !isCollapsed && (
+                <>
+                  {estadosFinancierosNavigation.map((item) => (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton asChild>
+                        <NavLink
+                          to={item.url}
+                          className={({ isActive }) =>
+                            `flex items-center gap-3 px-4 py-3 ml-6 rounded-xl transition-all duration-200 group text-slate-700 dark:text-slate-300 ${
+                              isActive
+                                ? "bg-blue-600 text-white shadow-lg shadow-blue-600/25"
+                                : "hover:bg-slate-100 dark:hover:bg-slate-800 hover:translate-x-1"
+                            }`
+                          }
+                          end
+                        >
+                          <item.icon className="h-4 w-4 transition-transform group-hover:scale-110" />
+                          <span className="font-medium text-sm">{item.title}</span>
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </>
+              )}
+
+              {/* {!isCollapsed && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <button
                       onClick={() => setIsTestPortfolioExpanded(!isTestPortfolioExpanded)}
                       className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group text-[#F7722F] dark:text-[#F7722F] hover:bg-blue-500 dark:hover:bg-[#F7722F] hover:translate-x-1 w-full text-left"
                     >
@@ -178,7 +379,7 @@ export function AppSidebar() {
                     </SidebarMenuItem>
                   ))}
                 </>
-              )}
+              )} */}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

@@ -1,3 +1,5 @@
+"use client"
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Code, Database, FolderOpen } from "lucide-react"
@@ -29,15 +31,14 @@ const HomePage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
       {/* Hero section with better styling and container */}
-      <div>
-        <h1 className="text-4xl font-bold tracking-tight bg-[#F7722F] bg-clip-text text-transparent">
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        <h1 className="text-4xl font-bold tracking-tight leading-tight bg-[#F7722F] bg-clip-text text-transparent">
           Página de Inicio
         </h1>
         <p className="text-lg text-slate-600 dark:text-slate-400 mt-2">
           Accede rápidamente a tus herramientas y módulos más utilizados
         </p>
         {/* Mostrar mensaje de error si ocurre */}
-        
       </div>
 
       <div className="max-w-7xl mx-auto px-6 py-8 space-y-12">
@@ -112,9 +113,7 @@ const HomePage = () => {
                       <Database className="h-6 w-6" />
                     </div>
                     <div>
-                      <CardTitle className="text-xl text-slate-800 dark:text-slate-200">
-                        Auxiliar de Cuentas
-                      </CardTitle>
+                      <CardTitle className="text-xl text-slate-800 dark:text-slate-200">Auxiliar de Cuentas</CardTitle>
                     </div>
                   </div>
                 </CardHeader>

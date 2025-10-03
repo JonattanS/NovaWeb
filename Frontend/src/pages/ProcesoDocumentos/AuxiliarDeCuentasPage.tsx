@@ -103,7 +103,18 @@ const AuxiliarDeCuentasPage = () => {
   };
 
   // Campos específicos para auxiliar de cuentas
-  const camposAuxiliar = ["doc_fec","clc_cod","doc_num","cta_cod","cta_nom","ter_nit","ter_raz","mov_val","cto_cod","act_cod",]
+  const camposAuxiliar = [
+    "doc_fec",
+    "clc_cod",
+    "doc_num",
+    "cta_cod",
+    "cta_nom",
+    "ter_nit",
+    "ter_raz",
+    "mov_val",
+    "cto_cod",
+    "act_cod",
+  ]
   // Filtrar solo los campos necesarios para auxiliar
   const resultadoFiltrado = resultado.map((row) => {
     const filteredRow: any = {};
@@ -120,7 +131,7 @@ const AuxiliarDeCuentasPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+    <div className="relative min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       <div className="max-w-7xl mx-auto py-6 px-4 space-y-6">
         {/* Header */}
         <div className="flex justify-between items-center">
@@ -142,7 +153,7 @@ const AuxiliarDeCuentasPage = () => {
                 data={resultadoFiltrado}
                 filename={`auxiliar_cuentasCVS_${new Date().toISOString().split("T")[0]}`}
                 sheetName="Auxiliar de Cuentas"
-                format="csv"    
+                format="csv"
                 onProgressChange={(progress) => setExportProgress(progress)}
                 onGeneratingChange={(generating) => setIsExporting(generating)}
                 getColumnDescription={getColumnDescription}
@@ -151,7 +162,7 @@ const AuxiliarDeCuentasPage = () => {
                 data={resultadoFiltrado}
                 filename={`auxiliar_cuentas_${new Date().toISOString().split("T")[0]}`}
                 sheetName="Auxiliar de Cuentas"
-                format="xlsx"  
+                format="xlsx"
                 onProgressChange={(progress) => setExportProgress(progress)}
                 onGeneratingChange={(generating) => setIsExporting(generating)}
                 getColumnDescription={getColumnDescription}
@@ -391,7 +402,7 @@ const AuxiliarDeCuentasPage = () => {
               </div>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="overflow-x-auto sticky-scroll-container" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+              <div className="relative overflow-x-auto" style={{ maxHeight: "70vh", overflowY: "auto" }}>
                 <table className="w-full text-sm">
                   <thead className="bg-gray-50 border-b-2 border-gray-200 sticky top-0 z-10">
                     <tr>

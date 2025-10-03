@@ -49,50 +49,50 @@ const DEFAULT_FOLDERS: ModuleFolder[] = PORTFOLIOS.map(p => ({
 
 // Modifica o añade tus módulos existentes para incluir folderId y opcionalmente porcod
 const PERSISTENT_MODULES: PersistentModule[] = [
-  {
-    id: 'cuentas-cobrar-detallado',
-    porcod: 1,
-    name: 'Cuentas por Cobrar Detallado',
-    description: 'Consulta detallada de cuentas por cobrar con filtros avanzados',
-    query: `SELECT 
-      ter_nit,
-      ter_raz,
-      doc_fec,
-      doc_num,
-      mov_val,
-      clc_cod
-    FROM public.con_his 
-    WHERE anf_cla = 1 AND anf_cre = 1 
-    ORDER BY doc_fec DESC`,
-    filters: {},
-    folderId: '1',
-    createdAt: '2025-01-07T00:00:00.000Z',
-    lastUsed: '2025-01-07T00:00:00.000Z',
-    usageCount: 5,
-    isMainFunction: true
-  },
-  {
-    id: 'resumen-terceros',
-    porcod: 1,
-    name: 'Resumen por Terceros',
-    description: 'Agrupación de saldos por tercero',
-    query: `SELECT
-      ter_nit,
-      ter_raz,
-      SUM(mov_val) AS saldo_total,
-      COUNT(*) AS num_documentos
-    FROM public.con_his
-    WHERE anf_cla = 1 AND anf_cre = 1
-    GROUP BY ter_nit, ter_raz
-    HAVING SUM(mov_val) > 0
-    ORDER BY saldo_total DESC`,
-    filters: {},
-    folderId: '1',
-    createdAt: '2025-01-07T00:00:00.000Z',
-    lastUsed: '2025-01-07T00:00:00.000Z',
-    usageCount: 3,
-    isMainFunction: true
-  }
+  //{
+  //  id: 'cuentas-cobrar-detallado',
+  //  porcod: 1,
+  //  name: 'Cuentas por Cobrar Detallado',
+  //  description: 'Consulta detallada de cuentas por cobrar con filtros avanzados',
+  //  query: `SELECT 
+  //    ter_nit,
+  //    ter_raz,
+  //    doc_fec,
+  //    doc_num,
+  //    mov_val,
+  //    clc_cod
+  //  FROM public.con_his 
+  //  WHERE anf_cla = 1 AND anf_cre = 1 
+  //  ORDER BY doc_fec DESC`,
+  //  filters: {},
+  //  folderId: '1',
+  //  createdAt: '2025-01-07T00:00:00.000Z',
+  //  lastUsed: '2025-01-07T00:00:00.000Z',
+  //  usageCount: 5,
+  //  isMainFunction: true
+  //},
+  //{
+  //  id: 'resumen-terceros',
+  //  porcod: 1,
+  //  name: 'Resumen por Terceros',
+  //  description: 'Agrupación de saldos por tercero',
+  //  query: `SELECT
+  //    ter_nit,
+  //    ter_raz,
+  //    SUM(mov_val) AS saldo_total,
+  //    COUNT(*) AS num_documentos
+  //  FROM public.con_his
+  //  WHERE anf_cla = 1 AND anf_cre = 1
+  //  GROUP BY ter_nit, ter_raz
+  //  HAVING SUM(mov_val) > 0
+  //  ORDER BY saldo_total DESC`,
+  //  filters: {},
+  //  folderId: '1',
+  //  createdAt: '2025-01-07T00:00:00.000Z',
+  //  lastUsed: '2025-01-07T00:00:00.000Z',
+  //  usageCount: 3,
+  //  isMainFunction: true
+  //}
 ];
 
 class ModuleService {

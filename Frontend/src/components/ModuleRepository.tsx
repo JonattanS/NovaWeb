@@ -30,6 +30,7 @@ import { getModulesByPortfolio, type NovModule } from "@/services/novModulesApi"
 import { useUser } from "@/contexts/UserContext"
 import { useToast } from "@/hooks/use-toast"
 import { useNavigate } from "react-router-dom"
+import { routesByMencod } from '../routesByMencod'
 
 interface ModuleRepositoryProps {
   onClose: () => void
@@ -227,34 +228,43 @@ const [expandedCards, setExpandedCards] = useState<Record<number, boolean>>({});
   const handleSystemModuleClick = (mod: NovModule) => {
     if (!mod.menter) {
       setExpandedCardContent((prev) => {
-        const newSet = new Set(prev)
+        const newSet = new Set(prev);
         if (newSet.has(mod.id)) {
-          newSet.delete(mod.id)
+          newSet.delete(mod.id);
           // Also collapse submódulos when collapsing card
           if (expandedModuleCode === mod.mencod) {
-            setExpandedModuleCode(null)
-            setSubModules([])
+            setExpandedModuleCode(null);
+            setSubModules([]);
           }
         } else {
-          newSet.add(mod.id)
+          newSet.add(mod.id);
         }
-        return newSet
-      })
-      return
+        return newSet;
+      });
+      return;
     }
-    // Submódulo: navigate
+
+    // Si el módulo tiene URL externa, abrir en pestaña nueva
     if (mod.menurl) {
-      window.open(mod.menurl, "_blank")
+      window.open(mod.menurl, "_blank");
     } else {
-      navigate("/system-module-viewer", {
-        state: {
-          module: mod,
-          moduleCode: mod.mencod,
-          moduleName: mod.mennom,
-        },
-      })
+      // Usar el mapeo para redirigir según mencod
+      const path = routesByMencod[mod.mencod];
+      if (path) {
+        navigate(path);
+      } else {
+        // Si no está definido, fallback a "/system-module-viewer" con estado
+        navigate("/system-module-viewer", {
+          state: {
+            module: mod,
+            moduleCode: mod.mencod,
+            moduleName: mod.mennom,
+          },
+        });
+        console.warn(`Ruta no definida para mencod ${mod.mencod}, se usa fallback.`);
+      }
     }
-  }
+  };
 
   const handleExpandSubmodules = (mod: NovModule, e: React.MouseEvent) => {
     e.stopPropagation()
@@ -273,7 +283,7 @@ const [expandedCards, setExpandedCards] = useState<Record<number, boolean>>({});
   if (loading) return <div>Cargando módulos...</div>
   if (error) return <div>{error}</div>
   if (modules.length === 0 && !selectedPortafolio) return <div>No hay módulos guardados para este usuario.</div>
-
+  
   // Renderizado principal
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">

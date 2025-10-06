@@ -29,6 +29,9 @@ import {
 } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 
+// Definición estática del código de módulo
+export const mencod = '010309';
+
 const getColumnDescription = (key: string): string => {
   const col = schemaService.getTableColumns().find((c) => c.name === key)
   return col?.description || key

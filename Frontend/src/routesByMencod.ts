@@ -9,6 +9,8 @@ export const routesByMencod: Record<string, string> = {
   '010609': '/LibroMayorBalancesPorSucursalPage',
   '010612': '/LibroMayorBalancesSimplificadoPage',
   '010615': '/LibrosInventariosBalancesPage',
+  '010315': '/ReporteDeSaldosDeBancosPage',
+  '010320': '/ReporteEstadoDeMultiplesAnexosPage',
   '010903': '/BalanceComprobacionRangoFechasCentroTercerosPage',
   '010906': '/BalanceGeneralPorSucursalPage',
   // Agrega aquí todas las demás entradas:

@@ -29,6 +29,16 @@ import LibrosInventariosBalancesPage from "./pages/LibrosOficiales/LibrosInventa
 import ConsultaBalanceComprobacionPage from "./pages/EstadosFinancieros/ConsultaBalanceComprobacionPage"
 import BalanceComprobacionRangoFechasCentroTercerosPage from "./pages/EstadosFinancieros/BalanceComprobacionRangoFechasCentroTercerosPage"
 import BalanceGeneralPorSucursalPage from "./pages/EstadosFinancieros/BalanceGeneralPorSucursalPage"
+import EstadoResultadosPorSucursalPage from "./pages/EstadosFinancieros/EstadoResultadosPorSucursalPage"
+import EstadoResultadosPorCentroActividadPage from "./pages/EstadosFinancieros/EstadoResultadosPorCentroActividadPage"
+import EstadoResultadosPorSucursalCentroPage from "./pages/EstadosFinancieros/EstadoResultadosPorSucursalCentroPage"
+import ConsultaSaldoPage from "./pages/EstadoDeSaldos/ConsultaSaldoPage"
+import ReporteSaldosPorCuentaPage from "./pages/EstadoDeSaldos/ReporteSaldosPorCuentaPage"
+import ReporteSaldosPorNitPage from "./pages/EstadoDeSaldos/ReporteSaldosPorNitPage"
+import ReporteSaldosPorCentroPage from "./pages/EstadoDeSaldos/ReporteSaldosPorCentroPage"
+import ReporteSaldosPorCentroNitPage from "./pages/EstadoDeSaldos/ReporteSaldosPorCentroNitPage"
+import ReporteDeSaldosDeBancosPage from "./pages/EstadoDeSaldos/ReporteDeSaldosDeBancosPage"
+import ReporteEstadoDeMultiplesAnexosPage from "./pages/AnexosFinancieros/ReporteEstadoDeMultiplesAnexosPage"
 import { ModuleRepository } from "./components/ModuleRepository"
 import { useEffect, useCallback, useRef } from "react"
 import { useNavigate } from "react-router-dom"
@@ -285,6 +295,106 @@ const AppRoutes = () => {
           <ProtectedRoute>
             <MainLayout>
               <BalanceGeneralPorSucursalPage />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/EstadoResultadosPorSucursalPage"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <EstadoResultadosPorSucursalPage />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/EstadoResultadosPorCentroActividadPage"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <EstadoResultadosPorCentroActividadPage />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/EstadoResultadosPorSucursalCentroPage"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <EstadoResultadosPorSucursalCentroPage />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/ConsultaSaldoPage"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <ConsultaSaldoPage />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/ReporteSaldosPorCuentaPage"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <ReporteSaldosPorCuentaPage />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/ReporteSaldosPorNitPage"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <ReporteSaldosPorNitPage />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/ReporteSaldosPorCentroPage"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <ReporteSaldosPorCentroPage />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/ReporteSaldosPorCentroNitPage"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <ReporteSaldosPorCentroNitPage />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/ReporteDeSaldosDeBancosPage"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <ReporteDeSaldosDeBancosPage />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/ReporteEstadoDeMultiplesAnexosPage"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <ReporteEstadoDeMultiplesAnexosPage />
             </MainLayout>
           </ProtectedRoute>
         }

@@ -108,12 +108,15 @@ router.post('/consultadocumentos', async (req, res) => {
       `;
       break;
       
-    case 'otra_tabla':
+    case 'con_sal':
       baseQuery = `
-        SELECT campo1, campo2, campo3
-        FROM otra_tabla
+        SELECT id, adm_ciaid, cor_ano, cor_mes, cor_dia, sal_tip, cta_cod, suc_cod, ter_nit, cto_cod, 
+          act_cod, anx_cod, cpt_cod, anf_cod, clc_cod, doc_num, doc_fec, num_itm, sal_atr, sal_can, sal_ini, sal_deb, 
+          sal_crd, sal_can_mes, sal_ini_ext, sal_deb_ext, sal_crd_ext, suc_nom, clc_nom, cta_nom, anx_nom, cpt_nom, 
+          anf_nom, ter_raz, cto_nom, act_nom
+        FROM  con_sal
         ${sql}
-        ORDER BY campo1
+        ORDER BY id
       `;
       break;
       

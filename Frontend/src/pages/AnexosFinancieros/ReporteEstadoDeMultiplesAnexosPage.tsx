@@ -29,7 +29,7 @@ import {
 } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 
-export const mencod = '010320';
+export const mencod = '011802';
 
 const getColumnDescription = (key: string): string => {
   const col = schemaService.getTableColumns().find((c) => c.name === key)

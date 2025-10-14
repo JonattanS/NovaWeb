@@ -38,7 +38,8 @@ import ReporteSaldosPorNitPage from "./pages/EstadoDeSaldos/ReporteSaldosPorNitP
 import ReporteSaldosPorCentroPage from "./pages/EstadoDeSaldos/ReporteSaldosPorCentroPage"
 import ReporteSaldosPorCentroNitPage from "./pages/EstadoDeSaldos/ReporteSaldosPorCentroNitPage"
 import ReporteDeSaldosDeBancosPage from "./pages/EstadoDeSaldos/ReporteDeSaldosDeBancosPage"
-import ReporteEstadoDeMultiplesAnexosPage from "./pages/AnexosFinancieros/ReporteEstadoDeMultiplesAnexosPage"
+import ReporteEstadoDeMultiplesAnexosPage from "./pages/AnexosFinancieros/ReporteAnexosVencidosEdadesPage"
+import ReporteAnexosVencidosEdadesPage from "./pages/AnexosFinancieros/ReporteAnexosVencidosEdadesPage"
 import { ModuleRepository } from "./components/ModuleRepository"
 import { useEffect, useCallback, useRef } from "react"
 import { useNavigate } from "react-router-dom"
@@ -395,6 +396,16 @@ const AppRoutes = () => {
           <ProtectedRoute>
             <MainLayout>
               <ReporteEstadoDeMultiplesAnexosPage />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/ReporteAnexosVencidosEdadesPage"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <ReporteAnexosVencidosEdadesPage />
             </MainLayout>
           </ProtectedRoute>
         }

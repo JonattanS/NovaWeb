@@ -35,9 +35,7 @@ const HomePage = () => {
         <h1 className="text-4xl font-bold tracking-tight leading-tight bg-[#F7722F] bg-clip-text text-transparent">
           Página de Inicio
         </h1>
-        <p className="text-lg text-slate-600 dark:text-slate-400 mt-2">
-          Accede rápidamente a tus herramientas y módulos más utilizados
-        </p>
+
         {/* Mostrar mensaje de error si ocurre */}
       </div>
 
@@ -47,10 +45,10 @@ const HomePage = () => {
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-200 mb-2">
-                  Funciones / Módulos más usados
+                  Opciones más usadas
                 </h2>
                 <p className="text-slate-600 dark:text-slate-400">
-                  Accede rápidamente a las funciones que más utilizas
+                  Accede rápidamente a las opciones que más utilizas
                 </p>
               </div>
               <Button
@@ -60,7 +58,7 @@ const HomePage = () => {
                 className="bg-white dark:bg-slate-800 shadow-md hover:shadow-lg transition-all duration-200"
               >
                 <FolderOpen className="h-4 w-4 mr-2" />
-                Ver Todas
+                Ver Portafolios
               </Button>
             </div>
           </div>

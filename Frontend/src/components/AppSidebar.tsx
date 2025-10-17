@@ -1,20 +1,7 @@
 "use client"
-import {
-  Home,
-  Database,
-  Zap,
-  Search,
-  ChevronDown,
-  ChevronRight,
-  Table,
-  FileText,
-  Calculator,
-  BookOpen,
-  Book,
-  Receipt,
-  BarChart3,
-} from "lucide-react"
-import { NavLink } from "react-router-dom"
+
+import { Home, Database, Zap, ChevronDown, ChevronRight, Folder, Settings } from "lucide-react"
+import { NavLink, useNavigate } from "react-router-dom"
 import { useState, useEffect } from "react"
 import {
   Sidebar,
@@ -30,8 +17,8 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { moduleService } from "@/services/moduleService"
 import { useUser } from "@/contexts/UserContext"
+import { getModulesByPortfolio, type NovModule } from "@/services/novModulesApi"
 
-// Definiciones de navegación que faltaban
 const staticNavigation = [
   {
     title: "Consultas Manuales",
@@ -48,85 +35,19 @@ const inicioNavigation = [
   },
 ]
 
-const librosOficialesNavigation = [
-  {
-    title: "Comprobante Diario",
-    url: "/ComprobanteDiarioPage",
-    icon: Receipt,
-  },
-  {
-    title: "Libro Diario por Sucursal",
-    url: "/LibroDiarioPorSucursalPage",
-    icon: Book,
-  },
-  {
-    title: "Libro Mayor y Balances por Sucursal",
-    url: "/LibroMayorBalancesPorSucursalPage",
-    icon: BookOpen,
-  },
-  {
-    title: "Libro Mayor y Balances Simplificado",
-    url: "/LibroMayorBalancesSimplificadoPage",
-    icon: FileText,
-  },
-  {
-    title: "Libros de Inventarios y Balances",
-    url: "/LibrosInventariosBalancesPage",
-    icon: Table,
-  },
-]
-
-const procesoDocumentosNavigation = [
-  {
-    title: "Consulta de Documentos",
-    url: "/ConsultaDocumentosPage",
-    icon: Search,
-  },
-  {
-    title: "Auxiliar de Cuentas",
-    url: "/AuxiliarDeCuentasPage",
-    icon: Table,
-  },
-  {
-    title: "Auxiliar Cuentas Extranjeras",
-    url: "/AuxiliarDeCuentasExtranjerasPage",
-    icon: Calculator,
-  },
-  {
-    title: "Diario por Documentos",
-    url: "/DiarioPorDocumentosPage",
-    icon: BookOpen,
-  },
-]
-
-const estadosFinancierosNavigation = [
-  {
-    title: "Consulta Balance de Comprobación",
-    url: "/ConsultaBalanceComprobacionPage",
-    icon: BarChart3,
-  },
-  {
-    title: "Balance Comprobación Rango Fechas Centro y Terceros",
-    url: "/BalanceComprobacionRangoFechasCentroTercerosPage",
-    icon: FileText,
-  },
-  {
-    title: "Balance General por Sucursal",
-    url: "/BalanceGeneralPorSucursalPage",
-    icon: Calculator,
-  },
-]
-
 export function AppSidebar() {
   const { state, toggleSidebar } = useSidebar()
   const isCollapsed = state === "collapsed"
-  // Obtener usuario y su compañía desde el contexto
+  const navigate = useNavigate()
+
   const { user } = useUser()
+  const portafoliosPermitidos: number[] = user?.portafolios || []
+
   const [dynamicFunctions, setDynamicFunctions] = useState(moduleService.getMainFunctions())
-  const [isTestPortfolioExpanded, setIsTestPortfolioExpanded] = useState(false)
-  const [isProcesoDocumentosExpanded, setIsProcesoDocumentosExpanded] = useState(false)
-  const [isLibrosOficialesExpanded, setIsLibrosOficialesExpanded] = useState(false)
-  const [isEstadosFinancierosExpanded, setIsEstadosFinancierosExpanded] = useState(false)
+
+  const [portfolios, setPortfolios] = useState<{ [key: number]: { name: string; modules: NovModule[] } }>({})
+  const [expandedPortfolios, setExpandedPortfolios] = useState<{ [key: number]: boolean }>({})
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const updateDynamicFunctions = () => {
@@ -140,9 +61,68 @@ export function AppSidebar() {
     return () => clearInterval(interval)
   }, [])
 
+  useEffect(() => {
+    const loadPortfoliosAndModules = async () => {
+      if (!user?.token) return
+
+      try {
+        setLoading(true)
+
+        const allFolders = moduleService.getAllFolders()
+        const allowedFolders = allFolders.filter((f) => portafoliosPermitidos.includes(f.porcod ?? -1))
+
+        const portfolioMap: { [key: number]: { name: string; modules: NovModule[] } } = {}
+
+        // Load modules for each portfolio
+        for (const folder of allowedFolders) {
+          if (folder.porcod) {
+            try {
+              const modules = await getModulesByPortfolio(folder.porcod, user.token)
+              // Only include parent modules (menter = false) for the sidebar
+              const parentModules = modules.filter((m: NovModule) => !m.menter)
+              portfolioMap[folder.porcod] = {
+                name: folder.name,
+                modules: parentModules,
+              }
+            } catch (error) {
+              console.error(`Error loading modules for portfolio ${folder.porcod}:`, error)
+            }
+          }
+        }
+
+        setPortfolios(portfolioMap)
+      } catch (error) {
+        console.error("Error loading portfolios:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadPortfoliosAndModules()
+  }, [user, portafoliosPermitidos])
+
+  const togglePortfolio = (porcod: number) => {
+    setExpandedPortfolios((prev) => ({
+      ...prev,
+      [porcod]: !prev[porcod],
+    }))
+  }
+
+  const navigateToModuleRepository = (porcod: number, portfolioName: string) => {
+    navigate("/portafolios", {
+      state: {
+        selectedPortfolio: {
+          porcod,
+          name: portfolioName,
+          id: porcod.toString(),
+        },
+      },
+    })
+  }
+
   return (
     <Sidebar
-      className={`border-r border-slate-200 dark:border-slate-700 bg-[#002550] dark:bg-[#002550] h-screen z-30 transition-all duration-200 ${
+      className={`border-r border-slate-200 dark:border-slate-700 bg-[#41B9E8] dark:bg-[#41B9E8] h-screen z-30 transition-transform-smooth duration-200 ease-in-out${
         isCollapsed ? "w-16" : "w-64"
       }`}
       collapsible="icon"
@@ -196,7 +176,6 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Portafolio Section */}
         <SidebarGroup>
           <SidebarGroupLabel
             className={`${isCollapsed ? "hidden" : "block"} text-[#F7722F] dark:text-[#F7722F] font-semibold px-4`}
@@ -205,249 +184,86 @@ export function AppSidebar() {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              
-
-              {/* Libros Oficiales */}
-              {isCollapsed ? (
+              {loading ? (
                 <SidebarMenuItem>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <SidebarMenuButton className="w-full justify-center p-2 hover:bg-slate-800">
-                        <BookOpen className="h-5 w-5 text-[#F7722F]" />
-                      </SidebarMenuButton>
-                    </PopoverTrigger>
-                    <PopoverContent
-                      side="right"
-                      align="start"
-                      className="w-64 p-3 bg-white border-slate-600 ml-2 z-50"
-                    >
-                      <div className="space-y-2">
-                        <div className="text-[#F7722F] font-semibold text-sm mb-3">Libros Oficiales</div>
-                        {librosOficialesNavigation.map((item) => (
-                          <NavLink
-                            key={item.title}
-                            to={item.url}
-                            className={({ isActive }) =>
-                              `flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 ${
-                                isActive ? "bg-blue-600 text-white" : "text-slate-600 hover:bg-slate-200"
-                              }`
-                            }
-                            end
-                          >
-                            <item.icon className="h-4 w-4" />
-                            <span className="font-medium text-sm">{item.title}</span>
-                          </NavLink>
-                        ))}
-                      </div>
-                    </PopoverContent>
-                  </Popover>
+                  <div className="flex items-center gap-3 px-4 py-3 text-slate-300">
+                    <Settings className="w-5 h-5 animate-spin" />
+                    {!isCollapsed && <span>Cargando portafolios...</span>}
+                  </div>
                 </SidebarMenuItem>
               ) : (
-                <>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton asChild>
-                      <button
-                        onClick={() => setIsLibrosOficialesExpanded(!isLibrosOficialesExpanded)}
-                        className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group text-[#F7722F] dark:text-[#F7722F] hover:bg-blue-500 dark:hover:bg-[#F7722F] hover:translate-x-1 w-full text-left"
-                      >
-                        {isLibrosOficialesExpanded ? (
-                          <ChevronDown className="h-5 w-5 transition-transform group-hover:scale-110" />
-                        ) : (
-                          <ChevronRight className="h-5 w-5 transition-transform group-hover:scale-110" />
-                        )}
-                        <BookOpen className="h-5 w-5" />
-                        <span className="font-medium">Libros Oficiales</span>
-                      </button>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
+                Object.entries(portfolios).map(([porcodStr, portfolio]) => {
+                  const porcod = Number.parseInt(porcodStr)
+                  const isExpanded = expandedPortfolios[porcod]
 
-                  {isLibrosOficialesExpanded && (
-                    <>
-                      {librosOficialesNavigation.map((item) => (
-                        <SidebarMenuItem key={item.title}>
-                          <SidebarMenuButton asChild>
-                            <NavLink
-                              to={item.url}
-                              className={({ isActive }) =>
-                                `flex items-center gap-3 px-4 py-3 ml-6 rounded-xl transition-all duration-200 group text-slate-700 dark:text-slate-300 ${
-                                  isActive
-                                    ? "bg-blue-600 text-white shadow-lg shadow-blue-600/25"
-                                    : "hover:bg-slate-100 dark:hover:bg-slate-800 hover:translate-x-1"
-                                }`
-                              }
-                              end
-                            >
-                              <item.icon className="h-4 w-4 transition-transform group-hover:scale-110" />
-                              <span className="font-medium text-sm">{item.title}</span>
-                            </NavLink>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                      ))}
-                    </>
-                  )}
-                </>
-              )}
-
-              {/* Proceso Documentos */}
-              {isCollapsed ? (
-                <SidebarMenuItem>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <SidebarMenuButton className="w-full justify-center p-2 hover:bg-slate-800">
-                        <FileText className="h-5 w-5 text-[#F7722F]" />
-                      </SidebarMenuButton>
-                    </PopoverTrigger>
-                    <PopoverContent
-                      side="right"
-                      align="start"
-                      className="w-64 p-3 bg-white border-slate-600 ml-2 z-50"
-                    >
-                      <div className="space-y-2">
-                        <div className="text-[#F7722F] font-semibold text-sm mb-3">Proceso Documentos</div>
-                        {procesoDocumentosNavigation.map((item) => (
-                          <NavLink
-                            key={item.title}
-                            to={item.url}
-                            className={({ isActive }) =>
-                              `flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 ${
-                                isActive ? "bg-blue-600 text-white" : "text-slate-600 hover:bg-slate-200"
-                              }`
-                            }
-                            end
+                  return (
+                    <SidebarMenuItem key={porcod}>
+                      {isCollapsed ? (
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <SidebarMenuButton className="w-full justify-center p-2 hover:bg-slate-800">
+                              <Folder className="h-5 w-5 text-[#F7722F]" />
+                            </SidebarMenuButton>
+                          </PopoverTrigger>
+                          <PopoverContent
+                            side="right"
+                            align="start"
+                            className="w-64 p-3 bg-white border-slate-600 ml-2 z-50"
                           >
-                            <item.icon className="h-4 w-4" />
-                            <span className="font-medium text-sm">{item.title}</span>
-                          </NavLink>
-                        ))}
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                </SidebarMenuItem>
-              ) : (
-                <>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton asChild>
-                      <button
-                        onClick={() => setIsProcesoDocumentosExpanded(!isProcesoDocumentosExpanded)}
-                        className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group text-[#F7722F] dark:text-[#F7722F] hover:bg-blue-500 dark:hover:bg-[#F7722F] hover:translate-x-1 w-full text-left"
-                      >
-                        {isProcesoDocumentosExpanded ? (
-                          <ChevronDown className="h-5 w-5 transition-transform group-hover:scale-110" />
-                        ) : (
-                          <ChevronRight className="h-5 w-5 transition-transform group-hover:scale-110" />
-                        )}
-                        <FileText className="h-5 w-5" />
-                        <span className="font-medium">Proceso Documentos</span>
-                      </button>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-
-                  {isProcesoDocumentosExpanded && (
-                    <>
-                      {procesoDocumentosNavigation.map((item) => (
-                        <SidebarMenuItem key={item.title}>
+                            <div className="space-y-2">
+                              <div className="text-[#F7722F] font-semibold text-sm mb-3">{portfolio.name}</div>
+                              {portfolio.modules.map((module) => (
+                                <button
+                                  key={module.id}
+                                  onClick={() => navigateToModuleRepository(porcod, portfolio.name)}
+                                  className="flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 text-slate-600 hover:bg-slate-200 w-full text-left"
+                                >
+                                  <Settings className="w-4 h-4" />
+                                  <span className="font-medium text-sm">{module.mennom}</span>
+                                </button>
+                              ))}
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                      ) : (
+                        <>
                           <SidebarMenuButton asChild>
-                            <NavLink
-                              to={item.url}
-                              className={({ isActive }) =>
-                                `flex items-center gap-3 px-4 py-3 ml-6 rounded-xl transition-all duration-200 group text-slate-700 dark:text-slate-300 ${
-                                  isActive
-                                    ? "bg-blue-600 text-white shadow-lg shadow-blue-600/25"
-                                    : "hover:bg-slate-100 dark:hover:bg-slate-800 hover:translate-x-1"
-                                }`
-                              }
-                              end
+                            <button
+                              onClick={() => togglePortfolio(porcod)}
+                              className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group text-[#F7722F] dark:text-[#F7722F] hover:bg-blue-500 dark:hover:bg-[#F7722F] hover:translate-x-1 w-full text-left"
                             >
-                              <item.icon className="h-4 w-4 transition-transform group-hover:scale-110" />
-                              <span className="font-medium text-sm">{item.title}</span>
-                            </NavLink>
+                              {isExpanded ? (
+                                <ChevronDown className="h-5 w-5 transition-transform group-hover:scale-110" />
+                              ) : (
+                                <ChevronRight className="h-5 w-5 transition-transform group-hover:scale-110" />
+                              )}
+                              <Folder className="h-5 w-5" />
+                              <span className="font-medium">{portfolio.name}</span>
+                            </button>
                           </SidebarMenuButton>
-                        </SidebarMenuItem>
-                      ))}
-                    </>
-                  )}
-                </>
-              )}
 
-              {/* Estados Financieros */}
-              {isCollapsed ? (
-                <SidebarMenuItem>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <SidebarMenuButton className="w-full justify-center p-2 hover:bg-slate-800">
-                        <BarChart3 className="h-5 w-5 text-[#F7722F]" />
-                      </SidebarMenuButton>
-                    </PopoverTrigger>
-                    <PopoverContent
-                      side="right"
-                      align="start"
-                      className="w-64 p-3 bg-white border-slate-600 ml-2 z-50"
-                    >
-                      <div className="space-y-2">
-                        <div className="text-[#F7722F] font-semibold text-sm mb-3">Estados Financieros</div>
-                        {estadosFinancierosNavigation.map((item) => (
-                          <NavLink
-                            key={item.title}
-                            to={item.url}
-                            className={({ isActive }) =>
-                              `flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 ${
-                                isActive ? "bg-blue-600 text-white" : "text-slate-600 hover:bg-slate-200"
-                              }`
-                            }
-                            end
-                          >
-                            <item.icon className="h-4 w-4" />
-                            <span className="font-medium text-sm">{item.title}</span>
-                          </NavLink>
-                        ))}
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                </SidebarMenuItem>
-              ) : (
-                <>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton asChild>
-                      <button
-                        onClick={() => setIsEstadosFinancierosExpanded(!isEstadosFinancierosExpanded)}
-                        className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group text-[#F7722F] dark:text-[#F7722F] hover:bg-blue-500 dark:hover:bg-[#F7722F] hover:translate-x-1 w-full text-left"
-                      >
-                        {isEstadosFinancierosExpanded ? (
-                          <ChevronDown className="h-5 w-5 transition-transform group-hover:scale-110" />
-                        ) : (
-                          <ChevronRight className="h-5 w-5 transition-transform group-hover:scale-110" />
-                        )}
-                        <BarChart3 className="h-5 w-5" />
-                        <span className="font-medium">Estados Financieros</span>
-                      </button>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-
-                  {isEstadosFinancierosExpanded && (
-                    <>
-                      {estadosFinancierosNavigation.map((item) => (
-                        <SidebarMenuItem key={item.title}>
-                          <SidebarMenuButton asChild>
-                            <NavLink
-                              to={item.url}
-                              className={({ isActive }) =>
-                                `flex items-center gap-3 px-4 py-3 ml-6 rounded-xl transition-all duration-200 group text-slate-700 dark:text-slate-300 ${
-                                  isActive
-                                    ? "bg-blue-600 text-white shadow-lg shadow-blue-600/25"
-                                    : "hover:bg-slate-100 dark:hover:bg-slate-800 hover:translate-x-1"
-                                }`
-                              }
-                              end
-                            >
-                              <item.icon className="h-4 w-4 transition-transform group-hover:scale-110" />
-                              <span className="font-medium text-sm">{item.title}</span>
-                            </NavLink>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                      ))}
-                    </>
-                  )}
-                </>
+                          {isExpanded && (
+                            <>
+                              {portfolio.modules.map((module) => (
+                                <SidebarMenuItem key={module.id}>
+                                  <SidebarMenuButton asChild>
+                                    <button
+                                      onClick={() => navigateToModuleRepository(porcod, portfolio.name)}
+                                      className="flex items-center gap-3 px-4 py-3 ml-6 rounded-xl transition-all duration-200 group text-slate-200 dark:text-slate-300 hover:bg-slate-700 dark:hover:bg-slate-800  text-left"
+                                    >
+                                      <Settings className="h-4 w-4 transition-transform group-hover:scale-110" />
+                                      <span className="font-medium text-sm">{module.mennom}</span>
+                                    </button>
+                                  </SidebarMenuButton>
+                                </SidebarMenuItem>
+                              ))}
+                            </>
+                          )}
+                        </>
+                      )}
+                    </SidebarMenuItem>
+                  )
+                })
               )}
             </SidebarMenu>
           </SidebarGroupContent>
@@ -513,6 +329,67 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {/* Funciones Dinámicas */}
+        {dynamicFunctions.length > 0 && (
+          <SidebarGroup>
+            <SidebarGroupLabel
+              className={`${isCollapsed ? "hidden" : "block"} text-[#F7722F] dark:text-[#F7722F] font-semibold px-4`}
+            >
+              Funciones Principales
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {dynamicFunctions.map((func) => (
+                  <SidebarMenuItem key={func.id}>
+                    {isCollapsed ? (
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <SidebarMenuButton className="w-full justify-center p-2 hover:bg-slate-800">
+                            <Zap className="h-5 w-5 text-slate-300" />
+                          </SidebarMenuButton>
+                        </PopoverTrigger>
+                        <PopoverContent
+                          side="right"
+                          align="start"
+                          className="w-48 p-2 bg-[#002550] border-slate-600 ml-2 z-50"
+                        >
+                          <NavLink
+                            to={`/dynamic-function/${func.id}`}
+                            className={({ isActive }) =>
+                              `flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 group ${
+                                isActive ? "bg-purple-600 text-white" : "text-slate-300 hover:bg-slate-800"
+                              }`
+                            }
+                          >
+                            <Zap className="h-4 w-4" />
+                            <span className="font-medium text-sm">{func.name}</span>
+                          </NavLink>
+                        </PopoverContent>
+                      </Popover>
+                    ) : (
+                      <SidebarMenuButton asChild>
+                        <NavLink
+                          to={`/dynamic-function/${func.id}`}
+                          className={({ isActive }) =>
+                            `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group text-slate-700 dark:text-slate-300 ${
+                              isActive
+                                ? "bg-purple-600 text-white shadow-lg shadow-purple-600/25"
+                                : "hover:bg-slate-100 dark:hover:bg-slate-800 hover:translate-x-1"
+                            }`
+                          }
+                        >
+                          <Zap className="h-5 w-5 transition-transform group-hover:scale-110" />
+                          <span className="font-medium">{func.name}</span>
+                        </NavLink>
+                      </SidebarMenuButton>
+                    )}
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
     </Sidebar>
   )

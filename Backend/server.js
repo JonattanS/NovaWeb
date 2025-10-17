@@ -3,7 +3,7 @@ const cors = require('cors');
 require('dotenv').config();
 
 const app = express();
-const port = process.env.PORT || 3002;
+const port = process.env.PORT || 3004;
 
 app.use(cors());
 app.use(express.json());
@@ -18,9 +18,14 @@ app.use('/api/usr-modules', usrModulesRouter);
 const consultaDocumentosRouter = require('./routes/consultadocumentos');
 app.use('/api', consultaDocumentosRouter);
 
-// Importar y conectar la nueva ruta
 const comunicadoRouter = require('./routes/Comunicado');
 app.use('/api', comunicadoRouter);
+
+// Importa novModules
+const novModulesRoutes = require('./routes/novModules');
+
+// Registrar la ruta
+app.use('/api/nov-modules', novModulesRoutes);
 
 // Endpoint para ejecutar queries con configuración dinámica (pool temporal)
 

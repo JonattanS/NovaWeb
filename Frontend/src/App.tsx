@@ -29,6 +29,19 @@ import LibrosInventariosBalancesPage from "./pages/LibrosOficiales/LibrosInventa
 import ConsultaBalanceComprobacionPage from "./pages/EstadosFinancieros/ConsultaBalanceComprobacionPage"
 import BalanceComprobacionRangoFechasCentroTercerosPage from "./pages/EstadosFinancieros/BalanceComprobacionRangoFechasCentroTercerosPage"
 import BalanceGeneralPorSucursalPage from "./pages/EstadosFinancieros/BalanceGeneralPorSucursalPage"
+import EstadoResultadosPorSucursalPage from "./pages/EstadosFinancieros/EstadoResultadosPorSucursalPage"
+import EstadoResultadosPorCentroActividadPage from "./pages/EstadosFinancieros/EstadoResultadosPorCentroActividadPage"
+import EstadoResultadosPorSucursalCentroPage from "./pages/EstadosFinancieros/EstadoResultadosPorSucursalCentroPage"
+import ConsultaSaldoPage from "./pages/EstadoDeSaldos/ConsultaSaldoPage"
+import ReporteSaldosPorCuentaPage from "./pages/EstadoDeSaldos/ReporteSaldosPorCuentaPage"
+import ReporteSaldosPorNitPage from "./pages/EstadoDeSaldos/ReporteSaldosPorNitPage"
+import ReporteSaldosPorCentroPage from "./pages/EstadoDeSaldos/ReporteSaldosPorCentroPage"
+import ReporteSaldosPorCentroNitPage from "./pages/EstadoDeSaldos/ReporteSaldosPorCentroNitPage"
+import ReporteDeSaldosDeBancosPage from "./pages/EstadoDeSaldos/ReporteDeSaldosDeBancosPage"
+import ReporteEstadoDeMultiplesAnexosPage from "./pages/AnexosFinancieros/ReporteEstadoDeMultiplesAnexosPage"
+import HojaDeVidaAnexoPage from "./pages/AnexosFinancieros/HojaDeVidaAnexoPage"
+import ReporteAnalisisAnexosVencidosPage from "./pages/AnexosFinancieros/ReporteAnalisisAnexosVencidosPage"
+import ReporteAnexosVencidosEdadesPage from "./pages/AnexosFinancieros/ReporteAnexosVencidosEdadesPage"
 import { ModuleRepository } from "./components/ModuleRepository"
 import { useEffect, useCallback, useRef } from "react"
 import { useNavigate } from "react-router-dom"
@@ -71,22 +84,34 @@ const MainLayoutContent = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="min-h-screen flex w-full">
       <AppSidebar />
-      <div className="flex-1 flex flex-col transition-all duration-200">
-        <header className="border-b bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl supports-[backdrop-filter]:bg-white/60 shadow-sm sticky top-0 z-40">
+      
+      <div className="flex-1 flex flex-col transition-all duration-200 overflow-x-hidden">
+        {/* Header fijo con la MISMA transición que el sidebar */}
+        <header 
+          className={`
+          border-b bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl 
+          supports-[backdrop-filter]:bg-white/60 shadow-sm 
+          fixed top-0 right-0 z-40 
+          transition-transform-smooth duration-200 ease-in-out
+          ${isCollapsed ? 'left-12' : 'left-64'}`}
+          >
+        
           <div className="flex h-16 items-center justify-between px-6">
             <div className="flex items-center space-x-4">
               <SidebarTrigger className="hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" />
               <div>
                 <h2 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-[#F7722F] bg-clip-text text-transparent">
-                  Nova Web
+              Nova Web
                 </h2>
               </div>
             </div>
             <UserMenu />
           </div>
         </header>
-        <main className="flex-1 p-6 overflow-auto bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-          <div className="max-w-7xl mx-auto w-full">{children}</div>
+        
+        {/* Contenido principal */}
+        <main className="flex-1 p-6 overflow-y-auto bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 pt-16">
+          {children}
         </main>
       </div>
     </div>
@@ -273,6 +298,136 @@ const AppRoutes = () => {
           <ProtectedRoute>
             <MainLayout>
               <BalanceGeneralPorSucursalPage />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/EstadoResultadosPorSucursalPage"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <EstadoResultadosPorSucursalPage />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/EstadoResultadosPorCentroActividadPage"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <EstadoResultadosPorCentroActividadPage />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/EstadoResultadosPorSucursalCentroPage"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <EstadoResultadosPorSucursalCentroPage />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/ConsultaSaldoPage"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <ConsultaSaldoPage />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/ReporteSaldosPorCuentaPage"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <ReporteSaldosPorCuentaPage />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/ReporteSaldosPorNitPage"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <ReporteSaldosPorNitPage />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/ReporteSaldosPorCentroPage"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <ReporteSaldosPorCentroPage />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/ReporteSaldosPorCentroNitPage"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <ReporteSaldosPorCentroNitPage />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/ReporteDeSaldosDeBancosPage"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <ReporteDeSaldosDeBancosPage />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/ReporteEstadoDeMultiplesAnexosPage"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <ReporteEstadoDeMultiplesAnexosPage />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/HojaDeVidaAnexoPage"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <HojaDeVidaAnexoPage />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/ReporteAnalisisAnexosVencidosPage"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <ReporteAnalisisAnexosVencidosPage />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/ReporteAnexosVencidosEdadesPage"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <ReporteAnexosVencidosEdadesPage />
             </MainLayout>
           </ProtectedRoute>
         }

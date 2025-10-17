@@ -72,6 +72,46 @@ function construirWhere(f) {
     where.push(`cmp_cod <= $${idx++}`);
     values.push(f.cmp_cod_fin);
   }
+  if (f.anx_cod_ini) {
+    where.push(`anx_cod >= $${idx++}`);
+    values.push(f.anx_cod_ini);
+  }
+  if (f.anx_cod_fin) {
+    where.push(`anx_cod <= $${idx++}`);
+    values.push(f.anx_cod_fin);
+  }
+  if (f.anf_cod_ini) {
+    where.push(`anf_cod >= $${idx++}`);
+    values.push(f.anf_cod_ini);
+  }
+  if (f.anf_cod_fin) {
+    where.push(`anf_cod <= $${idx++}`);
+    values.push(f.anf_cod_fin);
+  }
+  if (f.doc_num_ref_ini) {
+    where.push(`doc_num_ref >= $${idx++}`);
+    values.push(f.doc_num_ref_ini);
+  }
+  if (f.doc_num_ref_fin) {
+    where.push(`doc_num_ref <= $${idx++}`);
+    values.push(f.doc_num_ref_fin);
+  }
+  if (f.doc_fec_ref_ini) {
+    where.push(`doc_fec_ref >= $${idx++}`);
+    values.push(f.doc_fec_ref_ini);
+  }
+  if (f.doc_fec_ref_fin) {
+    where.push(`doc_fec_ref <= $${idx++}`);
+    values.push(f.doc_fec_ref_fin);
+  }
+  if (f.doc_est_ini) {
+    where.push(`doc_est >= $${idx++}`);
+    values.push(f.doc_est_ini);
+  }
+  if (f.doc_est_fin) {
+    where.push(`doc_est <= $${idx++}`);
+    values.push(f.doc_est_fin);
+  }
 
   // Puedes añadir aquí otros campos siguiendo la misma lógica.
 
@@ -108,12 +148,15 @@ router.post('/consultadocumentos', async (req, res) => {
       `;
       break;
       
-    case 'otra_tabla':
+    case 'con_sal':
       baseQuery = `
-        SELECT campo1, campo2, campo3
-        FROM otra_tabla
+        SELECT id, adm_ciaid, cor_ano, cor_mes, cor_dia, sal_tip, cta_cod, suc_cod, ter_nit, cto_cod, 
+          act_cod, anx_cod, cpt_cod, anf_cod, clc_cod, doc_num, doc_fec, num_itm, sal_atr, sal_can, sal_ini, sal_deb, 
+          sal_crd, sal_can_mes, sal_ini_ext, sal_deb_ext, sal_crd_ext, suc_nom, clc_nom, cta_nom, anx_nom, cpt_nom, 
+          anf_nom, ter_raz, cto_nom, act_nom
+        FROM  con_sal
         ${sql}
-        ORDER BY campo1
+        ORDER BY id
       `;
       break;
       

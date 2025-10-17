@@ -15,9 +15,6 @@ import { useNavigate } from "react-router-dom"
 import jsPDF from "jspdf"
 import autoTable from "jspdf-autotable"
 
-// Definición estática del código de módulo
-export const mencod = '010903';
-
 const getColumnDescription = (key: string): string => {
   const col = schemaService.getTableColumns().find((c) => c.name === key)
   return col?.description || key
@@ -33,7 +30,7 @@ type Filtros = {
 
 const ROWS_PER_PAGE = 20
 
-const BalanceComprobacionRangoFechasCentroTercerosPage = () => {
+const EstadoResultadosPorCentroActividadPage = () => {
   const navigate = useNavigate()
   const [filtros, setFiltros] = useState<Filtros>({
     suc_cod: "",
@@ -66,7 +63,7 @@ const BalanceComprobacionRangoFechasCentroTercerosPage = () => {
     const url = window.URL.createObjectURL(blob)
     const a = document.createElement("a")
     a.href = url
-    a.download = `Balance_Comprobacion_Rango_Fechas_Centro_Terceros_${new Date().toISOString().split("T")[0]}.csv`
+    a.download = `Estado_Resultados_Por_Centro_Actividad_${new Date().toISOString().split("T")[0]}.csv`
     a.click()
   }
 
@@ -94,7 +91,7 @@ const BalanceComprobacionRangoFechasCentroTercerosPage = () => {
       pdf.setFontSize(18)
       pdf.setFont("helvetica", "bold")
       pdf.setTextColor(headerColor[0], headerColor[1], headerColor[2])
-      pdf.text("Balance Comprobación Rango Fechas Centro y Terceros", 20, 20)
+      pdf.text("Estado de Resultados por Centro de Actividad", 20, 20)
 
       pdf.setFontSize(10)
       pdf.setFont("helvetica", "normal")
@@ -232,7 +229,7 @@ const BalanceComprobacionRangoFechasCentroTercerosPage = () => {
 
       const a = document.createElement("a")
       a.href = blobUrl
-      a.download = `balance_comprobacion_rango_fechas_centro_terceros_${new Date().toISOString().split("T")[0]}.pdf`
+      a.download = `estado_resultados_por_centro_actividad_${new Date().toISOString().split("T")[0]}.pdf`
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)
@@ -366,7 +363,7 @@ const BalanceComprobacionRangoFechasCentroTercerosPage = () => {
             <div className="h-6 w-px bg-gray-300" />
             <h1 className="text-2xl font-bold text-gray-900 flex items-center">
               <Table className="h-6 w-6 mr-2 text-blue-600" />
-              Balance Comprobación Rango Fechas Centro y Terceros
+              Estado de Resultados por Centro de Actividad
             </h1>
           </div>
 
@@ -610,4 +607,4 @@ const BalanceComprobacionRangoFechasCentroTercerosPage = () => {
   )
 }
 
-export default BalanceComprobacionRangoFechasCentroTercerosPage
+export default EstadoResultadosPorCentroActividadPage

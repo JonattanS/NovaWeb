@@ -1,0 +1,122 @@
+FLOWCHART NOVAWEB - CÓDIGO PARA COPIAR/PEGAR
+
+=== FLOWCHART.JS FORMAT ===
+st=>start: Usuario ingresa filtros
+op1=>operation: handleSubmit()
+op2=>operation: documentosService.consultarDocumentos()
+op3=>operation: POST /api/consultadocumentos
+op4=>operation: Express Router
+op5=>operation: construirWhere(filtros)
+op6=>operation: SQL dinámico
+op7=>operation: pool.query()
+op8=>operation: PostgreSQL
+op9=>operation: result.rows
+op10=>operation: res.json()
+op11=>operation: setResultados()
+e=>end: UI actualizada
+
+st->op1->op2->op3->op4->op5->op6->op7->op8->op9->op10->op11->e
+
+=== MERMAID FLOWCHART ===
+flowchart TD
+    A[Usuario ingresa filtros] --> B[handleSubmit]
+    B --> C[documentosService]
+    C --> D[POST /api/consultadocumentos]
+    D --> E[Express Router]
+    E --> F[construirWhere]
+    F --> G[SQL dinámico]
+    G --> H[pool.query]
+    H --> I[PostgreSQL]
+    I --> J[result.rows]
+    J --> K[res.json]
+    K --> L[setResultados]
+    L --> M[UI actualizada]
+
+=== LUCIDCHART/DRAW.IO FORMAT ===
+┌─────────────────┐
+│ Usuario ingresa │
+│    filtros      │
+└─────────┬───────┘
+          │
+          ▼
+┌─────────────────┐
+│  handleSubmit() │
+└─────────┬───────┘
+          │
+          ▼
+┌─────────────────┐
+│ documentosService│
+│.consultarDoc()  │
+└─────────┬───────┘
+          │
+          ▼
+┌─────────────────┐
+│ POST /api/      │
+│consultadocumentos│
+└─────────┬───────┘
+          │
+          ▼
+┌─────────────────┐
+│ Express Router  │
+└─────────┬───────┘
+          │
+          ▼
+┌─────────────────┐
+│ construirWhere  │
+│   (filtros)     │
+└─────────┬───────┘
+          │
+          ▼
+┌─────────────────┐
+│ SQL dinámico    │
+│ WHERE clause    │
+└─────────┬───────┘
+          │
+          ▼
+┌─────────────────┐
+│ pool.query()    │
+└─────────┬───────┘
+          │
+          ▼
+┌─────────────────┐
+│   PostgreSQL    │
+│   con_his       │
+└─────────┬───────┘
+          │
+          ▼
+┌─────────────────┐
+│  result.rows    │
+└─────────┬───────┘
+          │
+          ▼
+┌─────────────────┐
+│   res.json()    │
+└─────────┬───────┘
+          │
+          ▼
+┌─────────────────┐
+│ setResultados() │
+└─────────┬───────┘
+          │
+          ▼
+┌─────────────────┐
+│ UI actualizada  │
+└─────────────────┘
+
+=== VISIO/POWERPOINT FORMAT ===
+[INICIO] → [handleSubmit] → [documentosService] → [POST API] → [Express Router] → [construirWhere] → [SQL Query] → [PostgreSQL] → [Results] → [JSON Response] → [Update UI] → [FIN]
+
+=== SIMPLE TEXT FLOW ===
+1. Usuario ingresa filtros
+2. handleSubmit()
+3. documentosService.consultarDocumentos()
+4. POST /api/consultadocumentos
+5. Express Router
+6. construirWhere(filtros)
+7. SQL dinámico generado
+8. pool.query(baseQuery, values)
+9. PostgreSQL ejecuta query
+10. result.rows
+11. res.json(result.rows)
+12. setResultados(datos)
+13. UI actualizada

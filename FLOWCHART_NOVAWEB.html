@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>NovaWeb Flowchart</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/raphael/2.3.0/raphael.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flowchart/1.17.1/flowchart.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        #diagram { margin: 20px 0; }
+        .code-block { background: #f4f4f4; padding: 15px; border-radius: 5px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>NovaWeb - Flujo de Arquitectura</h1>
+    
+    <h2>Diagrama Interactivo</h2>
+    <div id="diagram"></div>
+    
+    <h2>Código Flowchart.js</h2>
+    <div class="code-block">
+        <pre id="flowchart-code"></pre>
+    </div>
+
+    <script>
+        // Definición del flowchart
+        const flowchartCode = `st=>start: Usuario ingresa filtros
+op1=>operation: handleSubmit()
+op2=>operation: documentosService.consultarDocumentos()
+op3=>operation: POST /api/consultadocumentos
+op4=>operation: Express Router recibe request
+op5=>operation: construirWhere(filtros)
+op6=>operation: Genera SQL dinámico
+op7=>operation: pool.query(baseQuery, values)
+op8=>operation: PostgreSQL ejecuta query
+op9=>operation: Retorna result.rows
+op10=>operation: res.json(result.rows)
+op11=>operation: Frontend recibe response
+op12=>operation: setResultados(datos)
+op13=>operation: TablaResultados actualiza
+e=>end: UI actualizada
+
+st->op1->op2->op3->op4->op5->op6->op7->op8->op9->op10->op11->op12->op13->e`;
+
+        // Mostrar código
+        document.getElementById('flowchart-code').textContent = flowchartCode;
+
+        // Crear diagrama
+        const diagram = flowchart.parse(flowchartCode);
+        diagram.drawSVG('diagram', {
+            'x': 0,
+            'y': 0,
+            'line-width': 3,
+            'line-length': 50,
+            'text-margin': 10,
+            'font-size': 14,
+            'font-color': 'black',
+            'line-color': 'black',
+            'element-color': 'black',
+            'fill': 'white',
+            'yes-text': 'yes',
+            'no-text': 'no',
+            'arrow-end': 'block',
+            'scale': 1,
+            'symbols': {
+                'start': {
+                    'font-color': 'red',
+                    'element-color': 'green',
+                    'fill': 'yellow'
+                },
+                'end': {
+                    'class': 'end-element'
+                }
+            },
+            'flowstate': {
+                'past': { 'fill': '#CCCCCC', 'font-size': 12},
+                'current': {'fill': 'yellow', 'font-color': 'red', 'font-weight': 'bold'},
+                'future': { 'fill': '#FFFF99'},
+                'request': { 'fill': 'blue'},
+                'invalid': {'fill': '#444444'},
+                'approved': { 'fill': '#58C4A3', 'font-size': 12, 'yes-text': 'APPROVED', 'no-text': 'n/a' },
+                'rejected': { 'fill': '#C45879', 'font-size': 12, 'yes-text': 'n/a', 'no-text': 'REJECTED' }
+            }
+        });
+    </script>
+</body>
+</html>

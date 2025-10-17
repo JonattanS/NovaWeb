@@ -34,8 +34,26 @@ import { useNavigate } from "react-router-dom"
 export const mencod = '010306';
 
 const getColumnDescription = (key: string): string => {
-  const col = schemaService.getTableColumns().find((c) => c.name === key)
-  return col?.description || key
+  const descriptions: Record<string, string> = {
+    clc_cod: 'Documento',
+    doc_num: 'Número Documento',
+    doc_fec: 'Fecha Documento',
+    doc_num_ref: 'Número Referencia',
+    doc_fec_ref: 'Fecha Referencia',
+    cta_cod: 'Cuenta',
+    mov_det: 'Detalle',
+    mov_bas: 'Valor Base',
+    mov_deb: 'Debitos',
+    mov_cre: 'Creditos',
+    mov_cheq: 'No. Cheque',
+    ter_nit: 'Nit',
+    cto_cod: 'C.A.',
+    act_cod: 'Act.',
+    suc_des: 'Su./Ag. Destino',
+    clc_cod_rel: 'Cl. Rel',
+    doc_num_rel: 'Docto. Relac.'
+  };
+  return descriptions[key] || key;
 }
 
 type Filtros = {
@@ -83,25 +101,68 @@ const DiarioPorDocumentosPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Enviando filtros:", filtros); // DEBUG
+    console.log("Enviando filtros:", filtros);
     setLoading(true);
     setError(undefined);
     setPage(1);
 
     try {
-      const response = await databaseService.consultaDocumentos(filtros);
-      console.log("Respuesta del servidor:", response); // DEBUG
-      setResultado(response);
+      const movimientosRaw = await databaseService.consultaDocumentos(filtros);
+      
+      // Procesar movimientos y calcular débitos/créditos
+      const resultadoProcesado = movimientosRaw.map((mov: any) => {
+        const movVal = parseFloat(mov.mov_val) || 0;
+        
+        return {
+          clc_cod: mov.clc_cod || '',
+          doc_num: mov.doc_num || '',
+          doc_fec: mov.doc_fec || '',
+          doc_num_ref: mov.doc_num_ref || '',
+          doc_fec_ref: mov.doc_fec_ref || '',
+          cta_cod: mov.cta_cod || '',
+          mov_det: mov.mov_det || '',
+          mov_bas: mov.mov_bas || '',
+          mov_deb: movVal > 0 ? movVal : 0,
+          mov_cre: movVal < 0 ? Math.abs(movVal) : 0,
+          mov_cheq: mov.mov_cheq || '',
+          ter_nit: mov.ter_nit || '',
+          cto_cod: mov.cto_cod || '',
+          act_cod: mov.act_cod || '',
+          suc_des: mov.suc_des || '',
+          clc_cod_rel: mov.clc_cod_rel || '',
+          doc_num_rel: mov.doc_num_rel || ''
+        };
+      });
+
+      setResultado(resultadoProcesado);
     } catch (err: any) {
-      console.error("Error en consulta:", err); // DEBUG
+      console.error("Error en consulta:", err);
       setError(err.message);
     } finally {
       setLoading(false);
     }
   };
 
-  // Campos específicos para diario por documentos
-  const camposDiario = ['clc_cod', 'doc_num', 'doc_fec', 'doc_num_ref', 'doc_fec_ref', 'cta_cod', 'mov_det'];
+  // Campos específicos para diario por documentos en el orden requerido
+  const camposDiario = [
+    'clc_cod',      // Documento
+    'doc_num',      // Número Documento
+    'doc_fec',      // Fecha Documento
+    'doc_num_ref',  // Número Referencia
+    'doc_fec_ref',  // Fecha Referencia
+    'cta_cod',      // Cuenta
+    'mov_det',      // Detalle
+    'mov_bas',      // Valor Base
+    'mov_deb',      // Debitos
+    'mov_cre',      // Creditos
+    'mov_cheq',     // No. Cheque
+    'ter_nit',      // Nit
+    'cto_cod',      // C.A.
+    'act_cod',      // Act.
+    'suc_des',      // Su./Ag. Destino
+    'clc_cod_rel',  // Cl. Rel
+    'doc_num_rel'   // Docto. Relac.
+  ];
   
   // Filtrar solo los campos necesarios para diario
   const resultadoFiltrado = resultado.map(row => {
@@ -351,9 +412,9 @@ const DiarioPorDocumentosPage = () => {
             <CardContent className="p-0">
               <div className="relative overflow-x-auto" style={{ maxHeight: "70vh", overflowY: "auto" }}>
                 <table className="w-full text-sm">
-                  <thead className="bg-gray-50 border-b-2 border-gray-200">
+                  <thead className="bg-gray-50 border-b-2 border-gray-200 sticky top-0 z-10">
                     <tr>
-                      {Object.keys(resultadoFiltrado[0] || {}).map((key) => (
+                      {camposDiario.map((key) => (
                         <th key={key} className="px-4 py-3 font-semibold text-left text-gray-700 whitespace-nowrap">
                           {getColumnDescription(key)}
                         </th>
@@ -363,7 +424,7 @@ const DiarioPorDocumentosPage = () => {
                   <tbody className="divide-y divide-gray-200">
                     {resultadoFiltrado.slice((page - 1) * ROWS_PER_PAGE, page * ROWS_PER_PAGE).map((row, i) => (
                       <tr key={i} className="hover:bg-blue-50/50 transition-colors">
-                        {Object.keys(row).map((key) => (
+                        {camposDiario.map((key) => (
                           <td key={key} className="px-4 py-3 text-gray-900 whitespace-nowrap">
                             {formatCellValue(key, row[key])}
                           </td>

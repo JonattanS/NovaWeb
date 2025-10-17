@@ -96,36 +96,53 @@ const ConsultaSaldoPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Preparar filtros para envío (solo incluir campos habilitados)
-    const filtrosParaEnvio = {
-      fuente: 'con_sal',
-      suc_cod: filtros.suc_cod,
-      doc_fec: filtros.doc_fec,
-      cta_cod: filtros.cta_cod,
-      ...(filtros.enableTerNit && filtros.ter_nit ? { ter_nit: filtros.ter_nit } : {}),
-      ...(filtros.enableCtoCod && filtros.cto_cod ? { cto_cod: filtros.cto_cod } : {}),
-      ...(filtros.enableActCod && filtros.act_cod ? { act_cod: filtros.act_cod } : {}),
-    };
-
-    console.log("Enviando filtros:", filtrosParaEnvio);
+    // Validar que se ingrese una cuenta específica
+    if (!filtros.cta_cod.trim()) {
+      setError("Debe ingresar una cuenta específica para consultar");
+      return;
+    }
+    
     setLoading(true);
     setError("");
     setPage(1);
 
     try {
-      const response = await databaseService.consultaDocumentos(filtrosParaEnvio);
-      console.log("Respuesta del servidor:", response);
-      console.log("Cantidad de registros:", response?.length || 0);
+      const año = new Date(filtros.doc_fec).getFullYear();
+      const mesCorte = new Date(filtros.doc_fec).getMonth() + 1;
+      const diaCorte = new Date(filtros.doc_fec).getDate();
       
-      if (!response || response.length === 0) {
-        setError("No se encontraron datos para los filtros especificados");
-        setResultado([]);
-        return;
-      }
+      // Consultar con_sal para saldo inicial
+      const filtrosSal = {
+        fuente: 'con_sal',
+        suc_cod: filtros.suc_cod,
+        cta_cod: filtros.cta_cod,
+        ...(filtros.enableTerNit && filtros.ter_nit ? { ter_nit: filtros.ter_nit } : {}),
+        ...(filtros.enableCtoCod && filtros.cto_cod ? { cto_cod: filtros.cto_cod } : {}),
+        ...(filtros.enableActCod && filtros.act_cod ? { act_cod: filtros.act_cod } : {}),
+      };
       
-      // Procesar datos para mostrar formato de estado de saldos
-      const datosProcessados = procesarEstadoSaldos(response, filtros.doc_fec);
-      console.log("Datos procesados:", datosProcessados);
+      // Consultar con_his para movimientos del año
+      const fechaIni = `${año}-01-01`;
+      const fechaFin = filtros.doc_fec;
+      
+      const filtrosHis = {
+        fuente: 'con_his',
+        suc_cod: filtros.suc_cod,
+        cta_cod: filtros.cta_cod,
+        fecha_ini: fechaIni,
+        fecha_fin: fechaFin,
+        ...(filtros.enableTerNit && filtros.ter_nit ? { ter_nit: filtros.ter_nit } : {}),
+        ...(filtros.enableCtoCod && filtros.cto_cod ? { cto_cod: filtros.cto_cod } : {}),
+        ...(filtros.enableActCod && filtros.act_cod ? { act_cod: filtros.act_cod } : {}),
+      };
+
+      const [responseSal, responseHis] = await Promise.all([
+        databaseService.consultaDocumentos(filtrosSal),
+        databaseService.consultaDocumentos(filtrosHis)
+      ]);
+      
+      // Procesar datos combinando con_sal y con_his
+      const datosProcessados = procesarEstadoSaldos(responseSal || [], responseHis || [], filtros.doc_fec);
       setResultado(datosProcessados);
     } catch (err: any) {
       console.error("Error en consulta:", err);
@@ -136,93 +153,103 @@ const ConsultaSaldoPage = () => {
     }
   };
 
-  // Función para procesar los datos según la lógica del programa CGC250.w
-  const procesarEstadoSaldos = (datos: any[], fechaCorte: string) => {
-    console.log("Procesando datos:", datos);
+  // Función para procesar los datos combinando con_sal y con_his
+  const procesarEstadoSaldos = (datosSal: any[], datosHis: any[], fechaCorte: string) => {
     
-    const año = fechaCorte ? new Date(fechaCorte).getFullYear() : new Date().getFullYear();
-    const mesCorte = fechaCorte ? new Date(fechaCorte).getMonth() + 1 : 12;
+    const año = new Date(fechaCorte).getFullYear();
+    const mesCorte = new Date(fechaCorte).getMonth() + 1;
+    const fechaLimite = new Date(fechaCorte);
+    fechaLimite.setDate(fechaLimite.getDate() + 1); // Día siguiente
     
     const meses = [
       'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
       'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
     ];
     
-    // Acumular todos los datos en una sola estructura (como hace el programa original)
-    const acumulado = {
-      suc_cod: filtros.suc_cod || '',
-      suc_nom: '',
-      cta_cod: filtros.cta_cod || '',
-      cta_nom: '',
-      sal_ini: 0,
-      mesesDebito: new Array(13).fill(0),
-      mesesCredito: new Array(13).fill(0)
-    };
+    // Obtener saldo inicial de con_sal para la cuenta específica
+    let saldoInicial = 0;
+    let suc_cod = filtros.suc_cod || '';
+    let suc_nom = '';
+    let cta_cod = filtros.cta_cod;
+    let cta_nom = '';
     
-    // Si hay datos, procesarlos
-    if (datos && datos.length > 0) {
-      // Solo mostrar sucursal y cuenta si están filtradas específicamente
-      if (filtros.suc_cod) {
-        acumulado.suc_cod = datos[0].suc_cod || filtros.suc_cod;
-        acumulado.suc_nom = datos[0].suc_nom || '';
-      }
-      if (filtros.cta_cod) {
-        acumulado.cta_cod = datos[0].cta_cod || filtros.cta_cod;
-        acumulado.cta_nom = datos[0].cta_nom || '';
-      }
+    if (datosSal && datosSal.length > 0) {
+      // Tomar SOLO el primer registro de la cuenta específica
+      const primerRegistro = datosSal.find(item => 
+        item.cta_cod === filtros.cta_cod && item.cor_ano === año
+      );
       
-      // Acumular todos los registros
-      datos.forEach(item => {
-        // Verificar sal_tip (puede ser nombre de tabla con o sin prefijo con_)
-        const salTip = item.sal_tip;
-        const esSaldo = salTip === 'S' || 
-                       salTip === 'ssuc' || salTip === 'con_ssuc' ||
-                       salTip === 'snit' || salTip === 'con_snit' ||
-                       salTip === 'scto' || salTip === 'con_scto' ||
-                       salTip === 'scnt' || salTip === 'con_scnt' ||
-                       salTip === 'scac' || salTip === 'con_scac' ||
-                       salTip === 'scna' || salTip === 'con_scna';
+      if (primerRegistro) {
+        saldoInicial = parseFloat(primerRegistro.sal_ini || 0);
+        suc_cod = primerRegistro.suc_cod || suc_cod;
+        suc_nom = primerRegistro.suc_nom || '';
+        cta_nom = primerRegistro.cta_nom || '';
+      }
+    }
+    
+    // Procesar movimientos de con_his agrupados por mes para la cuenta específica
+    const movimientosPorMes = new Array(13).fill(0).map(() => ({ debito: 0, credito: 0 }));
+    
+    if (datosHis && datosHis.length > 0) {
+      // Filtrar solo los movimientos de la cuenta específica (usando año de doc_fec)
+      const movimientosCuenta = datosHis.filter(item => 
+        item.cta_cod === filtros.cta_cod && 
+        item.doc_fec && 
+        new Date(item.doc_fec).getFullYear() === año &&
+        item.clc_cod !== 'SI'
+      );
+      
+      movimientosCuenta.forEach((item) => {
+        const fechaDoc = new Date(item.doc_fec);
+        const mesDoc = fechaDoc.getMonth() + 1;
+        const diaDoc = fechaDoc.getDate();
         
-        if (esSaldo && item.cor_ano === año) {
-          acumulado.sal_ini += parseFloat(item.sal_ini || 0);
-          const mes = item.cor_mes;
-          if (mes >= 1 && mes <= 12) {
-            acumulado.mesesDebito[mes] += parseFloat(item.sal_deb || 0);
-            acumulado.mesesCredito[mes] += parseFloat(item.sal_crd || 0);
+        // Solo incluir si la fecha es menor al día siguiente
+        if (fechaDoc < fechaLimite) {
+          const movVal = parseFloat(item.mov_val || 0);
+          
+          if (mesDoc >= 1 && mesDoc <= 12) {
+            if (movVal > 0) {
+              movimientosPorMes[mesDoc].debito += movVal;
+            } else if (movVal < 0) {
+              movimientosPorMes[mesDoc].credito += movVal; // Mantener el valor negativo
+            }
           }
         }
       });
     }
     
-    // Crear resultado consolidado (una sola vez cada mes)
+    // Crear resultado
     const resultado = [];
-    let saldoAcumulado = acumulado.sal_ini;
+    let saldoAcumulado = saldoInicial;
     let totalDebito = 0;
     let totalCredito = 0;
     
     // Fila inicial
     resultado.push({
-      suc_cod: acumulado.suc_cod,
-      suc_nom: acumulado.suc_nom,
-      cta_cod: acumulado.cta_cod,
-      cta_nom: acumulado.cta_nom,
+      suc_cod: suc_cod,
+      suc_nom: suc_nom,
+      cta_cod: cta_cod,
+      cta_nom: cta_nom,
       mes: 'Inicial',
       credito: 0,
       debito: 0,
-      saldo: saldoAcumulado
+      saldo: saldoInicial
     });
     
     // Filas mensuales hasta el mes de corte
     for (let i = 1; i <= mesCorte; i++) {
-      const debito = acumulado.mesesDebito[i];
-      const credito = acumulado.mesesCredito[i];
-      saldoAcumulado = saldoAcumulado + debito + credito;
+      const debito = movimientosPorMes[i].debito;
+      const credito = movimientosPorMes[i].credito;
+      
+      // El saldo se calcula: saldo anterior + débitos - créditos
+      saldoAcumulado = saldoAcumulado + debito - credito;
       
       resultado.push({
-        suc_cod: acumulado.suc_cod,
-        suc_nom: acumulado.suc_nom,
-        cta_cod: acumulado.cta_cod,
-        cta_nom: acumulado.cta_nom,
+        suc_cod: suc_cod,
+        suc_nom: suc_nom,
+        cta_cod: cta_cod,
+        cta_nom: cta_nom,
         mes: meses[i - 1],
         credito: credito,
         debito: debito,
@@ -233,19 +260,18 @@ const ConsultaSaldoPage = () => {
       totalCredito += credito;
     }
     
-    // Fila total (una sola vez)
+    // Fila total
     resultado.push({
-      suc_cod: acumulado.suc_cod,
-      suc_nom: acumulado.suc_nom,
-      cta_cod: acumulado.cta_cod,
-      cta_nom: acumulado.cta_nom,
+      suc_cod: suc_cod,
+      suc_nom: suc_nom,
+      cta_cod: cta_cod,
+      cta_nom: cta_nom,
       mes: `TOTAL ${año}`,
       credito: totalCredito,
       debito: totalDebito,
-      saldo: saldoAcumulado
+      saldo: saldoInicial + totalDebito - totalCredito
     });
     
-    console.log("Resultado procesado:", resultado);
     return resultado;
   };
 
@@ -334,6 +360,7 @@ const ConsultaSaldoPage = () => {
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
                         <Building className="h-4 w-4" />
                         <span>Información Básica</span>
+                        <span className="text-red-500 text-xs">(Cuenta es obligatoria)</span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                         <Input
@@ -353,10 +380,11 @@ const ConsultaSaldoPage = () => {
                         />
                         <Input
                           name="cta_cod"
-                          placeholder="Cuenta"
+                          placeholder="Cuenta (Requerida)"
                           value={filtros.cta_cod}
                           onChange={handleChange}
                           className="bg-white"
+                          required
                         />
                       </div>
                     </div>

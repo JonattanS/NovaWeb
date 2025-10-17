@@ -72,6 +72,46 @@ function construirWhere(f) {
     where.push(`cmp_cod <= $${idx++}`);
     values.push(f.cmp_cod_fin);
   }
+  if (f.anx_cod_ini) {
+    where.push(`anx_cod >= $${idx++}`);
+    values.push(f.anx_cod_ini);
+  }
+  if (f.anx_cod_fin) {
+    where.push(`anx_cod <= $${idx++}`);
+    values.push(f.anx_cod_fin);
+  }
+  if (f.anf_cod_ini) {
+    where.push(`anf_cod >= $${idx++}`);
+    values.push(f.anf_cod_ini);
+  }
+  if (f.anf_cod_fin) {
+    where.push(`anf_cod <= $${idx++}`);
+    values.push(f.anf_cod_fin);
+  }
+  if (f.doc_num_ref_ini) {
+    where.push(`doc_num_ref >= $${idx++}`);
+    values.push(f.doc_num_ref_ini);
+  }
+  if (f.doc_num_ref_fin) {
+    where.push(`doc_num_ref <= $${idx++}`);
+    values.push(f.doc_num_ref_fin);
+  }
+  if (f.doc_fec_ref_ini) {
+    where.push(`doc_fec_ref >= $${idx++}`);
+    values.push(f.doc_fec_ref_ini);
+  }
+  if (f.doc_fec_ref_fin) {
+    where.push(`doc_fec_ref <= $${idx++}`);
+    values.push(f.doc_fec_ref_fin);
+  }
+  if (f.doc_est_ini) {
+    where.push(`doc_est >= $${idx++}`);
+    values.push(f.doc_est_ini);
+  }
+  if (f.doc_est_fin) {
+    where.push(`doc_est <= $${idx++}`);
+    values.push(f.doc_est_fin);
+  }
 
   // Puedes añadir aquí otros campos siguiendo la misma lógica.
 

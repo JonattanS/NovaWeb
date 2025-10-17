@@ -125,39 +125,69 @@ const ReporteDeSaldosDeBancosPage = () => {
     console.log("Parámetros de corte:", { año, mesCorte, fechaCorte });
     
     // Agrupar saldos de con_sal por cuenta (busca con_ssuc)
-    const saldosAgrupados = datosSal.reduce((acc, item) => {
-      console.log("Procesando item con_sal:", item);
+    console.log("=== INICIANDO PROCESAMIENTO CON_SAL ===");
+    console.log("Total registros con_sal recibidos:", datosSal.length);
+    console.log("Filtros aplicados:", { cta_cod_ini: filtros.cta_cod_ini, cta_cod_fin: filtros.cta_cod_fin, año });
+    
+    const saldosAgrupados = datosSal.reduce((acc, item, index) => {
+      console.log(`\n--- Procesando item ${index + 1}/${datosSal.length} ---`);
+      console.log("Item completo:", item);
       
       // Verificar sal_tip para saldos de con_ssuc (equivalente a CON_SSUC)
       const salTip = item.sal_tip;
       const esSaldoSsuc = salTip === 'ssuc' || salTip === 'con_ssuc';
       
-      console.log("Filtros sal_tip:", { salTip, esSaldoSsuc, cor_ano: item.cor_ano, año });
+      console.log("Verificación sal_tip:", { salTip, esSaldoSsuc, cor_ano: item.cor_ano, año, añoCoincide: item.cor_ano === año });
       
-      if (!esSaldoSsuc || item.cor_ano !== año) {
-        console.log("Item filtrado por sal_tip o año");
+      if (!esSaldoSsuc) {
+        console.log("❌ FILTRADO: sal_tip no es ssuc/con_ssuc");
         return acc;
       }
       
-      // Filtrar solo cuentas que empiecen con los códigos de banco (BEGINS logic)
+      if (item.cor_ano !== año) {
+        console.log("❌ FILTRADO: año no coincide");
+        return acc;
+      }
+      
+      // Filtrar solo cuentas que estén en el rango especificado
       const ctaCod = item.cta_cod || '';
+      console.log("Verificando cuenta:", { ctaCod, cta_cod_ini: filtros.cta_cod_ini, cta_cod_fin: filtros.cta_cod_fin });
+      
       let esCtaBanco = false;
       
-      // Verificar si la cuenta comienza con algún código en el rango
+      // Verificar si la cuenta está en el rango
       if (filtros.cta_cod_ini && filtros.cta_cod_fin) {
-        esCtaBanco = ctaCod >= filtros.cta_cod_ini && ctaCod <= filtros.cta_cod_fin;
+        // Comparación numérica para rangos de cuentas
+        const ctaNum = parseInt(ctaCod.replace(/\D/g, '')) || 0;
+        const iniNum = parseInt(filtros.cta_cod_ini.replace(/\D/g, '')) || 0;
+        const finNum = parseInt(filtros.cta_cod_fin.replace(/\D/g, '')) || 0;
+        
+        esCtaBanco = ctaNum >= iniNum && ctaNum <= finNum;
+        console.log("Comparación numérica:", { ctaNum, iniNum, finNum, esCtaBanco });
+        
+        // También verificar comparación de strings como fallback
+        const esCtaBancoStr = ctaCod >= filtros.cta_cod_ini && ctaCod <= filtros.cta_cod_fin;
+        console.log("Comparación string:", { ctaCod, esCtaBancoStr });
+        
+        // Usar cualquiera de las dos comparaciones
+        esCtaBanco = esCtaBanco || esCtaBancoStr;
       } else if (filtros.cta_cod_ini) {
         esCtaBanco = ctaCod.startsWith(filtros.cta_cod_ini);
+        console.log("Verificación startsWith ini:", { ctaCod, filtros_ini: filtros.cta_cod_ini, esCtaBanco });
       } else if (filtros.cta_cod_fin) {
         esCtaBanco = ctaCod.startsWith(filtros.cta_cod_fin);
+        console.log("Verificación startsWith fin:", { ctaCod, filtros_fin: filtros.cta_cod_fin, esCtaBanco });
       } else {
         esCtaBanco = true; // Si no hay filtros, incluir todas
+        console.log("Sin filtros de cuenta, incluir todas");
       }
       
       if (!esCtaBanco) {
-        console.log("Item filtrado por no ser cuenta de banco");
+        console.log("❌ FILTRADO: cuenta no está en el rango especificado");
         return acc;
       }
+      
+      console.log("✅ CUENTA ACEPTADA:", ctaCod);
       
       const key = ctaCod;
       if (!acc[key]) {
@@ -194,7 +224,12 @@ const ReporteDeSaldosDeBancosPage = () => {
     }, {});
     
     // Procesar movimientos de con_his del mes actual (busca por bco_cod)
-    datosHis.forEach(item => {
+    console.log("\n=== INICIANDO PROCESAMIENTO CON_HIS ===");
+    console.log("Total registros con_his recibidos:", datosHis.length);
+    
+    datosHis.forEach((item, index) => {
+      console.log(`\n--- Procesando movimiento ${index + 1}/${datosHis.length} ---`);
+      console.log("Item con_his:", { clc_cod: item.clc_cod, doc_num: item.doc_num, mov_val: item.mov_val, bco_cod: item.bco_cod, bco_nom: item.bco_nom });
       if (item.clc_cod && item.doc_num > 0 && item.mov_val !== undefined && item.bco_cod) {
         // Filtrar documentos válidos
         if (item.clc_cod === 'SAL') return; // Excluir saldos iniciales
@@ -213,11 +248,12 @@ const ReporteDeSaldosDeBancosPage = () => {
           };
         }
         
-        // Acumular movimientos del mes actual
+        // Acumular movimientos del mes actual usando mov_val
+        // Positivos = débitos, Negativos = créditos
         const movVal = parseFloat(item.mov_val || 0);
         if (movVal > 0) {
           saldosAgrupados[key].debitos_mes += movVal;
-        } else {
+        } else if (movVal < 0) {
           saldosAgrupados[key].creditos_mes += Math.abs(movVal);
         }
       }
@@ -246,6 +282,10 @@ const ReporteDeSaldosDeBancosPage = () => {
     // Ordenar por código de cuenta
     resultado.sort((a, b) => a.cta_cod.localeCompare(b.cta_cod));
     
+    console.log("\n=== RESUMEN FINAL ===");
+    console.log("Total cuentas agrupadas:", Object.keys(saldosAgrupados).length);
+    console.log("Cuentas agrupadas:", Object.keys(saldosAgrupados));
+    console.log("Total registros en resultado final:", resultado.length);
     console.log("Resultado procesado:", resultado);
     return resultado;
   };

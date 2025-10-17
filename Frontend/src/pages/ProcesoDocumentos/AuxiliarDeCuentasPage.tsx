@@ -33,8 +33,25 @@ import { useNavigate } from "react-router-dom"
 export const mencod = '010309';
 
 const getColumnDescription = (key: string): string => {
-  const col = schemaService.getTableColumns().find((c) => c.name === key)
-  return col?.description || key
+  const descriptions: Record<string, string> = {
+    cta_cod: 'Cuenta',
+    cta_nom: 'Descripcion',
+    cto_cod: 'Centro',
+    cto_nom: 'Descripcion Centro',
+    act_cod: 'Actividad',
+    act_nom: 'Descripcion Actividad',
+    ter_nit: 'Nit',
+    ter_raz: 'Descripcion Nit',
+    clc_cod: 'Cl.',
+    doc_num: 'Numero',
+    doc_fec: 'Fecha',
+    mov_det: 'Detalle',
+    che_num: 'No. Cheque',
+    mov_deb: 'Debitos',
+    mov_cre: 'Creditos',
+    saldo: 'Saldo'
+  };
+  return descriptions[key] || key;
 }
 
 type Filtros = {
@@ -88,35 +105,106 @@ const AuxiliarDeCuentasPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Enviando filtros:", filtros); // DEBUG
+    console.log("Enviando filtros:", filtros);
     setLoading(true);
     setError(undefined);
     setPage(1);
 
     try {
-      const response = await databaseService.consultaDocumentos(filtros);
-      console.log("Respuesta del servidor:", response); // DEBUG
-      setResultado(response);
+      const movimientosRaw = await databaseService.consultaDocumentos(filtros);
+      
+      // Ordenar por cuenta y fecha
+      const movimientos = movimientosRaw.sort((a: any, b: any) => {
+        if (a.cta_cod !== b.cta_cod) {
+          return a.cta_cod.localeCompare(b.cta_cod);
+        }
+        return new Date(a.doc_fec).getTime() - new Date(b.doc_fec).getTime();
+      });
+
+      // Procesar movimientos y calcular saldos
+      const resultadoProcesado: any[] = [];
+      const saldosAcumulados = new Map();
+      let cuentaAnterior = '';
+
+      movimientos.forEach((mov: any, index: number) => {
+        const cuentaActual = mov.cta_cod;
+        
+        // Si es una nueva cuenta, verificar si el primer registro es saldo inicial
+        if (cuentaActual !== cuentaAnterior) {
+          // Buscar si el primer registro de esta cuenta es clc_cod = 'SI'
+          const primerRegistroCuenta = movimientos.find((m: any, i: number) => 
+            i >= index && m.cta_cod === cuentaActual
+          );
+          
+          let saldoInicial = 0;
+          if (primerRegistroCuenta && primerRegistroCuenta.clc_cod === 'SI') {
+            saldoInicial = parseFloat(primerRegistroCuenta.mov_val) || 0;
+          }
+          
+          saldosAcumulados.set(cuentaActual, saldoInicial);
+          cuentaAnterior = cuentaActual;
+        }
+
+        // Procesar movimiento actual
+        const movVal = parseFloat(mov.mov_val) || 0;
+        
+        // Si es el primer registro y es saldo inicial (SI), usar ese valor como base
+        let saldoActual;
+        if (mov.clc_cod === 'SI' && saldosAcumulados.get(cuentaActual) === movVal) {
+          saldoActual = movVal;
+        } else {
+          saldoActual = saldosAcumulados.get(cuentaActual) + movVal;
+        }
+        
+        saldosAcumulados.set(cuentaActual, saldoActual);
+
+        resultadoProcesado.push({
+          cta_cod: mov.cta_cod || '',
+          cta_nom: mov.cta_nom || '',
+          cto_cod: mov.cto_cod || '',
+          cto_nom: '',
+          act_cod: mov.act_cod || '',
+          act_nom: '',
+          ter_nit: mov.ter_nit || '',
+          ter_raz: mov.ter_raz || '',
+          clc_cod: mov.clc_cod || '',
+          doc_num: mov.doc_num || '',
+          doc_fec: mov.doc_fec || '',
+          mov_det: mov.mov_det || '',
+          che_num: mov.che_num || '',
+          mov_deb: movVal > 0 ? movVal : 0,
+          mov_cre: movVal < 0 ? Math.abs(movVal) : 0,
+          saldo: saldoActual
+        });
+      });
+
+      setResultado(resultadoProcesado);
     } catch (err: any) {
-      console.error("Error en consulta:", err); // DEBUG
+      console.error("Error en consulta:", err);
       setError(err.message);
     } finally {
       setLoading(false);
     }
   };
 
-  // Campos específicos para auxiliar de cuentas
+  // Campos específicos para auxiliar de cuentas en el orden requerido
   const camposAuxiliar = [
-    "doc_fec",
-    "clc_cod",
-    "doc_num",
-    "cta_cod",
-    "cta_nom",
-    "ter_nit",
-    "ter_raz",
-    "mov_val",
-    "cto_cod",
-    "act_cod",
+    "cta_cod",      // Cuenta
+    "cta_nom",      // Descripcion
+    "cto_cod",      // Centro
+    "cto_nom",      // Descripcion Centro
+    "act_cod",      // Actividad
+    "act_nom",      // Descripcion Actividad
+    "ter_nit",      // Nit
+    "ter_raz",      // Descripcion Nit
+    "clc_cod",      // Cl.
+    "doc_num",      // Numero
+    "doc_fec",      // Fecha
+    "mov_det",      // Detalle
+    "che_num",      // No. Cheque
+    "mov_deb",      // Debitos
+    "mov_cre",      // Creditos
+    "saldo"         // Saldo
   ]
   // Filtrar solo los campos necesarios para auxiliar
   const resultadoFiltrado = resultado.map((row) => {
@@ -409,7 +497,7 @@ const AuxiliarDeCuentasPage = () => {
                 <table className="w-full text-sm">
                   <thead className="bg-gray-50 border-b-2 border-gray-200 sticky top-0 z-10">
                     <tr>
-                      {Object.keys(resultadoFiltrado[0] || {}).map((key) => (
+                      {camposAuxiliar.map((key) => (
                         <th key={key} className="px-4 py-3 font-semibold text-left text-gray-700 whitespace-nowrap">
                           {getColumnDescription(key)}
                         </th>
@@ -419,7 +507,7 @@ const AuxiliarDeCuentasPage = () => {
                   <tbody className="divide-y divide-gray-200">
                     {resultadoFiltrado.slice((page - 1) * ROWS_PER_PAGE, page * ROWS_PER_PAGE).map((row, i) => (
                       <tr key={i} className="hover:bg-blue-50/50 transition-colors">
-                        {Object.keys(row).map((key) => (
+                        {camposAuxiliar.map((key) => (
                           <td key={key} className="px-4 py-3 text-gray-900 whitespace-nowrap">
                             {formatCellValue(key, row[key])}
                           </td>

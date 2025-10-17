@@ -15,6 +15,8 @@ export const routesByMencod: Record<string, string> = {
   '010330': '/ReporteAnalisisAnexosVencidosPage',
   '010903': '/BalanceComprobacionRangoFechasCentroTercerosPage',
   '010906': '/BalanceGeneralPorSucursalPage',
+  '011802': '/ReporteEstadoDeMultiplesAnexosPage',
+  '011810': '/ReporteAnexosVencidosEdadesPage',
   // Agrega aquí todas las demás entradas:
   // 'mencod': '/ruta-definida-en-App'
 };

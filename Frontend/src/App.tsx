@@ -41,6 +41,7 @@ import ReporteDeSaldosDeBancosPage from "./pages/EstadoDeSaldos/ReporteDeSaldosD
 import ReporteEstadoDeMultiplesAnexosPage from "./pages/AnexosFinancieros/ReporteEstadoDeMultiplesAnexosPage"
 import HojaDeVidaAnexoPage from "./pages/AnexosFinancieros/HojaDeVidaAnexoPage"
 import ReporteAnalisisAnexosVencidosPage from "./pages/AnexosFinancieros/ReporteAnalisisAnexosVencidosPage"
+import ReporteAnexosVencidosEdadesPage from "./pages/AnexosFinancieros/ReporteAnexosVencidosEdadesPage"
 import { ModuleRepository } from "./components/ModuleRepository"
 import { useEffect, useCallback, useRef } from "react"
 import { useNavigate } from "react-router-dom"
@@ -417,6 +418,16 @@ const AppRoutes = () => {
           <ProtectedRoute>
             <MainLayout>
               <ReporteAnalisisAnexosVencidosPage />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/ReporteAnexosVencidosEdadesPage"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <ReporteAnexosVencidosEdadesPage />
             </MainLayout>
           </ProtectedRoute>
         }

@@ -1,135 +1,135 @@
-const express = require('express');
-const router = express.Router();
-const pool = require('../db');
+const express = require("express")
+const router = express.Router()
+const pool = require("../db")
 
 // Función generadora de WHERE dinámico, según los filtros de la petición
 function construirWhere(f) {
-  const where = [];
-  const values = [];
-  let idx = 1;
+  const where = []
+  const values = []
+  let idx = 1
 
   if (f.suc_cod) {
-    where.push(`suc_cod = $${idx++}`);
-    values.push(f.suc_cod);
+    where.push(`suc_cod = $${idx++}`)
+    values.push(f.suc_cod)
   }
   if (f.suc_cod_ini) {
-    where.push(`suc_cod >= $${idx++}`);
-    values.push(f.suc_cod_ini);
+    where.push(`suc_cod >= $${idx++}`)
+    values.push(f.suc_cod_ini)
   }
   if (f.suc_cod_fin) {
-    where.push(`suc_cod <= $${idx++}`);
-    values.push(f.suc_cod_fin);
+    where.push(`suc_cod <= $${idx++}`)
+    values.push(f.suc_cod_fin)
   }
   if (f.clc_cod) {
-    where.push(`clc_cod = $${idx++}`);
-    values.push(f.clc_cod);
+    where.push(`LOWER(clc_cod) LIKE LOWER($${idx++})`)
+    values.push(`%${f.clc_cod}%`)
   }
   if (f.clc_cod_ini) {
-    where.push(`clc_cod >= $${idx++}`);
-    values.push(f.clc_cod_ini);
+    where.push(`clc_cod >= $${idx++}`)
+    values.push(f.clc_cod_ini)
   }
   if (f.clc_cod_fin) {
-    where.push(`clc_cod <= $${idx++}`);
-    values.push(f.clc_cod_fin);
+    where.push(`clc_cod <= $${idx++}`)
+    values.push(f.clc_cod_fin)
   }
   if (f.doc_num_ini) {
-    where.push(`doc_num >= $${idx++}`);
-    values.push(f.doc_num_ini);
+    where.push(`doc_num >= $${idx++}`)
+    values.push(f.doc_num_ini)
   }
   if (f.doc_num_fin) {
-    where.push(`doc_num <= $${idx++}`);
-    values.push(f.doc_num_fin);
+    where.push(`doc_num <= $${idx++}`)
+    values.push(f.doc_num_fin)
   }
   if (f.fecha_ini) {
-    where.push(`doc_fec >= $${idx++}`);
-    values.push(f.fecha_ini);
+    where.push(`doc_fec >= $${idx++}`)
+    values.push(f.fecha_ini)
   }
   if (f.fecha_fin) {
-    where.push(`doc_fec <= $${idx++}`);
-    values.push(f.fecha_fin);
+    where.push(`doc_fec <= $${idx++}`)
+    values.push(f.fecha_fin)
   }
   if (f.ter_nit_ini) {
-    where.push(`ter_nit >= $${idx++}`);
-    values.push(f.ter_nit_ini);
+    where.push(`ter_nit >= $${idx++}`)
+    values.push(f.ter_nit_ini)
   }
   if (f.ter_nit_fin) {
-    where.push(`ter_nit <= $${idx++}`);
-    values.push(f.ter_nit_fin);
+    where.push(`ter_nit <= $${idx++}`)
+    values.push(f.ter_nit_fin)
   }
   if (f.cta_cod_ini) {
-    where.push(`cta_cod >= $${idx++}`);
-    values.push(f.cta_cod_ini);
+    where.push(`cta_cod >= $${idx++}`)
+    values.push(f.cta_cod_ini)
   }
   if (f.cta_cod_fin) {
-    where.push(`cta_cod <= $${idx++}`);
-    values.push(f.cta_cod_fin);
+    where.push(`cta_cod <= $${idx++}`)
+    values.push(f.cta_cod_fin)
   }
   if (f.cmp_cod_ini) {
-    where.push(`cmp_cod >= $${idx++}`);
-    values.push(f.cmp_cod_ini);
+    where.push(`cmp_cod >= $${idx++}`)
+    values.push(f.cmp_cod_ini)
   }
   if (f.cmp_cod_fin) {
-    where.push(`cmp_cod <= $${idx++}`);
-    values.push(f.cmp_cod_fin);
+    where.push(`cmp_cod <= $${idx++}`)
+    values.push(f.cmp_cod_fin)
   }
   if (f.anx_cod_ini) {
-    where.push(`anx_cod >= $${idx++}`);
-    values.push(f.anx_cod_ini);
+    where.push(`anx_cod >= $${idx++}`)
+    values.push(f.anx_cod_ini)
   }
   if (f.anx_cod_fin) {
-    where.push(`anx_cod <= $${idx++}`);
-    values.push(f.anx_cod_fin);
+    where.push(`anx_cod <= $${idx++}`)
+    values.push(f.anx_cod_fin)
   }
   if (f.anf_cod_ini) {
-    where.push(`anf_cod >= $${idx++}`);
-    values.push(f.anf_cod_ini);
+    where.push(`anf_cod >= $${idx++}`)
+    values.push(f.anf_cod_ini)
   }
   if (f.anf_cod_fin) {
-    where.push(`anf_cod <= $${idx++}`);
-    values.push(f.anf_cod_fin);
+    where.push(`anf_cod <= $${idx++}`)
+    values.push(f.anf_cod_fin)
   }
   if (f.doc_num_ref_ini) {
-    where.push(`doc_num_ref >= $${idx++}`);
-    values.push(f.doc_num_ref_ini);
+    where.push(`doc_num_ref >= $${idx++}`)
+    values.push(f.doc_num_ref_ini)
   }
   if (f.doc_num_ref_fin) {
-    where.push(`doc_num_ref <= $${idx++}`);
-    values.push(f.doc_num_ref_fin);
+    where.push(`doc_num_ref <= $${idx++}`)
+    values.push(f.doc_num_ref_fin)
   }
   if (f.doc_fec_ref_ini) {
-    where.push(`doc_fec_ref >= $${idx++}`);
-    values.push(f.doc_fec_ref_ini);
+    where.push(`doc_fec_ref >= $${idx++}`)
+    values.push(f.doc_fec_ref_ini)
   }
   if (f.doc_fec_ref_fin) {
-    where.push(`doc_fec_ref <= $${idx++}`);
-    values.push(f.doc_fec_ref_fin);
+    where.push(`doc_fec_ref <= $${idx++}`)
+    values.push(f.doc_fec_ref_fin)
   }
   if (f.doc_est_ini) {
-    where.push(`doc_est >= $${idx++}`);
-    values.push(f.doc_est_ini);
+    where.push(`doc_est >= $${idx++}`)
+    values.push(f.doc_est_ini)
   }
   if (f.doc_est_fin) {
-    where.push(`doc_est <= $${idx++}`);
-    values.push(f.doc_est_fin);
+    where.push(`doc_est <= $${idx++}`)
+    values.push(f.doc_est_fin)
   }
 
   // Puedes añadir aquí otros campos siguiendo la misma lógica.
 
   return {
-    sql: where.length > 0 ? `WHERE ${where.join(' AND ')}` : '',
-    values
-  };
+    sql: where.length > 0 ? `WHERE ${where.join(" AND ")}` : "",
+    values,
+  }
 }
 
-router.post('/consultadocumentos', async (req, res) => {
-  const { fuente = 'con_his', ...filtros } = req.body;
+router.post("/consultadocumentos", async (req, res) => {
+  const { fuente = "con_his", ...filtros } = req.body
 
-  const { sql, values } = construirWhere(filtros);
-  
-  let baseQuery;
-  
+  const { sql, values } = construirWhere(filtros)
+
+  let baseQuery
+
   switch (fuente) {
-    case 'con_his':
+    case "con_his":
     default:
       baseQuery = `
         SELECT id, adm_ciaid, suc_cod, clc_cod, doc_num, doc_fec, doc_tot_deb, doc_tot_crd, doc_pre, doc_num_ref, doc_fec_ref,
@@ -145,10 +145,10 @@ router.post('/consultadocumentos', async (req, res) => {
         FROM con_his
         ${sql}
         ORDER BY LOWER(clc_cod), doc_num, doc_fec, mov_cons
-      `;
-      break;
-      
-    case 'con_sal':
+      `
+      break
+
+    case "con_sal":
       baseQuery = `
         SELECT id, adm_ciaid, cor_ano, cor_mes, cor_dia, sal_tip, cta_cod, suc_cod, ter_nit, cto_cod, 
           act_cod, anx_cod, cpt_cod, anf_cod, clc_cod, doc_num, doc_fec, num_itm, sal_atr, sal_can, sal_ini, sal_deb, 
@@ -157,20 +157,18 @@ router.post('/consultadocumentos', async (req, res) => {
         FROM  con_sal
         ${sql}
         ORDER BY id
-      `;
-      break;
-      
+      `
+      break
+
     // Agregar más casos según necesidad
   }
 
   try {
-    const result = await pool.query(baseQuery, values);
-    res.json(result.rows);
+    const result = await pool.query(baseQuery, values)
+    res.json(result.rows)
   } catch (err) {
-    res.status(500).json({ error: `Error consultando ${fuente}`, detalle: err.message });
+    res.status(500).json({ error: `Error consultando ${fuente}`, detalle: err.message })
   }
-});
+})
 
-
-
-module.exports = router;
+module.exports = router

@@ -10,11 +10,11 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { databaseService } from "@/services/database"
 import { formatCellValue } from "@/utils/formatters"
 import { schemaService } from "@/services/schemaService"
+import { DataPagination } from "@/components/DataPagination"
+import { ExcelExporter } from "@/components/ExcelExporter"
 import {
   ArrowLeft,
   Search,
-  Download,
-  FileText,
   Filter,
   ChevronDown,
   ChevronUp,
@@ -26,11 +26,9 @@ import {
   CreditCard,
 } from "lucide-react"
 import { useNavigate } from "react-router-dom"
-import jsPDF from "jspdf"
-import autoTable from "jspdf-autotable"
 
 // Definición estática del código de módulo
-export const mencod = '010303';
+export const mencod = "010303"
 
 const getColumnDescription = (key: string): string => {
   const col = schemaService.getTableColumns().find((c) => c.name === key)
@@ -50,7 +48,7 @@ type Filtros = {
   cta_cod_fin: string
 }
 
-const ROWS_PER_PAGE = 20
+const ROWS_PER_PAGE = 100
 
 const ConsultaDocumentosPage = () => {
   const navigate = useNavigate()
@@ -70,126 +68,13 @@ const ConsultaDocumentosPage = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [page, setPage] = useState(1)
-  const [inputPage, setInputPage] = useState("1")
-  const [isFiltersOpen, setIsFiltersOpen] = useState(false)
+  const [isFiltersOpen, setIsFiltersOpen] = useState(true)
+  const [isExporting, setIsExporting] = useState(false)
+  const [exportProgress, setExportProgress] = useState(0)
 
   useEffect(() => {
     handleSubmit(new Event("submit") as unknown as React.FormEvent)
   }, [])
-
-  const exportToCSV = () => {
-    if (resultado.length === 0) return
-    const columns = Object.keys(resultado[0])
-    const csv = [
-      columns.join(","),
-      ...resultado.map((row) => columns.map((col) => `"${row[col] ?? ""}"`).join(",")),
-    ].join("\n")
-    const blob = new Blob([csv], { type: "text/csv" })
-    const url = window.URL.createObjectURL(blob)
-    const a = document.createElement("a")
-    a.href = url
-    a.download = `consulta_documentos_${new Date().toISOString().split("T")[0]}.csv`
-    a.click()
-  }
-
-  const exportToPDF = () => {
-    if (resultado.length === 0) return
-
-    const pdf = new jsPDF({
-      orientation: "landscape",
-      unit: "mm",
-      format: "a4",
-    })
-
-    // Configuración de colores y estilos
-    const primaryColor = [59, 130, 246] // Blue-500
-    const headerColor = [30, 64, 175] // Blue-800
-    const alternateRowColor = [248, 250, 252] // Slate-50
-
-    // Título del documento
-    pdf.setFontSize(18)
-    pdf.setFont("helvetica", "bold")
-    pdf.setTextColor(headerColor[0], headerColor[1], headerColor[2])
-    pdf.text("Consulta de Documentos Contables", 20, 20)
-
-    // Información adicional
-    pdf.setFontSize(10)
-    pdf.setFont("helvetica", "normal")
-    pdf.setTextColor(100, 100, 100)
-    pdf.text(`Fecha de generación: ${new Date().toLocaleDateString("es-ES")}`, 20, 30)
-    pdf.text(`Total de registros: ${resultado.length}`, 20, 35)
-
-    // Preparar datos para la tabla
-    const columns = Object.keys(resultado[0] ?? {})
-    const headers = columns.map((col) => getColumnDescription(col))
-
-    // Formatear datos para mejor legibilidad
-    const rows = resultado.map((row) =>
-      columns.map((col) => {
-        const value = row[col]
-        if (value === null || value === undefined) return ""
-
-        // Formatear valores largos para mejor visualización
-        const stringValue = String(value)
-        if (stringValue.length > 25) {
-          return stringValue.substring(0, 22) + "..."
-        }
-        return stringValue
-      }),
-    )
-
-    // Configurar la tabla con autoTable
-    autoTable(pdf, {
-      startY: 45,
-      head: [headers],
-      body: rows,
-      theme: "grid",
-      styles: {
-        fontSize: 8,
-        cellPadding: { top: 3, right: 2, bottom: 3, left: 2 },
-        overflow: "linebreak",
-        cellWidth: "wrap",
-        valign: "middle",
-        halign: "left",
-      },
-      headStyles: {
-        textColor: [255, 255, 255],
-        fontStyle: "bold",
-        fontSize: 9,
-        cellPadding: { top: 4, right: 2, bottom: 4, left: 2 },
-      },
-   
-      columnStyles: {
-        // Ajustar anchos de columna automáticamente
-        ...columns.reduce((acc, _, index) => {
-          acc[index] = {
-            cellWidth: "auto",
-            minCellWidth: 15,
-          }
-          return acc
-        }, {} as any),
-      },
-      margin: { top: 45, right: 10, bottom: 20, left: 10 },
-      tableWidth: "auto",
-      showHead: "everyPage",
-      didDrawPage: (data) => {
-        // Pie de página
-        const pageCount = (pdf as any).internal.getNumberOfPages()
-        const currentPage = data.pageNumber
-
-        pdf.setFontSize(8)
-        pdf.setTextColor(100, 100, 100)
-        pdf.text(
-          `Página ${currentPage} de ${pageCount}`,
-          pdf.internal.pageSize.width - 30,
-          pdf.internal.pageSize.height - 10,
-        )
-      },
-    })
-
-    // Guardar el PDF
-    pdf.save(`consulta_documentos_${new Date().toISOString().split("T")[0]}.pdf`)
-  }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -202,7 +87,6 @@ const ConsultaDocumentosPage = () => {
     setError("")
     setResultado([])
     setPage(1)
-    setInputPage("1")
     try {
       const response = await databaseService.consultaDocumentos(filtros)
       setResultado(response)
@@ -213,44 +97,16 @@ const ConsultaDocumentosPage = () => {
     }
   }
 
-  // === PAGINACIÓN ===
-  const totalPages = Math.ceil(resultado.length / ROWS_PER_PAGE)
   const startIndex = (page - 1) * ROWS_PER_PAGE
   const endIndex = Math.min(startIndex + ROWS_PER_PAGE, resultado.length)
   const pageResults = resultado.slice(startIndex, endIndex)
-
-  const handleInputPageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInputPage(e.target.value.replace(/[^0-9]/g, ""))
-  }
-
-  const goToInputPage = () => {
-    let newPage = Number.parseInt(inputPage, 10)
-    if (isNaN(newPage) || newPage < 1) newPage = 1
-    if (newPage > totalPages) newPage = totalPages
-    setPage(newPage)
-    setInputPage(newPage.toString())
-  }
-
-  const goToNext = () => {
-    if (page < totalPages) {
-      setPage(page + 1)
-      setInputPage((page + 1).toString())
-    }
-  }
-
-  const goToPrev = () => {
-    if (page > 1) {
-      setPage(page - 1)
-      setInputPage((page - 1).toString())
-    }
-  }
 
   const getActiveFiltersCount = () => {
     return Object.values(filtros).filter((value) => value.trim() !== "").length
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+    <div className="relative min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       <div className="max-w-7xl mx-auto py-6 px-4 space-y-6">
         {/* Header */}
         <div className="flex justify-between items-center">
@@ -268,22 +124,24 @@ const ConsultaDocumentosPage = () => {
 
           {resultado.length > 0 && (
             <div className="flex gap-2">
-              <Button
-                variant="outline"
-                onClick={exportToCSV}
-                className="bg-white hover:bg-green-50 border-green-200 text-green-700"
-              >
-                <Download className="h-4 w-4 mr-2" />
-                CSV
-              </Button>
-              <Button
-                variant="outline"
-                onClick={exportToPDF}
-                className="bg-white hover:bg-red-50 border-red-200 text-red-700"
-              >
-                <FileText className="h-4 w-4 mr-2" />
-                PDF
-              </Button>
+              <ExcelExporter
+                data={resultado}
+                filename={`consulta_documentos_CSV_${new Date().toISOString().split("T")[0]}`}
+                sheetName="Consulta de Documentos"
+                format="csv"
+                onProgressChange={(progress) => setExportProgress(progress)}
+                onGeneratingChange={(generating) => setIsExporting(generating)}
+                getColumnDescription={getColumnDescription}
+              />
+              <ExcelExporter
+                data={resultado}
+                filename={`consulta_documentos_${new Date().toISOString().split("T")[0]}`}
+                sheetName="Consulta de Documentos"
+                format="xlsx"
+                onProgressChange={(progress) => setExportProgress(progress)}
+                onGeneratingChange={(generating) => setIsExporting(generating)}
+                getColumnDescription={getColumnDescription}
+              />
             </div>
           )}
         </div>
@@ -292,7 +150,7 @@ const ConsultaDocumentosPage = () => {
         <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
           <Collapsible open={isFiltersOpen} onOpenChange={setIsFiltersOpen}>
             <CollapsibleTrigger asChild>
-              <CardHeader className="cursor-pointer hover:bg-gray-50/50 transition-colors">
+              <CardHeader className="cursor-pointer hover:bg-gray-50/50 transition-colors rounded-t-lg">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
                     <Filter className="h-5 w-5 text-blue-600" />
@@ -315,7 +173,6 @@ const ConsultaDocumentosPage = () => {
             <CollapsibleContent>
               <CardContent className="pt-0">
                 <form onSubmit={handleSubmit} className="space-y-6">
-                  {/* Filtros organizados por categorías */}
                   <div className="grid gap-6">
                     {/* Información General */}
                     <div className="space-y-3">
@@ -456,7 +313,26 @@ const ConsultaDocumentosPage = () => {
           </Collapsible>
         </Card>
 
-        {/* Error */}
+        {isExporting && (
+          <Card className="border-blue-200 bg-blue-50">
+            <CardContent className="pt-6">
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm text-blue-700">
+                  <span>Generando archivo Excel...</span>
+                  <span>{Math.round(exportProgress)}%</span>
+                </div>
+                <div className="w-full bg-blue-200 rounded-full h-2">
+                  <div
+                    className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${exportProgress}%` }}
+                  />
+                </div>
+                <div className="text-xs text-blue-600 text-center">Procesando {resultado.length} registros...</div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {error && (
           <Card className="border-red-200 bg-red-50">
             <CardContent className="pt-6">
@@ -465,10 +341,9 @@ const ConsultaDocumentosPage = () => {
           </Card>
         )}
 
-        {/* Resultados */}
         {resultado.length > 0 && (
           <Card className="shadow-lg border-0 bg-white/90 backdrop-blur-sm">
-            <CardHeader className="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-t-lg">
+            <CardHeader className="bg-gradient-to-r from-[#F7722F] to-[#00264D] text-white rounded-t-lg">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-xl flex items-center">
                   <Table className="h-5 w-5 mr-2" />
@@ -480,11 +355,11 @@ const ConsultaDocumentosPage = () => {
               </div>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="overflow-x-auto">
+              <div className="relative overflow-x-auto" style={{ maxHeight: "70vh", overflowY: "auto" }}>
                 <table className="w-full text-sm">
-                  <thead className="bg-gray-50 border-b-2 border-gray-200">
+                  <thead className="bg-gray-50 border-b-2 border-gray-200 sticky top-0 z-10">
                     <tr>
-                      {Object.keys(pageResults[0]).map((key) => (
+                      {Object.keys(pageResults[0] || {}).map((key) => (
                         <th key={key} className="px-4 py-3 font-semibold text-left text-gray-700 whitespace-nowrap">
                           {getColumnDescription(key)}
                         </th>
@@ -504,41 +379,14 @@ const ConsultaDocumentosPage = () => {
                   </tbody>
                 </table>
               </div>
-
-              {/* Paginación mejorada */}
-              <div className="flex items-center justify-between p-4 bg-gray-50 border-t">
-                <div className="text-sm text-gray-600">
-                  Mostrando {startIndex + 1} a {endIndex} de {resultado.length} registros
-                </div>
-
-                <div className="flex items-center space-x-3">
-                  <Button variant="outline" size="sm" onClick={goToPrev} disabled={page === 1} className="bg-white">
-                    Anterior
-                  </Button>
-
-                  <div className="flex items-center space-x-2 text-sm">
-                    <span>Página</span>
-                    <Input
-                      type="text"
-                      value={inputPage}
-                      onChange={handleInputPageChange}
-                      onBlur={goToInputPage}
-                      onKeyDown={(e) => e.key === "Enter" && goToInputPage()}
-                      className="w-16 text-center bg-white"
-                    />
-                    <span>de {totalPages}</span>
-                  </div>
-
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={goToNext}
-                    disabled={page === totalPages}
-                    className="bg-white"
-                  >
-                    Siguiente
-                  </Button>
-                </div>
+              <div className="border-t bg-gray-50">
+                <DataPagination
+                  currentPage={page}
+                  totalPages={Math.ceil(resultado.length / ROWS_PER_PAGE)}
+                  recordsPerPage={ROWS_PER_PAGE}
+                  totalRecords={resultado.length}
+                  onPageChange={setPage}
+                />
               </div>
             </CardContent>
           </Card>

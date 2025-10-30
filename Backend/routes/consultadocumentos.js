@@ -147,6 +147,7 @@ router.post('/consultadocumentos', async (req, res) => {
         ORDER BY LOWER(clc_cod), doc_num, doc_fec, mov_cons
       `;
       break;
+  
       
     case 'con_sal':
       baseQuery = `
@@ -159,6 +160,8 @@ router.post('/consultadocumentos', async (req, res) => {
         ORDER BY id
       `;
       break;
+
+   
       
     // Agregar más casos según necesidad
   }

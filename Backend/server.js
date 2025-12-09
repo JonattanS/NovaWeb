@@ -27,6 +27,10 @@ const novModulesRoutes = require('./routes/novModules');
 // Registrar la ruta
 app.use('/api/nov-modules', novModulesRoutes);
 
+// Importa y registra la ruta de logs de auditoría
+const auditLogsRouter = require('./routes/auditLogs');
+app.use('/api', auditLogsRouter);
+
 // Endpoint para ejecutar queries con configuración dinámica (pool temporal)
 
 const pool = require('./db');

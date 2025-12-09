@@ -120,6 +120,34 @@ export function AppSidebar() {
     })
   }
 
+  /**
+   * Nueva función: Navega a ModuleViewer con el módulo dinámico
+   * Este es el manejador clave para módulos del backend
+   */
+  const handleDynamicModuleClick = (module: NovModule) => {
+    // Crear un objeto compatible con PersistentModule para ModuleViewer
+    const dynamicModuleData = {
+      id: module.id.toString(),
+      name: module.mennom,
+      description: `Módulo del sistema: ${module.mencod}`,
+      query: "", // Los módulos del sistema no tienen query directa
+      filters: {},
+      folderId: "",
+      createdAt: new Date().toISOString(),
+      isDynamicModule: true, // Bandera para identificar módulo dinámico
+      systemModuleData: module, // Guardar datos originales del sistema
+    }
+
+    // Navegar a ModuleViewer con los datos del módulo
+    navigate("/module-viewer", {
+      state: {
+        loadModule: dynamicModuleData,
+        isDynamicModule: true,
+        systemModule: module,
+      },
+    })
+  }
+
   return (
     <Sidebar
       className={`border-r border-slate-200 dark:border-slate-700 bg-[#41B9E8] dark:bg-[#41B9E8] h-screen z-30 transition-transform-smooth duration-200 ease-in-out${
@@ -215,7 +243,7 @@ export function AppSidebar() {
                               {portfolio.modules.map((module) => (
                                 <button
                                   key={module.id}
-                                  onClick={() => navigateToModuleRepository(porcod, portfolio.name)}
+                                  onClick={() => handleDynamicModuleClick(module)}
                                   className="flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 text-slate-600 hover:bg-slate-200 w-full text-left"
                                 >
                                   <Settings className="w-4 h-4" />
@@ -248,8 +276,8 @@ export function AppSidebar() {
                                 <SidebarMenuItem key={module.id}>
                                   <SidebarMenuButton asChild>
                                     <button
-                                      onClick={() => navigateToModuleRepository(porcod, portfolio.name)}
-                                      className="flex items-center gap-3 px-4 py-3 ml-6 rounded-xl transition-all duration-200 group text-slate-200 dark:text-slate-300 hover:bg-slate-700 dark:hover:bg-slate-800  text-left"
+                                      onClick={() => handleDynamicModuleClick(module)}
+                                      className="flex items-center gap-3 px-4 py-3 ml-6 rounded-xl transition-all duration-200 group text-slate-200 dark:text-slate-300 hover:bg-slate-700 dark:hover:bg-slate-800 hover:translate-x-1 text-left w-full"
                                     >
                                       <Settings className="h-4 w-4 transition-transform group-hover:scale-110" />
                                       <span className="font-medium text-sm">{module.mennom}</span>

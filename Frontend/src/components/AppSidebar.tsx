@@ -18,7 +18,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { moduleService } from "@/services/moduleService"
 import { useUser } from "@/contexts/UserContext"
 import { getModulesByPortfolio, type NovModule } from "@/services/novModulesApi"
-import { routesByMencod } from '../routesByMencod'
 
 const staticNavigation = [
   {
@@ -110,39 +109,22 @@ export function AppSidebar() {
   }
 
   /**
-   * Navega a un módulo dinámico del sistema usando routesByMencod
-   * Si el módulo tiene URL externa, abre en pestaña nueva
-   * Si tiene ruta mapeada en routesByMencod, navega a esa ruta
-   * Si no está mapeado, abre ModuleRepository con el estado del módulo
+   * Navega al portafolio específico mostrando los módulos del sistema
+   * y expandiendo el módulo clickeado
    */
-  const handleDynamicModuleClick = (module: NovModule) => {
-    // Si el módulo tiene URL externa, abrir en pestaña nueva
-    if (module.menurl) {
-      window.open(module.menurl, "_blank")
-      return
-    }
-
-    // Buscar ruta en el mapeo routesByMencod
-    const path = routesByMencod[module.mencod]
-    
-    if (path) {
-      // Navegar a la ruta predefinida
-      navigate(path)
-    } else {
-      // Fallback: navegar a ModuleRepository con estado del módulo
-      navigate("/portafolios", {
-        state: {
-          selectedPortfolio: {
-            porcod: module.porcod,
-            name: `Portafolio ${module.porcod}`,
-            id: module.porcod?.toString(),
-          },
-          expandSystemModules: true,
-          highlightModule: module.mencod,
+  const handleDynamicModuleClick = (module: NovModule, porcod: number, portfolioName: string) => {
+    // Navegar a /portafolios con el portafolio y módulo seleccionados
+    navigate("/portafolios", {
+      state: {
+        selectedPortfolio: {
+          porcod,
+          name: portfolioName,
+          id: porcod.toString(),
         },
-      })
-      console.warn(`Ruta no definida para mencod ${module.mencod}, se abre ModuleRepository`)
-    }
+        showSystemModules: true,  // Mostrar tab de módulos del sistema
+        selectedModuleCode: module.mencod,  // Expandir este módulo
+      },
+    })
   }
 
   return (
@@ -240,7 +222,7 @@ export function AppSidebar() {
                               {portfolio.modules.map((module) => (
                                 <button
                                   key={module.id}
-                                  onClick={() => handleDynamicModuleClick(module)}
+                                  onClick={() => handleDynamicModuleClick(module, porcod, portfolio.name)}
                                   className="flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 text-slate-600 hover:bg-slate-200 w-full text-left"
                                 >
                                   <Settings className="w-4 h-4" />
@@ -273,7 +255,7 @@ export function AppSidebar() {
                                 <SidebarMenuItem key={module.id}>
                                   <SidebarMenuButton asChild>
                                     <button
-                                      onClick={() => handleDynamicModuleClick(module)}
+                                      onClick={() => handleDynamicModuleClick(module, porcod, portfolio.name)}
                                       className="flex items-center gap-3 px-4 py-3 ml-6 rounded-xl transition-all duration-200 group text-slate-200 dark:text-slate-300 hover:bg-slate-700 dark:hover:bg-slate-800 hover:translate-x-1 text-left w-full"
                                     >
                                       <Settings className="h-4 w-4 transition-transform group-hover:scale-110" />

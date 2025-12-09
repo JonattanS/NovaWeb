@@ -18,6 +18,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { moduleService } from "@/services/moduleService"
 import { useUser } from "@/contexts/UserContext"
 import { getModulesByPortfolio, type NovModule } from "@/services/novModulesApi"
+import { routesByMencod } from '../routesByMencod'
 
 const staticNavigation = [
   {
@@ -108,44 +109,40 @@ export function AppSidebar() {
     }))
   }
 
-  const navigateToModuleRepository = (porcod: number, portfolioName: string) => {
-    navigate("/portafolios", {
-      state: {
-        selectedPortfolio: {
-          porcod,
-          name: portfolioName,
-          id: porcod.toString(),
-        },
-      },
-    })
-  }
-
   /**
-   * Nueva función: Navega a ModuleViewer con el módulo dinámico
-   * Este es el manejador clave para módulos del backend
+   * Navega a un módulo dinámico del sistema usando routesByMencod
+   * Si el módulo tiene URL externa, abre en pestaña nueva
+   * Si tiene ruta mapeada en routesByMencod, navega a esa ruta
+   * Si no está mapeado, abre ModuleRepository con el estado del módulo
    */
   const handleDynamicModuleClick = (module: NovModule) => {
-    // Crear un objeto compatible con PersistentModule para ModuleViewer
-    const dynamicModuleData = {
-      id: module.id.toString(),
-      name: module.mennom,
-      description: `Módulo del sistema: ${module.mencod}`,
-      query: "", // Los módulos del sistema no tienen query directa
-      filters: {},
-      folderId: "",
-      createdAt: new Date().toISOString(),
-      isDynamicModule: true, // Bandera para identificar módulo dinámico
-      systemModuleData: module, // Guardar datos originales del sistema
+    // Si el módulo tiene URL externa, abrir en pestaña nueva
+    if (module.menurl) {
+      window.open(module.menurl, "_blank")
+      return
     }
 
-    // Navegar a ModuleViewer con los datos del módulo
-    navigate("/module-viewer", {
-      state: {
-        loadModule: dynamicModuleData,
-        isDynamicModule: true,
-        systemModule: module,
-      },
-    })
+    // Buscar ruta en el mapeo routesByMencod
+    const path = routesByMencod[module.mencod]
+    
+    if (path) {
+      // Navegar a la ruta predefinida
+      navigate(path)
+    } else {
+      // Fallback: navegar a ModuleRepository con estado del módulo
+      navigate("/portafolios", {
+        state: {
+          selectedPortfolio: {
+            porcod: module.porcod,
+            name: `Portafolio ${module.porcod}`,
+            id: module.porcod?.toString(),
+          },
+          expandSystemModules: true,
+          highlightModule: module.mencod,
+        },
+      })
+      console.warn(`Ruta no definida para mencod ${module.mencod}, se abre ModuleRepository`)
+    }
   }
 
   return (

@@ -10,11 +10,12 @@ import { AlertCircle, Eye, EyeOff } from "lucide-react"
 import { BACKEND_URL } from "../config"
 import { useUser } from "@/contexts/UserContext"
 
-const Login: React.FC<{ onLogin?: (token: string) => void }> = ({ onLogin }) => {
+const Login: React.FC<{ onLogin: (token: string) => void }> = ({ onLogin }) => {
   const [usrcod, setUsrcod] = useState("")
   const [usrpsw, setUsrpsw] = useState("")
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [selectedCompany, setSelectedCompany] = useState("Nova Corp SAS")
   const [showPassword, setShowPassword] = useState(false)
   const navigate = useNavigate()
   const { login } = useUser()
@@ -41,12 +42,10 @@ const Login: React.FC<{ onLogin?: (token: string) => void }> = ({ onLogin }) => 
         }
 
         // Usar login del UserContext
-        login(userData, data.refreshToken)
+        login(userData)
 
         // Callback para compatibilidad
-        if (onLogin) {
-          onLogin(data.accessToken)
-        }
+        onLogin(data.accessToken)
 
         // Redirigir al inicio
         navigate("/")

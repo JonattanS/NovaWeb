@@ -108,7 +108,12 @@ export function AppSidebar() {
     }))
   }
 
-  const navigateToModuleRepository = (porcod: number, portfolioName: string) => {
+  /**
+   * Navega al portafolio específico mostrando los módulos del sistema
+   * y expandiendo el módulo clickeado
+   */
+  const handleDynamicModuleClick = (module: NovModule, porcod: number, portfolioName: string) => {
+    // Navegar a /portafolios con el portafolio y módulo seleccionados
     navigate("/portafolios", {
       state: {
         selectedPortfolio: {
@@ -116,6 +121,8 @@ export function AppSidebar() {
           name: portfolioName,
           id: porcod.toString(),
         },
+        showSystemModules: true,  // Mostrar tab de módulos del sistema
+        selectedModuleCode: module.mencod,  // Expandir este módulo
       },
     })
   }
@@ -215,7 +222,7 @@ export function AppSidebar() {
                               {portfolio.modules.map((module) => (
                                 <button
                                   key={module.id}
-                                  onClick={() => navigateToModuleRepository(porcod, portfolio.name)}
+                                  onClick={() => handleDynamicModuleClick(module, porcod, portfolio.name)}
                                   className="flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 text-slate-600 hover:bg-slate-200 w-full text-left"
                                 >
                                   <Settings className="w-4 h-4" />
@@ -248,8 +255,8 @@ export function AppSidebar() {
                                 <SidebarMenuItem key={module.id}>
                                   <SidebarMenuButton asChild>
                                     <button
-                                      onClick={() => navigateToModuleRepository(porcod, portfolio.name)}
-                                      className="flex items-center gap-3 px-4 py-3 ml-6 rounded-xl transition-all duration-200 group text-slate-200 dark:text-slate-300 hover:bg-slate-700 dark:hover:bg-slate-800  text-left"
+                                      onClick={() => handleDynamicModuleClick(module, porcod, portfolio.name)}
+                                      className="flex items-center gap-3 px-4 py-3 ml-6 rounded-xl transition-all duration-200 group text-slate-200 dark:text-slate-300 hover:bg-slate-700 dark:hover:bg-slate-800 hover:translate-x-1 text-left w-full"
                                     >
                                       <Settings className="h-4 w-4 transition-transform group-hover:scale-110" />
                                       <span className="font-medium text-sm">{module.mennom}</span>

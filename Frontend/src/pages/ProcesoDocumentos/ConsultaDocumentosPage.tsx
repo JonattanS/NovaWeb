@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -30,9 +30,43 @@ import { useNavigate } from "react-router-dom"
 // Definición estática del código de módulo
 export const mencod = "010303"
 
+const camposConsulta = [
+  "suc_cod", // Sucursal/Agencia
+  "clc_cod", // Clase de Documento
+  "doc_num", // Número del Documento
+  "doc_fec", // Fecha del Documento
+  "doc_pre", // Prefijo exigido por la Administración de Impuestos
+  "doc_num_ref", // Número del Documento del tercero
+  "doc_fec_ref", // Fecha del Documento del tercero
+  "mov_cons", // Consecutivo de la partida
+  "cta_cod", // Código de cuenta
+  "mov_det", // Detalle del movimiento
+  "ter_nit", // NIT del tercero
+  "cto_cod", // Código de centro de actividad
+  "act_cod", // Código de la actividad
+  "mov_val", // Valor del movimiento
+  "mnd_cla", // Clase de moneda
+  "mnd_tas_act", // Tasa de cambio actual
+  "mov_val_ext", // Valor en moneda extranjera
+  "anf_cod", // Código de anexo financiero
+  "clc_cod_rel", // Clase de documento de relación
+  "doc_num_rel", // Número de documento de relación
+  "doc_fec_rel", // Fecha de documento de relación
+  "anx_cod", // Código de anexo tributario
+  "cpt_cod", // Código de concepto tributario
+  "ica_cod", // Actividad ICA
+  "mov_bas", // Valor base
+  "mov_por_apl", // % aplicado
+  "cta_nom", // Nombre cuenta contable
+  "ter_raz", // Razón social tercero
+  "cto_nom", // Nombre centro
+  "est_nom", // Nombre estado documento
+]
+
 const getColumnDescription = (key: string): string => {
-  const col = schemaService.getTableColumns().find((c) => c.name === key)
-  return col?.description || key
+  const columns = schemaService.getTableColumns()
+  const column = columns.find((col) => col.name === key)
+  return column ? column.description : key
 }
 
 type Filtros = {
@@ -72,10 +106,6 @@ const ConsultaDocumentosPage = () => {
   const [isExporting, setIsExporting] = useState(false)
   const [exportProgress, setExportProgress] = useState(0)
 
-  useEffect(() => {
-    handleSubmit(new Event("submit") as unknown as React.FormEvent)
-  }, [])
-
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setFiltros((prev) => ({ ...prev, [name]: value }))
@@ -97,9 +127,19 @@ const ConsultaDocumentosPage = () => {
     }
   }
 
+  const resultadoFiltrado = resultado.map((row) => {
+    const filteredRow: any = {}
+    camposConsulta.forEach((campo) => {
+      if (row[campo] !== undefined) {
+        filteredRow[campo] = row[campo]
+      }
+    })
+    return filteredRow
+  })
+
   const startIndex = (page - 1) * ROWS_PER_PAGE
-  const endIndex = Math.min(startIndex + ROWS_PER_PAGE, resultado.length)
-  const pageResults = resultado.slice(startIndex, endIndex)
+  const endIndex = Math.min(startIndex + ROWS_PER_PAGE, resultadoFiltrado.length)
+  const pageResults = resultadoFiltrado.slice(startIndex, endIndex)
 
   const getActiveFiltersCount = () => {
     return Object.values(filtros).filter((value) => value.trim() !== "").length
@@ -125,7 +165,7 @@ const ConsultaDocumentosPage = () => {
           {resultado.length > 0 && (
             <div className="flex gap-2">
               <ExcelExporter
-                data={resultado}
+                data={resultadoFiltrado}
                 filename={`consulta_documentos_CSV_${new Date().toISOString().split("T")[0]}`}
                 sheetName="Consulta de Documentos"
                 format="csv"
@@ -134,7 +174,7 @@ const ConsultaDocumentosPage = () => {
                 getColumnDescription={getColumnDescription}
               />
               <ExcelExporter
-                data={resultado}
+                data={resultadoFiltrado}
                 filename={`consulta_documentos_${new Date().toISOString().split("T")[0]}`}
                 sheetName="Consulta de Documentos"
                 format="xlsx"
@@ -327,7 +367,9 @@ const ConsultaDocumentosPage = () => {
                     style={{ width: `${exportProgress}%` }}
                   />
                 </div>
-                <div className="text-xs text-blue-600 text-center">Procesando {resultado.length} registros...</div>
+                <div className="text-xs text-blue-600 text-center">
+                  Procesando {resultadoFiltrado.length} registros...
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -350,7 +392,7 @@ const ConsultaDocumentosPage = () => {
                   Resultados de la Consulta
                 </CardTitle>
                 <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
-                  {resultado.length} registros
+                  {resultadoFiltrado.length} registros
                 </Badge>
               </div>
             </CardHeader>
@@ -359,7 +401,7 @@ const ConsultaDocumentosPage = () => {
                 <table className="w-full text-sm">
                   <thead className="bg-gray-50 border-b-2 border-gray-200 sticky top-0 z-10">
                     <tr>
-                      {Object.keys(pageResults[0] || {}).map((key) => (
+                      {camposConsulta.map((key) => (
                         <th key={key} className="px-4 py-3 font-semibold text-left text-gray-700 whitespace-nowrap">
                           {getColumnDescription(key)}
                         </th>
@@ -369,7 +411,7 @@ const ConsultaDocumentosPage = () => {
                   <tbody className="divide-y divide-gray-200">
                     {pageResults.map((row, i) => (
                       <tr key={i} className="hover:bg-blue-50/50 transition-colors">
-                        {Object.keys(row).map((key) => (
+                        {camposConsulta.map((key) => (
                           <td key={key} className="px-4 py-3 text-gray-900 whitespace-nowrap">
                             {formatCellValue(key, row[key])}
                           </td>
@@ -382,9 +424,9 @@ const ConsultaDocumentosPage = () => {
               <div className="border-t bg-gray-50">
                 <DataPagination
                   currentPage={page}
-                  totalPages={Math.ceil(resultado.length / ROWS_PER_PAGE)}
+                  totalPages={Math.ceil(resultadoFiltrado.length / ROWS_PER_PAGE)}
                   recordsPerPage={ROWS_PER_PAGE}
-                  totalRecords={resultado.length}
+                  totalRecords={resultadoFiltrado.length}
                   onPageChange={setPage}
                 />
               </div>

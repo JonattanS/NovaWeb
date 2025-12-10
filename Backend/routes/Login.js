@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db'); // pool global con conexión a PostgreSQL
 const jwt = require('jsonwebtoken');
+const { logLoginSuccess, logLoginFailure } = require('./audit');
 
 const JWT_SECRET = 'clave_secreta_super_segura';
 
@@ -16,13 +17,25 @@ router.post('/login', async (req, res) => {
   try {
     // Consulta al usuario
     const { rows } = await pool.query('SELECT * FROM adm_usr WHERE usrcod = $1', [usrcod]);
+    
     if (rows.length === 0) {
+      // Usuario no existe - registrar intento fallido
+      console.warn(`[LOGIN] Intento con usuario no existente: ${usrcod}`);
+      
+      // Intentamos registrar con una cia por defecto (ID 1, ajusta según tu BD)
+      await logLoginFailure(1, usrcod, 'Usuario no existe');
+      
       return res.status(200).json({ success: false, message: "Usuario no existe" });
     }
 
     const user = rows[0];
 
     if (user.usrpsw !== usrpsw) {
+      // Contraseña incorrecta - registrar intento fallido
+      console.warn(`[LOGIN] Contraseña incorrecta para usuario: ${usrcod}`);
+      
+      await logLoginFailure(user.adm_ciaid, usrcod, 'Contraseña incorrecta');
+      
       return res.status(200).json({ success: false, message: "Contraseña incorrecta" });
     }
 
@@ -54,6 +67,10 @@ router.post('/login', async (req, res) => {
       { expiresIn: '1h' }
     );
 
+    // Login exitoso - registrar en auditoría
+    console.log(`[LOGIN SUCCESS] Usuario: ${usrcod} (${user.id})`);
+    await logLoginSuccess(user.adm_ciaid, user.id, usrcod, user.usrnom);
+
     // Devolver datos del usuario y token
     return res.status(200).json({
       success: true,
@@ -72,7 +89,7 @@ router.post('/login', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error login:', error);
+    console.error('[LOGIN ERROR]', error);
     return res.status(500).json({ success: false, message: "Error interno del servidor" });
   }
 });

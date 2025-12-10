@@ -29,7 +29,7 @@ import { getUserModules } from "@/services/userModulesApi"
 import { getModulesByPortfolio, type NovModule } from "@/services/novModulesApi"
 import { useUser } from "@/contexts/UserContext"
 import { useToast } from "@/hooks/use-toast"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useLocation } from "react-router-dom"
 import { routesByMencod } from '../routesByMencod'
 
 interface ModuleRepositoryProps {
@@ -41,6 +41,7 @@ export const ModuleRepository = ({ onClose }: ModuleRepositoryProps) => {
   const portafoliosPermitidos: number[] = user?.portafolios || []
   const { toast } = useToast()
   const navigate = useNavigate()
+  const location = useLocation()
 
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string>("")
@@ -60,9 +61,7 @@ export const ModuleRepository = ({ onClose }: ModuleRepositoryProps) => {
   const [expandedModuleCode, setExpandedModuleCode] = useState<string | null>(null)
   const [subModules, setSubModules] = useState<NovModule[]>([])
   const [expandedCardContent, setExpandedCardContent] = useState<Set<number>>(new Set())
-
-  // Estado para saber qué tarjetas padre están expandidas
-const [expandedCards, setExpandedCards] = useState<Record<number, boolean>>({});
+  const [expandedCards, setExpandedCards] = useState<Record<number, boolean>>({})
 
   // Combina módulos evitando duplicados por id
   const mergeModulesWithoutDuplicates = (
@@ -131,6 +130,43 @@ const [expandedCards, setExpandedCards] = useState<Record<number, boolean>>({});
       loadSystemModules(selectedPortafolio.porcod || 1)
     }
   }, [selectedPortafolio, user, loadSystemModules])
+
+  // Detectar si viene del sidebar y establecer portafolio automáticamente
+  useEffect(() => {
+    if (location.state?.selectedPortfolio) {
+      const portfolio = folders.find(
+        (f) => f.porcod === location.state.selectedPortfolio.porcod
+      )
+      if (portfolio) {
+        setSelectedPortafolio(portfolio)
+        
+        // Si viene del sidebar, mostrar módulos del sistema
+        if (location.state?.showSystemModules) {
+          setShowingSystemModules(true)
+        }
+        
+        // Si especifica un módulo, expandirlo
+        if (location.state?.selectedModuleCode) {
+          setExpandedModuleCode(location.state.selectedModuleCode)
+          
+          // Encontrar el módulo padre y expandir su card
+          const parentModule = novModules.find(
+            (m) => m.mencod === location.state.selectedModuleCode && !m.menter
+          )
+          if (parentModule) {
+            setExpandedCards((prev) => ({
+              ...prev,
+              [parentModule.id]: true,
+            }))
+            const children = novModules.filter(
+              (m2) => m2.menter && m2.mencodpad === parentModule.mencod
+            )
+            setSubModules(children)
+          }
+        }
+      }
+    }
+  }, [location.state, folders, novModules])
 
   // Filtrado por portafolio y búsqueda
   const filteredModules = selectedPortafolio
@@ -227,44 +263,42 @@ const [expandedCards, setExpandedCards] = useState<Record<number, boolean>>({});
 
   const handleSystemModuleClick = (mod: NovModule) => {
     if (!mod.menter) {
+      // Es módulo padre, expandir/contraer
       setExpandedCardContent((prev) => {
-        const newSet = new Set(prev);
+        const newSet = new Set(prev)
         if (newSet.has(mod.id)) {
-          newSet.delete(mod.id);
-          // Also collapse submódulos when collapsing card
+          newSet.delete(mod.id)
           if (expandedModuleCode === mod.mencod) {
-            setExpandedModuleCode(null);
-            setSubModules([]);
+            setExpandedModuleCode(null)
+            setSubModules([])
           }
         } else {
-          newSet.add(mod.id);
+          newSet.add(mod.id)
         }
-        return newSet;
-      });
-      return;
+        return newSet
+      })
+      return
     }
 
-    // Si el módulo tiene URL externa, abrir en pestaña nueva
+    // Es submódulo, navegar
     if (mod.menurl) {
-      window.open(mod.menurl, "_blank");
+      window.open(mod.menurl, "_blank")
     } else {
-      // Usar el mapeo para redirigir según mencod
-      const path = routesByMencod[mod.mencod];
+      const path = routesByMencod[mod.mencod]
       if (path) {
-        navigate(path);
+        navigate(path)
       } else {
-        // Si no está definido, fallback a "/system-module-viewer" con estado
         navigate("/system-module-viewer", {
           state: {
             module: mod,
             moduleCode: mod.mencod,
             moduleName: mod.mennom,
           },
-        });
-        console.warn(`Ruta no definida para mencod ${mod.mencod}, se usa fallback.`);
+        })
+        console.warn(`Ruta no definida para mencod ${mod.mencod}, se usa fallback.`)
       }
     }
-  };
+  }
 
   const handleExpandSubmodules = (mod: NovModule, e: React.MouseEvent) => {
     e.stopPropagation()
@@ -549,7 +583,6 @@ const [expandedCards, setExpandedCards] = useState<Record<number, boolean>>({});
                             [mod.id]: !prev[mod.id]
                           }))
                           
-                          // LÓGICA ORIGINAL: Cargar submódulos cuando se expande
                           if (!expandedCards[mod.id]) {
                             const children = novModules.filter(
                               (m2) => m2.menter && m2.mencodpad === mod.mencod
@@ -557,7 +590,6 @@ const [expandedCards, setExpandedCards] = useState<Record<number, boolean>>({});
                             setSubModules(children)
                             setExpandedModuleCode(mod.mencod)
                           } else {
-                            // Limpiar cuando se colapsa
                             setSubModules([])
                             setExpandedModuleCode(null)
                           }
@@ -581,7 +613,6 @@ const [expandedCards, setExpandedCards] = useState<Record<number, boolean>>({});
                                     Código: {mod.mencod}
                                   </CardDescription>
                                 </Badge>
-                                
                               </div>
                             </div>
                             <div className="flex items-center gap-2">
@@ -594,12 +625,8 @@ const [expandedCards, setExpandedCards] = useState<Record<number, boolean>>({});
                           </div>
                         </CardHeader>
 
-                        {/* Contenido expandido: información del módulo Y submódulos */}
                         {expandedCards[mod.id] && (
                           <CardContent className="space-y-4">
-                            
-                            
-                            {/* Mostrar submódulos solo si este módulo está expandido */}
                             {expandedModuleCode === mod.mencod && (
                               <div className="space-y-2">
                                 <h4 className="text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
@@ -643,7 +670,6 @@ const [expandedCards, setExpandedCards] = useState<Record<number, boolean>>({});
                       </Card>
                     </div>
                   )
-
                 })}
               </div>
             )}

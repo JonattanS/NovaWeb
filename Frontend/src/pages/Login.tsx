@@ -8,6 +8,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { AlertCircle, Eye, EyeOff } from "lucide-react"
 import { BACKEND_URL } from "../config"
+import { useUser } from "@/contexts/UserContext"
 
 const Login: React.FC<{ onLogin: (token: string) => void }> = ({ onLogin }) => {
   const [usrcod, setUsrcod] = useState("")
@@ -17,6 +18,7 @@ const Login: React.FC<{ onLogin: (token: string) => void }> = ({ onLogin }) => {
   const [selectedCompany, setSelectedCompany] = useState("Nova Corp SAS")
   const [showPassword, setShowPassword] = useState(false)
   const navigate = useNavigate()
+  const { login } = useUser()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -27,19 +29,32 @@ const Login: React.FC<{ onLogin: (token: string) => void }> = ({ onLogin }) => {
       const response = await fetch(`${BACKEND_URL}/api/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ usrcod, usrpsw }), // Solo envía estos dos campos
+        body: JSON.stringify({ usrcod, usrpsw }),
       })
 
       const data = await response.json()
 
       if (data.success) {
-        onLogin(data.user) // Guarda el usuario
-        navigate("/") // Redirige a la página principal
+        // Guardar usuario con token
+        const userData = {
+          ...data.user,
+          token: data.accessToken,
+        }
+
+        // Usar login del UserContext
+        login(userData, data.refreshToken)
+
+        // Callback para compatibilidad
+        onLogin(data.accessToken)
+
+        // Redirigir al inicio
+        navigate("/")
       } else {
-        setError("Credenciales incorrectas")
+        setError(data.message || "Credenciales incorrectas")
       }
     } catch (err) {
       setError("Error de conexión con el servidor")
+      console.error('[LOGIN ERROR]', err)
     } finally {
       setIsLoading(false)
     }
@@ -107,6 +122,14 @@ const Login: React.FC<{ onLogin: (token: string) => void }> = ({ onLogin }) => {
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
+
+            {/* Info Message */}
+            <Alert className="bg-blue-50 border-blue-200 text-blue-700">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                Tu sesión expirará en 30 minutos de inactividad
+              </AlertDescription>
+            </Alert>
 
             {/* Submit Button */}
             <Button

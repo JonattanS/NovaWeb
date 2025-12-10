@@ -48,8 +48,11 @@ router.post('/login', async (req, res) => {
     const { rows: ciaRows } = await pool.query('SELECT ciaraz FROM adm_cia WHERE id = $1', [user.adm_ciaid]);
     const ciaraz = ciaRows.length > 0 ? ciaRows[0].ciaraz : null;
 
-    // Consulta los portafolios habilitados para esta cia
-    const { rows: portafolioRows } = await pool.query('SELECT porcod FROM nov_por WHERE adm_ciaid = $1',[user.adm_ciaid]);
+    // CRÍTICO: Obtener los portafolios ASIGNADOS a ESTE USUARIO específicamente
+    const { rows: portafolioRows } = await pool.query(
+      'SELECT porcod FROM adm_usr_por WHERE adm_usrid = $1',
+      [user.id]
+    );
     const portafolios = portafolioRows.map(row => row.porcod);
 
     // Consulta el rol del usuario
@@ -140,8 +143,11 @@ router.post('/refresh-token', async (req, res) => {
     const { rows: ciaRows } = await pool.query('SELECT ciaraz FROM adm_cia WHERE id = $1', [user.adm_ciaid]);
     const ciaraz = ciaRows.length > 0 ? ciaRows[0].ciaraz : null;
 
-    // Consulta los portafolios
-    const { rows: portafolioRows } = await pool.query('SELECT porcod FROM nov_por WHERE adm_ciaid = $1',[user.adm_ciaid]);
+    // CRÍTICO: Obtener los portafolios ASIGNADOS a ESTE USUARIO específicamente
+    const { rows: portafolioRows } = await pool.query(
+      'SELECT porcod FROM adm_usr_por WHERE adm_usrid = $1',
+      [user.id]
+    );
     const portafolios = portafolioRows.map(row => row.porcod);
 
     // Consulta el rol

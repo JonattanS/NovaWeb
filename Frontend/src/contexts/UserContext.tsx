@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
 import { BACKEND_URL } from "../config";
 
 type UserType = {
@@ -15,7 +14,7 @@ type UserType = {
 
 interface UserContextProps {
   user: any;
-  login: (userData: any) => void;
+  login: (userData: any, newRefreshToken?: string) => void;
   logout: (skipAudit?: boolean) => Promise<void>;
   canCreateMainFunctions: () => boolean;
   canDeleteMainFunctions: () => boolean;
@@ -27,7 +26,6 @@ interface UserContextProps {
 const UserContext = createContext<UserContextProps | undefined>(undefined);
 
 export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const navigate = useNavigate();
   const [user, setUser] = useState(() => {
     // Recupera usuario del localStorage si existe
     const data = localStorage.getItem("user");
@@ -128,10 +126,10 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
       if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
 
-      // Redirigir a login
-      navigate('/login');
+      // Redirigir a login usando window.location en lugar de useNavigate
+      window.location.href = '/login';
     },
-    [user?.id, user?.adm_ciaid, navigate]
+    [user?.id, user?.adm_ciaid]
   );
 
   // Login

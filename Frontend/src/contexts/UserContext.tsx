@@ -9,6 +9,9 @@ type UserType = {
   roldes: string;
   id?: number;
   adm_ciaid?: number;
+  portafolios?: number[];
+  ciaraz?: string;
+  usrnom?: string;
   [key: string]: any;
 };
 
@@ -79,9 +82,15 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const data = await response.json();
 
       if (data.success && data.accessToken) {
-        // Actualizar token del usuario
-        const updatedUser = { ...user, token: data.accessToken };
-        setUser(updatedUser);
+        // Actualizar usuario COMPLETO (incluyendo portafolios, roles, etc)
+        // Si backend devuelve user completo, usarlo; si no, solo actualizar token
+        if (data.user) {
+          setUser(data.user);
+        } else {
+          // Fallback: solo actualizar token
+          const updatedUser = { ...user, token: data.accessToken };
+          setUser(updatedUser);
+        }
 
         // Calcular nueva fecha de expiración (30 minutos desde ahora)
         const expiresAt = Date.now() + (data.expiresIn * 1000);

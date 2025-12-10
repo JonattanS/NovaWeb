@@ -148,7 +148,7 @@ router.post('/refresh-token', async (req, res) => {
     const rolResult = await pool.query('SELECT rolcod, roldes FROM adm_rol WHERE id = $1', [user.adm_rolid]);
     const rol = rolResult.rows[0] || { rolcod: null, roldes: null };
 
-    // Generar nuevo access token
+    // Generar nuevo access token con toda la información de autorización
     const newAccessToken = jwt.sign(
       {
         id: user.id,
@@ -167,10 +167,24 @@ router.post('/refresh-token', async (req, res) => {
 
     console.log(`[TOKEN REFRESH] Usuario: ${user.usrcod} (${user.id})`);
 
+    // Devolver el nuevo token PLUS los datos de usuario actualizados
+    // para que el frontend pueda refrescar el contexto completo
     return res.status(200).json({
       success: true,
       accessToken: newAccessToken,
       expiresIn: 1800, // 30 minutos en segundos
+      user: {
+        token: newAccessToken,
+        id: user.id,
+        usrcod: user.usrcod,
+        usrnom: user.usrnom,
+        adm_ciaid: user.adm_ciaid,
+        ciaraz,
+        adm_rolid: user.adm_rolid,
+        rolcod: rol.rolcod,
+        roldes: rol.roldes,
+        portafolios,
+      }
     });
   } catch (error) {
     if (error.name === 'TokenExpiredError') {

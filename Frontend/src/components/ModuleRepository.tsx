@@ -148,10 +148,25 @@ export const ModuleRepository = ({ onClose }: ModuleRepositoryProps) => {
         // Si especifica un módulo, expandirlo
         if (location.state?.selectedModuleCode) {
           setExpandedModuleCode(location.state.selectedModuleCode)
+          
+          // Encontrar el módulo padre y expandir su card
+          const parentModule = novModules.find(
+            (m) => m.mencod === location.state.selectedModuleCode && !m.menter
+          )
+          if (parentModule) {
+            setExpandedCards((prev) => ({
+              ...prev,
+              [parentModule.id]: true,
+            }))
+            const children = novModules.filter(
+              (m2) => m2.menter && m2.mencodpad === parentModule.mencod
+            )
+            setSubModules(children)
+          }
         }
       }
     }
-  }, [location.state, folders])
+  }, [location.state, folders, novModules])
 
   // Filtrado por portafolio y búsqueda
   const filteredModules = selectedPortafolio

@@ -28,11 +28,26 @@ interface UserContextProps {
 
 const UserContext = createContext<UserContextProps | undefined>(undefined);
 
+/**
+ * Asegura que el usuario tenga todos los campos requeridos
+ */
+const normalizeUser = (userData: any): any => {
+  if (!userData) return null;
+  
+  return {
+    ...userData,
+    portafolios: userData.portafolios || [],
+    rolcod: userData.rolcod || null,
+    roldes: userData.roldes || null,
+    ciaraz: userData.ciaraz || null,
+  };
+};
+
 export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState(() => {
     // Recupera usuario del localStorage si existe
     const data = localStorage.getItem("user");
-    return data ? JSON.parse(data) : null;
+    return data ? normalizeUser(JSON.parse(data)) : null;
   });
 
   const [refreshToken, setRefreshToken] = useState<string | null>(() => {
@@ -46,7 +61,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Guardar usuario y refresh token en localStorage
   useEffect(() => {
     if (user) {
-      localStorage.setItem("user", JSON.stringify(user));
+      const normalizedUser = normalizeUser(user);
+      localStorage.setItem("user", JSON.stringify(normalizedUser));
     } else {
       localStorage.removeItem("user");
     }
@@ -83,12 +99,14 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (data.success && data.accessToken) {
         // Actualizar usuario COMPLETO (incluyendo portafolios, roles, etc)
-        // Si backend devuelve user completo, usarlo; si no, solo actualizar token
+        // Normalizar para asegurar que tenga todos los campos
         if (data.user) {
-          setUser(data.user);
+          const normalizedUser = normalizeUser(data.user);
+          setUser(normalizedUser);
+          console.log('[TOKEN REFRESH] Usuario actualizado con portafolios:', normalizedUser.portafolios);
         } else {
-          // Fallback: solo actualizar token
-          const updatedUser = { ...user, token: data.accessToken };
+          // Fallback: solo actualizar token pero mantener portafolios
+          const updatedUser = normalizeUser({ ...user, token: data.accessToken });
           setUser(updatedUser);
         }
 
@@ -144,12 +162,14 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Login
   const login = useCallback(
     (userData: UserType, newRefreshToken?: string) => {
-      setUser(userData);
+      const normalizedUser = normalizeUser(userData);
+      setUser(normalizedUser);
       if (newRefreshToken) {
         setRefreshToken(newRefreshToken);
       }
       // Token expira en 30 minutos
       setTokenExpiresAt(Date.now() + 30 * 60 * 1000);
+      console.log('[LOGIN] Usuario login con portafolios:', normalizedUser.portafolios);
     },
     []
   );

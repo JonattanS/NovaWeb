@@ -14,6 +14,8 @@ import { ExcelExporter } from '@/components/ExcelExporter';
 import { databaseService } from '@/services/database';
 import { useToast } from '@/hooks/use-toast';
 
+export const mencod = '011814';
+
 interface FiltrosReporte {
   sucursal: string;
   cuentaContable: string;
@@ -57,7 +59,7 @@ const ReporteAnalisisAnexosVencidosDolMonLocalPage = () => {
   const [resultados, setResultados] = useState<RegistroAnexoVencido[]>([]);
   const [cargando, setCargando] = useState(false);
   const [paginaActual, setPaginaActual] = useState(1);
-  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+  const [isFiltersOpen, setIsFiltersOpen] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState(0);
   const registrosPorPagina = 50;

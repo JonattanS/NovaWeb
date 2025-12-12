@@ -121,6 +121,43 @@ function construirWhere(f) {
   }
 }
 
+// Función para construir WHERE dinámico para adm_log
+function construirWhereAuditLog(f) {
+  const where = []
+  const values = []
+  let idx = 1
+
+  if (f.adm_ciaid) {
+    where.push(`al.adm_ciaid = $${idx++}`)
+    values.push(f.adm_ciaid)
+  }
+  if (f.logTip) {
+    where.push(`al.logTip = $${idx++}`)
+    values.push(f.logTip)
+  }
+  if (f.logPro) {
+    where.push(`al.logPro = $${idx++}`)
+    values.push(f.logPro)
+  }
+  if (f.adm_usrId) {
+    where.push(`al.adm_usrId = $${idx++}`)
+    values.push(f.adm_usrId)
+  }
+  if (f.fecha_ini) {
+    where.push(`al.logFec >= $${idx++}::DATE`)
+    values.push(f.fecha_ini)
+  }
+  if (f.fecha_fin) {
+    where.push(`al.logFec <= $${idx++}::DATE + INTERVAL '1 day'`)
+    values.push(f.fecha_fin)
+  }
+
+  return {
+    sql: where.length > 0 ? `WHERE ${where.join(" AND ")}` : "",
+    values,
+  }
+}
+
 function validateFilters(filtros) {
   const errors = []
 
@@ -211,6 +248,38 @@ router.post("/consultadocumentos", async (req, res) => {
       `
       break
 
+    case "adm_log":
+      const { sql: sqlAudit, values: valuesAudit } = construirWhereAuditLog(filtros)
+      baseQuery = `
+        SELECT 
+          al.id,
+          al.adm_ciaid,
+          al.logTip,
+          al.logPro,
+          al.logGru,
+          al.logSec,
+          al.adm_menId,
+          al.logOpe,
+          al.logDet,
+          al.adm_usrId,
+          al.logFec,
+          COALESCE(au.usrcod, 'N/A') as usuario,
+          COALESCE(au.usrnom, 'N/A') as usuario_nombre,
+          COALESCE(ac.ciaraz, 'N/A') as empresa
+        FROM adm_log al
+        LEFT JOIN adm_usr au ON al.adm_usrId = au.id
+        LEFT JOIN adm_cia ac ON al.adm_ciaid = ac.id
+        ${sqlAudit}
+        ORDER BY al.logFec DESC
+      `
+      try {
+        const result = await pool.query(baseQuery, valuesAudit)
+        return res.json(result.rows)
+      } catch (err) {
+        console.error('[AUDIT LOGS ERROR]', err)
+        return res.status(500).json({ error: `Error consultando ${fuente}`, detalle: err.message })
+      }
+
     // Agregar más casos según necesidad
   }
 
@@ -218,6 +287,7 @@ router.post("/consultadocumentos", async (req, res) => {
     const result = await pool.query(baseQuery, values)
     res.json(result.rows)
   } catch (err) {
+    console.error(`[CONSULTA ERROR - ${fuente}]`, err)
     res.status(500).json({ error: `Error consultando ${fuente}`, detalle: err.message })
   }
 })

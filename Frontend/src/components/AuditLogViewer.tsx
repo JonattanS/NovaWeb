@@ -40,7 +40,7 @@ export function AuditLogViewer() {
   const [error, setError] = useState<string | null>(null)
 
   // Filtros
-  const [filterType, setFilterType] = useState<string>('')
+  const [filterType, setFilterType] = useState<string>('all')
   const [filterUser, setFilterUser] = useState<string>('')
   const [startDate, setStartDate] = useState<string>('')
   const [endDate, setEndDate] = useState<string>('')
@@ -59,7 +59,7 @@ export function AuditLogViewer() {
         limit: '20',
       })
 
-      if (filterType) params.append('logTip', filterType)
+      if (filterType && filterType !== 'all') params.append('logTip', filterType)
       if (filterUser) params.append('adm_usrId', filterUser)
       if (startDate) params.append('startDate', startDate)
       if (endDate) params.append('endDate', endDate)
@@ -95,7 +95,7 @@ export function AuditLogViewer() {
 
   // Limpiar filtros
   const handleClearFilters = () => {
-    setFilterType('')
+    setFilterType('all')
     setFilterUser('')
     setStartDate('')
     setEndDate('')
@@ -158,7 +158,7 @@ export function AuditLogViewer() {
                   <SelectValue placeholder="Todos" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos</SelectItem>
+                  <SelectItem value="all">Todos</SelectItem>
                   <SelectItem value="LOGIN_EXITOSO">Login Exitoso</SelectItem>
                   <SelectItem value="LOGIN_FALLIDO">Login Fallido</SelectItem>
                 </SelectContent>

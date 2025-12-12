@@ -28,7 +28,7 @@ import {
 } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 
-export const mencod = '010313';
+export const mencod = '011608';
 
 const getColumnDescription = (key: string): string => {
   const col = schemaService.getTableColumns().find((c) => c.name === key)
@@ -320,7 +320,6 @@ const ReporteSaldosPorCentroPage = () => {
                     {/* Información General */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <Building className="h-4 w-4" />
                         <span>Información General</span>
                       </div>
                       <div className="grid grid-cols-1 gap-3">
@@ -337,7 +336,6 @@ const ReporteSaldosPorCentroPage = () => {
                     {/* Rango de Fechas */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <Calendar className="h-4 w-4" />
                         <span>Rango de Fechas</span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -363,7 +361,6 @@ const ReporteSaldosPorCentroPage = () => {
                     {/* Rango de Cuentas */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <CreditCard className="h-4 w-4" />
                         <span>Rango de Cuentas</span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -387,7 +384,6 @@ const ReporteSaldosPorCentroPage = () => {
                     {/* Rango de Centros */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <Building2 className="h-4 w-4" />
                         <span>Rango de Centros de Actividad</span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -411,7 +407,6 @@ const ReporteSaldosPorCentroPage = () => {
                     {/* Toggle Cierre */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <ToggleLeft className="h-4 w-4" />
                         <span>Opciones</span>
                       </div>
                       <div className="flex items-center space-x-2">

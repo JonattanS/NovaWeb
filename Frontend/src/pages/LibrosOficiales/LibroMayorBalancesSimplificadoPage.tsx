@@ -184,7 +184,6 @@ const LibroMayorBalancesSimplificadoPage = () => {
                     {/* Rango de Sucursales */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <Building className="h-4 w-4" />
                         <span>Rango de Sucursales</span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -208,7 +207,6 @@ const LibroMayorBalancesSimplificadoPage = () => {
                     {/* Rango de Comprobantes */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <FileText className="h-4 w-4" />
                         <span>Rango de Comprobantes</span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -232,7 +230,6 @@ const LibroMayorBalancesSimplificadoPage = () => {
                     {/* Rango de Fechas */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <Calendar className="h-4 w-4" />
                         <span>Rango de Fechas de Comprobante</span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">

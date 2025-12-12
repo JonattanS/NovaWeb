@@ -30,7 +30,7 @@ import {
 } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 
-export const mencod = '010310';
+export const mencod = '011602';
 
 const getColumnDescription = (key: string): string => {
   const col = schemaService.getTableColumns().find((c) => c.name === key)
@@ -354,7 +354,6 @@ const ConsultaSaldoPage = () => {
                     {/* Filtros Básicos */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <Building className="h-4 w-4" />
                         <span>Información Básica</span>
                         <span className="text-red-500 text-xs">(Cuenta es obligatoria)</span>
                       </div>
@@ -388,7 +387,6 @@ const ConsultaSaldoPage = () => {
                     {/* Filtro NIT con Toggle */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <User className="h-4 w-4" />
                         <span>Filtro por NIT</span>
                       </div>
                       <div className="space-y-3">
@@ -416,7 +414,6 @@ const ConsultaSaldoPage = () => {
                     {/* Filtro Centro con Toggle */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <Target className="h-4 w-4" />
                         <span>Filtro por Centro</span>
                       </div>
                       <div className="space-y-3">
@@ -444,7 +441,6 @@ const ConsultaSaldoPage = () => {
                     {/* Filtro Actividad con Toggle */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <Activity className="h-4 w-4" />
                         <span>Filtro por Actividad</span>
                       </div>
                       <div className="space-y-3">

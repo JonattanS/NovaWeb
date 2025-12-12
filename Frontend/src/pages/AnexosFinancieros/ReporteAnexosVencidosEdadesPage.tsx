@@ -234,7 +234,6 @@ const ReporteAnexosVencidosEdadesPage = () => {
                     {/* Generales */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <Building className="h-4 w-4" />
                         <span>Sucursal / Anexo</span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -246,7 +245,6 @@ const ReporteAnexosVencidosEdadesPage = () => {
                     {/* NIT */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <Users className="h-4 w-4" />
                         <span>Rango de NIT</span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -258,7 +256,6 @@ const ReporteAnexosVencidosEdadesPage = () => {
                     {/* Fecha */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <Calendar className="h-4 w-4" />
                         <span>Fecha de Corte</span>
                       </div>
                       <Input type="date" name="fecha_corte" value={filtros.fecha_corte} onChange={handleChange} className="bg-white" />
@@ -267,7 +264,6 @@ const ReporteAnexosVencidosEdadesPage = () => {
                     {/* Opciones */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <ToggleLeft className="h-4 w-4" />
                         <span>Opciones</span>
                       </div>
                       <div className="grid grid-cols-2 gap-4">

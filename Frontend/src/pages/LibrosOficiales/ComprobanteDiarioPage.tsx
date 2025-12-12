@@ -178,7 +178,6 @@ const ComprobanteDiarioPage = () => {
                     {/* Información General */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <Building className="h-4 w-4" />
                         <span>Información General</span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -195,7 +194,6 @@ const ComprobanteDiarioPage = () => {
                     {/* Rango de Comprobantes */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <FileText className="h-4 w-4" />
                         <span>Rango de Comprobantes</span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">

@@ -28,7 +28,7 @@ import {
 } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 
-export const mencod = '010325';
+export const mencod = '011804';
 
 const getColumnDescription = (key: string): string => {
   const col = schemaService.getTableColumns().find((c) => c.name === key)
@@ -275,7 +275,6 @@ const HojaDeVidaAnexoPage = () => {
                     {/* Información General */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <Building className="h-4 w-4" />
                         <span>Información General</span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -299,7 +298,6 @@ const HojaDeVidaAnexoPage = () => {
                     {/* Rango de Documentos */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <Hash className="h-4 w-4" />
                         <span>Rango de Documentos</span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -323,7 +321,6 @@ const HojaDeVidaAnexoPage = () => {
                     {/* Rango de Anexos */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <FileText className="h-4 w-4" />
                         <span>Rango de Anexos</span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -347,7 +344,6 @@ const HojaDeVidaAnexoPage = () => {
                     {/* Rango de NITs */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <Users className="h-4 w-4" />
                         <span>Rango de NITs</span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -371,7 +367,6 @@ const HojaDeVidaAnexoPage = () => {
                     {/* Documento Referencia */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <Hash className="h-4 w-4" />
                         <span>Doc. Num. Ref</span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -395,7 +390,6 @@ const HojaDeVidaAnexoPage = () => {
                     {/* Fecha Referencia */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <Calendar className="h-4 w-4" />
                         <span>Fecha Ref.</span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -421,7 +415,6 @@ const HojaDeVidaAnexoPage = () => {
                     {/* Rango de Cuentas */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <CreditCard className="h-4 w-4" />
                         <span>Rango de Cuentas</span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -445,7 +438,6 @@ const HojaDeVidaAnexoPage = () => {
                     {/* Anexos Financieros */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <FileText className="h-4 w-4" />
                         <span>Anexos Financieros</span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -469,7 +461,6 @@ const HojaDeVidaAnexoPage = () => {
                     {/* Estado */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <CheckCircle className="h-4 w-4" />
                         <span>Estado</span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">

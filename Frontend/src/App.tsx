@@ -43,6 +43,7 @@ import HojaDeVidaAnexoPage from "./pages/AnexosFinancieros/HojaDeVidaAnexoPage"
 import ReporteAnalisisAnexosVencidosPage from "./pages/AnexosFinancieros/ReporteAnalisisAnexosVencidosPage"
 import ReporteAnexosVencidosEdadesPage from "./pages/AnexosFinancieros/ReporteAnexosVencidosEdadesPage"
 import { ModuleRepository } from "./components/ModuleRepository"
+import { AuditLogViewer } from "./components/AuditLogViewer"
 import { useEffect, useCallback, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import type React from "react"
@@ -438,6 +439,16 @@ const AppRoutes = () => {
           <ProtectedRoute>
             <MainLayout>
               <ModuleViewer />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/AuditLogViewer"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <AuditLogViewer />
             </MainLayout>
           </ProtectedRoute>
         }

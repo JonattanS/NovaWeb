@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -47,13 +47,9 @@ const BalanceComprobacionRangoFechasCentroTercerosPage = () => {
   const [error, setError] = useState("")
   const [page, setPage] = useState(1)
   const [inputPage, setInputPage] = useState("1")
-  const [isFiltersOpen, setIsFiltersOpen] = useState(false)
+  const [isFiltersOpen, setIsFiltersOpen] = useState(true)
   const [pdfProgress, setPdfProgress] = useState(0)
   const [isPdfGenerating, setIsPdfGenerating] = useState(false)
-
-  useEffect(() => {
-    handleSubmit(new Event("submit") as unknown as React.FormEvent)
-  }, [])
 
   const exportToCSV = () => {
     if (resultado.length === 0) return

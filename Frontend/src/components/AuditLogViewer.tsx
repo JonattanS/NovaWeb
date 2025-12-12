@@ -13,71 +13,76 @@ interface AuditLog {
   id: number
   logTip: string
   logPro: string
+  logGru?: string
+  logSec?: string
+  logOpe?: string
+  logDet: string | null
   usuario: string
   usuario_nombre: string
   empresa: string
   logFec: string
-  logDet: string | null
-}
-
-interface PaginationInfo {
-  page: number
-  limit: number
-  total: number
-  pages: number
 }
 
 export function AuditLogViewer() {
   const { user } = useUser()
   const [logs, setLogs] = useState<AuditLog[]>([])
-  const [pagination, setPagination] = useState<PaginationInfo>({
-    page: 1,
-    limit: 20,
-    total: 0,
-    pages: 0,
-  })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   // Filtros
   const [filterType, setFilterType] = useState<string>('all')
-  const [filterUser, setFilterUser] = useState<string>('')
+  const [filterProcess, setFilterProcess] = useState<string>('all')
   const [startDate, setStartDate] = useState<string>('')
   const [endDate, setEndDate] = useState<string>('')
   const [currentPage, setCurrentPage] = useState(1)
+  const [totalRecords, setTotalRecords] = useState(0)
+  const [pageSize] = useState(20)
 
-  // Cargar logs
-  const fetchLogs = async (page = 1) => {
-    if (!user?.token) return
+  // Cargar logs desde el servicio consultadocumentos
+  const fetchLogs = async () => {
+    if (!user?.token || !user?.adm_ciaid) return
 
     setLoading(true)
     setError(null)
 
     try {
-      const params = new URLSearchParams({
-        page: page.toString(),
-        limit: '20',
-      })
+      const payload: any = {
+        fuente: 'adm_log',
+        adm_ciaid: user.adm_ciaid,
+      }
 
-      if (filterType && filterType !== 'all') params.append('logTip', filterType)
-      if (filterUser) params.append('adm_usrId', filterUser)
-      if (startDate) params.append('startDate', startDate)
-      if (endDate) params.append('endDate', endDate)
-      if (user.adm_ciaid) params.append('adm_ciaid', user.adm_ciaid.toString())
+      if (filterType && filterType !== 'all') {
+        payload.logTip = filterType
+      }
+      if (filterProcess && filterProcess !== 'all') {
+        payload.logPro = filterProcess
+      }
+      if (startDate) {
+        payload.fecha_ini = startDate
+      }
+      if (endDate) {
+        payload.fecha_fin = endDate
+      }
 
-      const response = await fetch(`${BACKEND_URL}/api/audit-logs?${params}`, {
+      const response = await fetch(`${BACKEND_URL}/consultadocumentos`, {
+        method: 'POST',
         headers: {
+          'Content-Type': 'application/json',
           'Authorization': `Bearer ${user.token}`,
         },
+        body: JSON.stringify(payload),
       })
 
-      if (!response.ok) throw new Error('Error al cargar logs')
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Error al cargar logs')
+      }
 
       const data = await response.json()
-      setLogs(data.data || [])
-      setPagination(data.pagination)
-      setCurrentPage(page)
+      setLogs(data || [])
+      setTotalRecords(data?.length || 0)
     } catch (err) {
+      console.error('Error fetching logs:', err)
       setError(err instanceof Error ? err.message : 'Error desconocido')
     } finally {
       setLoading(false)
@@ -85,22 +90,27 @@ export function AuditLogViewer() {
   }
 
   useEffect(() => {
-    fetchLogs(1)
-  }, [user?.token])
+    fetchLogs()
+  }, [user?.token, user?.adm_ciaid])
 
   // Aplicar filtros
   const handleApplyFilters = () => {
-    fetchLogs(1)
+    setCurrentPage(1)
+    fetchLogs()
   }
 
   // Limpiar filtros
   const handleClearFilters = () => {
     setFilterType('all')
-    setFilterUser('')
+    setFilterProcess('all')
     setStartDate('')
     setEndDate('')
     setCurrentPage(1)
-    fetchLogs(1)
+    
+    // Hacer fetch con filtros limpios
+    setTimeout(() => {
+      fetchLogs()
+    }, 0)
   }
 
   // Exportar a CSV
@@ -133,6 +143,13 @@ export function AuditLogViewer() {
     window.URL.revokeObjectURL(url)
   }
 
+  // Paginación en el frontend
+  const paginatedLogs = logs.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  )
+  const totalPages = Math.ceil(totalRecords / pageSize)
+
   return (
     <div className="space-y-6 p-6">
       {/* Header */}
@@ -147,7 +164,7 @@ export function AuditLogViewer() {
           <CardTitle className="text-lg">Filtros</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             {/* Tipo de Log */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -161,6 +178,27 @@ export function AuditLogViewer() {
                   <SelectItem value="all">Todos</SelectItem>
                   <SelectItem value="LOGIN_EXITOSO">Login Exitoso</SelectItem>
                   <SelectItem value="LOGIN_FALLIDO">Login Fallido</SelectItem>
+                  <SelectItem value="CONSULTA">Consulta</SelectItem>
+                  <SelectItem value="UPDATE">Actualización</SelectItem>
+                  <SelectItem value="DELETE">Eliminación</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Proceso */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Proceso
+              </label>
+              <Select value={filterProcess} onValueChange={setFilterProcess}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Todos" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="LOGIN">Login</SelectItem>
+                  <SelectItem value="REPORTE">Reporte</SelectItem>
+                  <SelectItem value="QUERY">Query</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -224,7 +262,7 @@ export function AuditLogViewer() {
           <div>
             <CardTitle>Eventos Registrados</CardTitle>
             <CardDescription>
-              Total: {pagination.total} registros
+              Total: {totalRecords} registros
             </CardDescription>
           </div>
           <Button
@@ -242,7 +280,7 @@ export function AuditLogViewer() {
             <div className="flex justify-center items-center h-32">
               <RefreshCw className="h-6 w-6 animate-spin text-blue-600" />
             </div>
-          ) : logs.length === 0 ? (
+          ) : paginatedLogs.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               No hay registros que mostrar
             </div>
@@ -253,13 +291,14 @@ export function AuditLogViewer() {
                   <tr>
                     <th className="px-4 py-3 text-left font-medium text-gray-700">Fecha/Hora</th>
                     <th className="px-4 py-3 text-left font-medium text-gray-700">Tipo</th>
+                    <th className="px-4 py-3 text-left font-medium text-gray-700">Proceso</th>
                     <th className="px-4 py-3 text-left font-medium text-gray-700">Usuario</th>
                     <th className="px-4 py-3 text-left font-medium text-gray-700">Empresa</th>
                     <th className="px-4 py-3 text-left font-medium text-gray-700">Detalles</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">
-                  {logs.map((log) => {
+                  {paginatedLogs.map((log) => {
                     const details = log.logDet ? JSON.parse(log.logDet) : {}
                     return (
                       <tr key={log.id} className="hover:bg-gray-50 transition-colors">
@@ -272,12 +311,21 @@ export function AuditLogViewer() {
                               <CheckCircle className="h-3 w-3" />
                               Exitoso
                             </Badge>
-                          ) : (
+                          ) : log.logTip === 'LOGIN_FALLIDO' ? (
                             <Badge className="bg-red-100 text-red-800 hover:bg-red-100 flex items-center gap-1 w-fit">
                               <AlertCircle className="h-3 w-3" />
                               Fallido
                             </Badge>
+                          ) : (
+                            <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">
+                              {log.logTip}
+                            </Badge>
                           )}
+                        </td>
+                        <td className="px-4 py-3 text-gray-600">
+                          <span className="text-xs bg-gray-100 px-2 py-1 rounded">
+                            {log.logPro}
+                          </span>
                         </td>
                         <td className="px-4 py-3">
                           <div>
@@ -286,8 +334,8 @@ export function AuditLogViewer() {
                           </div>
                         </td>
                         <td className="px-4 py-3 text-gray-600">{log.empresa}</td>
-                        <td className="px-4 py-3 text-gray-600">
-                          {details.razon || details.tipo || 'N/A'}
+                        <td className="px-4 py-3 text-gray-600 text-xs">
+                          {log.logOpe || details.razon || details.tipo || 'N/A'}
                         </td>
                       </tr>
                     )
@@ -300,22 +348,22 @@ export function AuditLogViewer() {
       </Card>
 
       {/* Paginación */}
-      {pagination.pages > 1 && (
+      {totalPages > 1 && (
         <div className="flex items-center justify-between">
           <span className="text-sm text-gray-600">
-            Página {pagination.page} de {pagination.pages}
+            Página {currentPage} de {totalPages} (Total: {totalRecords} registros)
           </span>
           <div className="flex gap-2">
             <Button
-              onClick={() => fetchLogs(pagination.page - 1)}
-              disabled={pagination.page === 1 || loading}
+              onClick={() => setCurrentPage(currentPage - 1)}
+              disabled={currentPage === 1 || loading}
               variant="outline"
             >
               Anterior
             </Button>
             <Button
-              onClick={() => fetchLogs(pagination.page + 1)}
-              disabled={pagination.page === pagination.pages || loading}
+              onClick={() => setCurrentPage(currentPage + 1)}
+              disabled={currentPage === totalPages || loading}
               variant="outline"
             >
               Siguiente

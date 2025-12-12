@@ -26,11 +26,12 @@ CREATE TABLE IF NOT EXISTS adm_log (
 );
 
 -- Índices para mejorar el rendimiento de búsquedas
-CREATE INDEX idx_adm_log_adm_ciaid ON adm_log(adm_ciaid);
-CREATE INDEX idx_adm_log_adm_usrId ON adm_log(adm_usrId);
-CREATE INDEX idx_adm_log_logTip ON adm_log(logTip);
-CREATE INDEX idx_adm_log_logFec ON adm_log(logFec);
-CREATE INDEX idx_adm_log_logPro ON adm_log(logPro);
+CREATE INDEX IF NOT EXISTS idx_adm_log_logfec ON adm_log(logFec DESC);
+CREATE INDEX IF NOT EXISTS idx_adm_log_logtip ON adm_log(logTip);
+CREATE INDEX IF NOT EXISTS idx_adm_log_adm_usrid ON adm_log(adm_usrId);
+CREATE INDEX IF NOT EXISTS idx_adm_log_adm_ciaid ON adm_log(adm_ciaid);
+CREATE INDEX IF NOT EXISTS idx_adm_log_logpro ON adm_log(logPro);
+CREATE INDEX IF NOT EXISTS idx_adm_log_composite ON adm_log(adm_ciaid, logFec DESC);
 
 -- Nota: Ejecuta este script en tu base de datos PostgreSQL
 -- Asegúrate de que las tablas adm_cia, adm_men y adm_usr ya existan

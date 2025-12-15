@@ -42,6 +42,7 @@ type Filtros = {
   anx_cod_fin: string
   ter_nit_ini: string
   ter_nit_fin: string
+  fecha_corte: string  
   detallado: boolean
   alfabetico: boolean
 }
@@ -54,6 +55,7 @@ const ReporteEstadoDeMultiplesAnexosPage = () => {
     anx_cod_fin: "",
     ter_nit_ini: "",
     ter_nit_fin: "",
+    fecha_corte: "",
     detallado: true,
     alfabetico: true,
   });
@@ -292,6 +294,7 @@ const ReporteEstadoDeMultiplesAnexosPage = () => {
                       </div>
                     </div>
 
+
                     {/* Fecha de Corte */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
@@ -308,8 +311,7 @@ const ReporteEstadoDeMultiplesAnexosPage = () => {
                         />
                       </div>
                     </div>
-
-
+                    
                     {/* Rango de NITs */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">

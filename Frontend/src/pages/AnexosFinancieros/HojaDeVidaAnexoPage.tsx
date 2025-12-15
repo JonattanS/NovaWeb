@@ -87,7 +87,8 @@ const HojaDeVidaAnexoPage = () => {
   const [error, setError] = useState("");
   const [page, setPage] = useState(1);
 
-  const [isFiltersOpen, setIsFiltersOpen] = useState(true);
+  const [pageDetalle, setPageDetalle] = useState(1);
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
 
   const [isExporting, setIsExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState(0);

@@ -170,6 +170,10 @@ function validateFilters(filtros) {
     "ter_nit_fin",
     "cta_cod_ini",
     "cta_cod_fin",
+    "cto_cod_ini",
+    "cto_cod_fin",
+    "act_cod_ini",
+    "act_cod_fin",
   ]
 
   integerFields.forEach((field) => {
@@ -214,6 +218,11 @@ router.post("/consultadocumentos", async (req, res) => {
 
   const { sql, values } = construirWhere(filtros)
 
+  console.log("=== INICIANDO CONSULTA ===")
+  console.log("Fuente:", fuente)
+  console.log("SQL WHERE:", sql)
+  console.log("Values:", values)
+
   let baseQuery
 
   switch (fuente) {
@@ -227,12 +236,12 @@ router.post("/consultadocumentos", async (req, res) => {
           doc_fec_rel, vcto_nro, anf_tip_cuo, anf_nro_pag, anf_per_pag, anx_cod, cpt_cod, ica_cod, mov_bas, mov_por_apl, anf_int_nom, 
           mov_dia_bas, anf_tip_int, anf_mod_int, tas_cod, anf_ptos, anf_per_int, mov_cap, mov_cap_ext, mov_mor, mov_mor_ext, anf_vcto1, 
           anf_vcto, dif_tip_amo, dif_fec_ini, dif_dia, clc_cod_dif, doc_num_dif, doc_fec_dif, dif_con, mov_est, mov_mnd_ext, mov_exp_ext, 
-          mov_ret_igv, pag_ele_num, mov_bas_com, suc_nom, clc_nom, clc_ppt, cmp_nom, cta_nom, anx_nom, cpt_nom, anf_nom, anf_cla, anf_tip,
+          mov_ret_igv, pag_ele_num, mov_bas_com, mov_cheq as che_num, suc_nom, clc_nom, clc_ppt, cmp_nom, cta_nom, anx_nom, cpt_nom, anf_nom, anf_cla, anf_tip,
           anf_cre, ter_raz, cto_nom, act_nom, mnd_nom, usr_nom, est_nom, ven_nom, mnd_nom1, bco_nom, suc_nom_des, clc_nom_rel, ica_nom, tas_nom, 
           tip_amo_nom, clc_nom_dif, est_nom1, ind_anf, ind_anx, ind_cto, ind_mnd, ind_pre, ind_nit, ind_bco, ind_aju, ind_dif, ind_caj
         FROM con_his
         ${sql}
-        ORDER BY LOWER(clc_cod), doc_num, doc_fec, mov_cons
+        ORDER BY cta_cod, doc_fec, mov_cons
       `
       break
 
@@ -247,6 +256,7 @@ router.post("/consultadocumentos", async (req, res) => {
         ORDER BY id
       `
       break
+
 
     case "adm_log":
       const { sql: sqlAudit, values: valuesAudit } = construirWhereAuditLog(filtros)
@@ -280,8 +290,12 @@ router.post("/consultadocumentos", async (req, res) => {
         return res.status(500).json({ error: `Error consultando ${fuente}`, detalle: err.message })
       }
 
+
     // Agregar más casos según necesidad
   }
+
+  console.log("=== QUERY FINAL ===")
+  console.log(baseQuery)
 
   try {
     const result = await pool.query(baseQuery, values)

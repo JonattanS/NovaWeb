@@ -80,10 +80,15 @@ const HojaDeVidaAnexoPage = () => {
   });
 
   const [resultado, setResultado] = useState<any[]>([]);
+  const [resultadoDetalle, setResultadoDetalle] = useState<any[]>([]);
+  const [registroSeleccionado, setRegistroSeleccionado] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [loadingDetalle, setLoadingDetalle] = useState(false);
   const [error, setError] = useState("");
   const [page, setPage] = useState(1);
+
   const [isFiltersOpen, setIsFiltersOpen] = useState(true);
+
   const [isExporting, setIsExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState(0);
 
@@ -193,6 +198,38 @@ const HojaDeVidaAnexoPage = () => {
     
     console.log("Resultado procesado:", resultado);
     return resultado;
+  };
+
+  // Función para consultar movimientos detallados con con_anf_mov2
+  const consultarDetalleAnexo = async (registro: any) => {
+    if (!registro.suc_cod || !registro.anf_cod) {
+      console.log("Registro sin suc_cod o anf_cod:", registro);
+      return;
+    }
+
+    setLoadingDetalle(true);
+    setRegistroSeleccionado(registro);
+    
+    try {
+      const filtrosDetalle = {
+        fuente: 'con_anf_mov2',
+        suc_cod: registro.suc_cod,
+        anf_cod_ini: registro.anf_cod,
+        anf_cod_fin: registro.anf_cod
+      };
+      
+      console.log("Consultando detalle con:", filtrosDetalle);
+      const response = await databaseService.consultaDocumentos(filtrosDetalle);
+      console.log("Respuesta detalle:", response);
+      
+      setResultadoDetalle(response || []);
+      setPageDetalle(1);
+    } catch (err: any) {
+      console.error("Error consultando detalle:", err);
+      setResultadoDetalle([]);
+    } finally {
+      setLoadingDetalle(false);
+    }
   };
 
   const getActiveFiltersCount = () => {
@@ -564,7 +601,12 @@ const HojaDeVidaAnexoPage = () => {
                   </thead>
                   <tbody className="divide-y divide-gray-200">
                     {resultado.slice((page - 1) * ROWS_PER_PAGE, page * ROWS_PER_PAGE).map((row, i) => (
-                      <tr key={i} className="hover:bg-blue-50/50 transition-colors">
+                      <tr 
+                        key={i} 
+                        className="hover:bg-blue-50/50 transition-colors cursor-pointer" 
+                        onClick={() => consultarDetalleAnexo(row)}
+                        title="Click para ver detalle"
+                      >
                         <td className="px-4 py-3 text-gray-900 whitespace-nowrap">{row.suc_cod}</td>
                         <td className="px-4 py-3 text-gray-900 whitespace-nowrap">{row.clc_cod}</td>
                         <td className="px-4 py-3 text-gray-900 whitespace-nowrap">{row.doc_num}</td>
@@ -593,6 +635,75 @@ const HojaDeVidaAnexoPage = () => {
                   onPageChange={setPage}
                 />
               </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Detalle del Anexo Seleccionado */}
+        {registroSeleccionado && (
+          <Card className="shadow-lg border-0 bg-white/90 backdrop-blur-sm">
+            <CardHeader className="bg-gradient-to-r from-green-600 to-green-800 text-white rounded-t-lg">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-xl flex items-center">
+                  <FileText className="h-5 w-5 mr-2" />
+                  Detalle Anexo: {registroSeleccionado.anf_cod} - Sucursal: {registroSeleccionado.suc_cod}
+                </CardTitle>
+                <div className="flex items-center gap-2">
+                  {loadingDetalle && (
+                    <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
+                      Cargando...
+                    </Badge>
+                  )}
+                  <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
+                    {resultadoDetalle.length} registros
+                  </Badge>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="relative overflow-x-auto" style={{ maxHeight: "50vh", overflowY: "auto" }}>
+                <table className="w-full text-sm">
+                  <thead className="bg-green-50 border-b-2 border-green-200 sticky top-0 z-10">
+                    <tr>
+                      <th className="px-4 py-3 font-semibold text-left text-gray-700 whitespace-nowrap">Clase</th>
+                      <th className="px-4 py-3 font-semibold text-left text-gray-700 whitespace-nowrap">Documento</th>
+                      <th className="px-4 py-3 font-semibold text-left text-gray-700 whitespace-nowrap">Fecha</th>
+                      <th className="px-4 py-3 font-semibold text-left text-gray-700 whitespace-nowrap">NIT</th>
+                      <th className="px-4 py-3 font-semibold text-left text-gray-700 whitespace-nowrap">Tercero</th>
+                      <th className="px-4 py-3 font-semibold text-left text-gray-700 whitespace-nowrap">Cuenta</th>
+                      <th className="px-4 py-3 font-semibold text-right text-gray-700 whitespace-nowrap">Valor</th>
+                      <th className="px-4 py-3 font-semibold text-left text-gray-700 whitespace-nowrap">Detalle</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {resultadoDetalle.slice((pageDetalle - 1) * ROWS_PER_PAGE, pageDetalle * ROWS_PER_PAGE).map((row, i) => (
+                      <tr key={i} className="hover:bg-green-50/50 transition-colors">
+                        <td className="px-4 py-3 text-gray-900 whitespace-nowrap">{row.clc_cod}</td>
+                        <td className="px-4 py-3 text-gray-900 whitespace-nowrap">{row.doc_num}</td>
+                        <td className="px-4 py-3 text-gray-900 whitespace-nowrap">{row.doc_fec}</td>
+                        <td className="px-4 py-3 text-gray-900 whitespace-nowrap">{row.ter_nit}</td>
+                        <td className="px-4 py-3 text-gray-900 whitespace-nowrap">{row.ter_raz}</td>
+                        <td className="px-4 py-3 text-gray-900 whitespace-nowrap">{row.cta_cod}</td>
+                        <td className="px-4 py-3 text-gray-900 whitespace-nowrap text-right">
+                          {new Intl.NumberFormat('es-CO', { minimumFractionDigits: 2 }).format(parseFloat(row.mov_val || 0))}
+                        </td>
+                        <td className="px-4 py-3 text-gray-900 whitespace-nowrap">{row.mov_det}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {resultadoDetalle.length > ROWS_PER_PAGE && (
+                <div className="border-t bg-green-50">
+                  <DataPagination
+                    currentPage={pageDetalle}
+                    totalPages={Math.ceil(resultadoDetalle.length / ROWS_PER_PAGE)}
+                    recordsPerPage={ROWS_PER_PAGE}
+                    totalRecords={resultadoDetalle.length}
+                    onPageChange={setPageDetalle}
+                  />
+                </div>
+              )}
             </CardContent>
           </Card>
         )}

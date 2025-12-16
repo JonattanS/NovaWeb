@@ -127,6 +127,22 @@ export function AppSidebar() {
     })
   }
 
+  /**
+   * Navega al portafolio completo sin seleccionar módulo
+   */
+  const handlePortfolioClick = (porcod: number, portfolioName: string) => {
+    navigate("/portafolios", {
+      state: {
+        selectedPortfolio: {
+          porcod,
+          name: portfolioName,
+          id: porcod.toString(),
+        },
+        showSystemModules: false, // Mostrar módulos de usuario por defecto
+      },
+    })
+  }
+
   return (
     <Sidebar
       className={`border-r border-slate-200 dark:border-slate-700 bg-[#41B9E8] dark:bg-[#41B9E8] h-screen z-30 transition-transform-smooth duration-200 ease-in-out${
@@ -218,36 +234,55 @@ export function AppSidebar() {
                             className="w-64 p-3 bg-white border-slate-600 ml-2 z-50"
                           >
                             <div className="space-y-2">
-                              <div className="text-[#F7722F] font-semibold text-sm mb-3">{portfolio.name}</div>
-                              {portfolio.modules.map((module) => (
-                                <button
-                                  key={module.id}
-                                  onClick={() => handleDynamicModuleClick(module, porcod, portfolio.name)}
-                                  className="flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 text-slate-600 hover:bg-slate-200 w-full text-left"
-                                >
-                                  <Settings className="w-4 h-4" />
-                                  <span className="font-medium text-sm">{module.mennom}</span>
-                                </button>
-                              ))}
+                              <button
+                                onClick={() => handlePortfolioClick(porcod, portfolio.name)}
+                                className="flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 text-[#F7722F] hover:bg-blue-100 w-full text-left font-semibold mb-3"
+                              >
+                                <Folder className="w-4 h-4" />
+                                <span>{portfolio.name}</span>
+                              </button>
+                              <div className="border-t pt-2">
+                                <div className="text-xs text-slate-600 font-semibold mb-2 px-1">Módulos:</div>
+                                {portfolio.modules.map((module) => (
+                                  <button
+                                    key={module.id}
+                                    onClick={() => handleDynamicModuleClick(module, porcod, portfolio.name)}
+                                    className="flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 text-slate-600 hover:bg-slate-200 w-full text-left text-sm"
+                                  >
+                                    <Settings className="w-3 h-3" />
+                                    <span>{module.mennom}</span>
+                                  </button>
+                                ))}
+                              </div>
                             </div>
                           </PopoverContent>
                         </Popover>
                       ) : (
                         <>
-                          <SidebarMenuButton asChild>
+                          <div className="flex items-center gap-2 w-full px-4 py-3">
+                            <SidebarMenuButton
+                              asChild
+                              className="flex-1"
+                            >
+                              <button
+                                onClick={() => handlePortfolioClick(porcod, portfolio.name)}
+                                className="flex items-center gap-3 px-0 py-0 rounded-xl transition-all duration-200 group text-[#F7722F] dark:text-[#F7722F] hover:bg-blue-500 dark:hover:bg-[#F7722F] hover:translate-x-1 w-full text-left"
+                              >
+                                <Folder className="h-5 w-5" />
+                                <span className="font-medium flex-1">{portfolio.name}</span>
+                              </button>
+                            </SidebarMenuButton>
                             <button
                               onClick={() => togglePortfolio(porcod)}
-                              className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group text-[#F7722F] dark:text-[#F7722F] hover:bg-blue-500 dark:hover:bg-[#F7722F] hover:translate-x-1 w-full text-left"
+                              className="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors"
                             >
                               {isExpanded ? (
-                                <ChevronDown className="h-5 w-5 transition-transform group-hover:scale-110" />
+                                <ChevronDown className="h-5 w-5 text-slate-600 dark:text-slate-300" />
                               ) : (
-                                <ChevronRight className="h-5 w-5 transition-transform group-hover:scale-110" />
+                                <ChevronRight className="h-5 w-5 text-slate-600 dark:text-slate-300" />
                               )}
-                              <Folder className="h-5 w-5" />
-                              <span className="font-medium">{portfolio.name}</span>
                             </button>
-                          </SidebarMenuButton>
+                          </div>
 
                           {isExpanded && (
                             <>

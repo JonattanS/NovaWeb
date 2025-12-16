@@ -14,6 +14,8 @@ export const routesByMencod: Record<string, string> = {
   '010325': '/HojaDeVidaAnexoPage',
   '010903': '/BalanceComprobacionRangoFechasCentroTercerosPage',
   '010906': '/BalanceGeneralPorSucursalPage',
+  '010909': '/EstadoResultadosPorCentroActividadPage',
+  '010912': '/ConsultaBalanceComprobacionPage',
   '011602': '/ConsultaSaldoPage',
   '011604': '/ReporteSaldosPorCuentaPage',
   '011606': '/ReporteSaldosPorNitPage',

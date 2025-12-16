@@ -51,6 +51,17 @@ import { ModuleViewer } from "./components/ModuleViewer"
 
 const queryClient = new QueryClient()
 
+// Agregar estilos globales para la transición smooth
+const globalStyles = `
+  :root {
+    --sidebar-width: 256px;
+  }
+  
+  * {
+    --sidebar-transition: margin-left 0.3s ease-in-out, left 0.3s ease-in-out;
+  }
+`
+
 function useAutoLogout(onLogout: () => void, delay = 30 * 60 * 1000) {
   const timer = useRef<NodeJS.Timeout | null>(null)
 
@@ -76,42 +87,10 @@ function useAutoLogout(onLogout: () => void, delay = 30 * 60 * 1000) {
 }
 
 /**
- * Hook para obtener el ancho dinámico del sidebar desde el DOM
- */
-function useSidebarWidth() {
-  const [sidebarWidth, setSidebarWidth] = React.useState(256) // 64 (collapsed) o 256 (normal) o 384 (expanded)
-  const { state } = useSidebar()
-
-  useEffect(() => {
-    // Observar cambios en el ancho del sidebar
-    const sidebar = document.querySelector('[role="navigation"]')
-    if (!sidebar) return
-
-    const observeWidth = () => {
-      const width = sidebar.clientWidth
-      setSidebarWidth(width)
-    }
-
-    // Observar con ResizeObserver para cambios dinámicos
-    const resizeObserver = new ResizeObserver(observeWidth)
-    resizeObserver.observe(sidebar)
-
-    // Initial call
-    observeWidth()
-
-    return () => resizeObserver.disconnect()
-  }, [state])
-
-  return sidebarWidth
-}
-
-/**
  * Componente interno que usa useSidebar para obtener el estado
  */
 const MainLayoutContent = ({ children }: { children: React.ReactNode }) => {
   const { state } = useSidebar()
-  const sidebarWidth = useSidebarWidth()
-  const isCollapsed = state === "collapsed"
 
   return (
     <div className="min-h-screen flex w-full">
@@ -120,7 +99,7 @@ const MainLayoutContent = ({ children }: { children: React.ReactNode }) => {
       <div 
         className="flex-1 flex flex-col transition-all duration-300 ease-in-out overflow-x-hidden"
         style={{
-          marginLeft: `${sidebarWidth}px`,
+          marginLeft: 'var(--sidebar-width)',
         }}
       >
         {/* Header fijo con la MISMA transición que el sidebar */}
@@ -133,7 +112,7 @@ const MainLayoutContent = ({ children }: { children: React.ReactNode }) => {
           h-16
           "
           style={{
-            left: `${sidebarWidth}px`,
+            left: 'var(--sidebar-width)',
           }}
           >
         
@@ -535,6 +514,14 @@ const App = () => {
   const navigate = useNavigate()
 
   useAutoLogout(logout, 30 * 60 * 1000)
+
+  // Agregar estilos globales
+  useEffect(() => {
+    const style = document.createElement('style')
+    style.textContent = globalStyles
+    document.head.appendChild(style)
+    return () => document.head.removeChild(style)
+  }, [])
 
   // Usar useEffect después del <BrowserRouter> en el árbol para que useNavigate funcione
   useEffect(() => {

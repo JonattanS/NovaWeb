@@ -44,7 +44,7 @@ import ReporteAnalisisAnexosVencidosPage from "./pages/AnexosFinancieros/Reporte
 import ReporteAnexosVencidosEdadesPage from "./pages/AnexosFinancieros/ReporteAnexosVencidosEdadesPage"
 import { ModuleRepository } from "./components/ModuleRepository"
 import { AuditLogViewer } from "./components/AuditLogViewer"
-import { useEffect, useCallback, useRef } from "react"
+import { useEffect, useCallback, useRef, useMemo } from "react"
 import { useNavigate } from "react-router-dom"
 import type React from "react"
 import { ModuleViewer } from "./components/ModuleViewer"
@@ -82,26 +82,36 @@ const MainLayoutContent = ({ children }: { children: React.ReactNode }) => {
   const { state } = useSidebar()
   const isCollapsed = state === "collapsed"
 
+  // Calcular el margin-left dinámico basado en el ancho del sidebar
+  // El sidebar puede ser: w-16 (collapsed), w-64 (normal), w-96 (expanded)
+  const marginLeft = useMemo(() => {
+    if (isCollapsed) return 'ml-16'
+    // Por defecto usamos ml-64, pero el sidebar se expandirá a 384px (w-96) dinámicamente
+    // Aqui simplemente usamos la clase de Tailwind que coincide
+    return 'ml-64 lg:ml-96'
+  }, [isCollapsed])
+
   return (
     <div className="min-h-screen flex w-full">
       <AppSidebar />
       
-      <div className="flex-1 flex flex-col transition-all duration-200 overflow-x-hidden">
+      <div className={`flex-1 flex flex-col transition-all duration-300 ease-in-out overflow-x-hidden ${marginLeft}`}>
         {/* Header fijo con la MISMA transición que el sidebar */}
         <header 
           className={`
           border-b bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl 
           supports-[backdrop-filter]:bg-white/60 shadow-sm 
           fixed top-0 right-0 z-40 
-          transition-transform-smooth duration-200 ease-in-out
-          ${isCollapsed ? 'left-12' : 'left-64'}`}
+          transition-all duration-300 ease-in-out
+          ${isCollapsed ? 'left-16' : 'left-64 lg:left-96'}
+          `}
           >
         
           <div className="flex h-16 items-center justify-between px-6">
             <div className="flex items-center space-x-4">
               <SidebarTrigger className="hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" />
               <div>
-                <h2 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-[#F7722F] bg-clip-text text-transparent">
+                <h2 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-[#F7722F] bg-clip-text text-transparent truncate">
               Nova Web
                 </h2>
               </div>
@@ -111,7 +121,7 @@ const MainLayoutContent = ({ children }: { children: React.ReactNode }) => {
         </header>
         
         {/* Contenido principal */}
-        <main className="flex-1 p-6 overflow-y-auto bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 pt-16">
+        <main className="flex-1 p-6 overflow-y-auto overflow-x-hidden bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 pt-16">
           {children}
         </main>
       </div>

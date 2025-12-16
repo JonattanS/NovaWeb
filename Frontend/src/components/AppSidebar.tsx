@@ -51,7 +51,12 @@ export function AppSidebar() {
 
   // Calcular ancho dinámico basado en portafolios expandidos
   const hasExpandedPortfolios = Object.values(expandedPortfolios).some((expanded) => expanded)
-  const dynamicWidth = isCollapsed ? "w-16" : hasExpandedPortfolios ? "w-96" : "w-64"
+  const sidebarWidth = isCollapsed ? 64 : hasExpandedPortfolios ? 384 : 256
+
+  // Actualizar CSS variable cuando cambia el ancho
+  useEffect(() => {
+    document.documentElement.style.setProperty('--sidebar-width', `${sidebarWidth}px`)
+  }, [sidebarWidth])
 
   useEffect(() => {
     const updateDynamicFunctions = () => {
@@ -150,11 +155,11 @@ export function AppSidebar() {
   return (
     <Sidebar
       className={`border-r border-slate-200 dark:border-slate-700 bg-[#41B9E8] dark:bg-[#41B9E8] h-screen z-30 transition-all duration-300 ease-in-out ${
-        dynamicWidth
+        isCollapsed ? "w-16" : hasExpandedPortfolios ? "w-96" : "w-64"
       }`}
       collapsible="icon"
       style={{
-        width: isCollapsed ? '64px' : hasExpandedPortfolios ? '384px' : '256px',
+        width: `${sidebarWidth}px`,
       }}
     >
       <SidebarContent className="h-full overflow-y-auto overflow-x-hidden py-4">

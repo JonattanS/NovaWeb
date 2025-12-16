@@ -44,23 +44,12 @@ import ReporteAnalisisAnexosVencidosPage from "./pages/AnexosFinancieros/Reporte
 import ReporteAnexosVencidosEdadesPage from "./pages/AnexosFinancieros/ReporteAnexosVencidosEdadesPage"
 import { ModuleRepository } from "./components/ModuleRepository"
 import { AuditLogViewer } from "./components/AuditLogViewer"
+import type React from "react"
 import { useEffect, useCallback, useRef } from "react"
 import { useNavigate } from "react-router-dom"
-import type React from "react"
 import { ModuleViewer } from "./components/ModuleViewer"
 
 const queryClient = new QueryClient()
-
-// Agregar estilos globales para la transición smooth
-const globalStyles = `
-  :root {
-    --sidebar-width: 256px;
-  }
-  
-  * {
-    --sidebar-transition: margin-left 0.3s ease-in-out, left 0.3s ease-in-out;
-  }
-`
 
 function useAutoLogout(onLogout: () => void, delay = 30 * 60 * 1000) {
   const timer = useRef<NodeJS.Timeout | null>(null)
@@ -92,47 +81,48 @@ function useAutoLogout(onLogout: () => void, delay = 30 * 60 * 1000) {
 const MainLayoutContent = ({ children }: { children: React.ReactNode }) => {
   const { state } = useSidebar()
 
+  useEffect(() => {
+    const sidebarWidth = getComputedStyle(document.documentElement).getPropertyValue("--sidebar-width")
+    console.log("[v0] MainLayoutContent - CSS variable value:", sidebarWidth)
+    console.log("[v0] MainLayoutContent - Sidebar state:", state)
+  }, [state])
+
   return (
     <div className="min-h-screen flex w-full">
       <AppSidebar />
-      
-      <div 
-        className="flex-1 flex flex-col transition-all duration-300 ease-in-out overflow-x-hidden"
+
+      <div
+        className="flex-1 flex flex-col min-h-screen w-full"
         style={{
-          marginLeft: 'var(--sidebar-width)',
+          marginLeft: "var(--sidebar-width)",
+          transition: "margin-left 300ms ease-in-out",
         }}
       >
-        {/* Header fijo con la MISMA transición que el sidebar */}
-        <header 
+        <header
           className="
-          border-b bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl 
-          supports-[backdrop-filter]:bg-white/60 shadow-sm 
-          fixed top-0 right-0 z-40 
-          transition-all duration-300 ease-in-out
-          h-16
+            border-b bg-white dark:bg-slate-900 
+            shadow-sm 
+            sticky top-0 z-40
+            h-16 w-full
           "
           style={{
-            left: 'var(--sidebar-width)',
+            transition: "all 300ms ease-in-out",
           }}
-          >
-        
-          <div className="flex h-16 items-center justify-between px-6">
+        >
+          <div className="flex h-16 items-center justify-between px-4">
             <div className="flex items-center space-x-4">
-              <SidebarTrigger className="hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" />
+              <SidebarTrigger className="hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors rounded-lg p-2" />
               <div>
-                <h2 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-[#F7722F] bg-clip-text text-transparent truncate">
-              Nova Web
+                <h2 className="text-xl font-bold bg-gradient-to-r from-[#00264D] to-[#F7722F] bg-clip-text text-transparent truncate">
+                  Nova Web
                 </h2>
               </div>
             </div>
             <UserMenu />
           </div>
         </header>
-        
-        {/* Contenido principal */}
-        <main className="flex-1 p-6 overflow-y-auto overflow-x-hidden bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800" style={{
-          marginTop: '64px', // Altura del header (h-16 = 64px)
-        }}>
+
+        <main className="flex-1 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 w-full">
           {children}
         </main>
       </div>
@@ -494,7 +484,6 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
-      {/* NotFound también protegido */}
       <Route
         path="*"
         element={
@@ -514,21 +503,6 @@ const App = () => {
   const navigate = useNavigate()
 
   useAutoLogout(logout, 30 * 60 * 1000)
-
-  // Agregar estilos globales
-  useEffect(() => {
-    const style = document.createElement('style')
-    style.textContent = globalStyles
-    document.head.appendChild(style)
-    return () => document.head.removeChild(style)
-  }, [])
-
-  // Usar useEffect después del <BrowserRouter> en el árbol para que useNavigate funcione
-  useEffect(() => {
-    if (!user) {
-      navigate("/login")
-    }
-  }, [user, navigate])
 
   return (
     <QueryClientProvider client={queryClient}>

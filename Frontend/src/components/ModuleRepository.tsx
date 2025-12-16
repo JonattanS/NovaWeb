@@ -7,11 +7,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   Folder,
-  Plus,
   Search,
   Zap,
   Database,
@@ -30,7 +29,7 @@ import { getModulesByPortfolio, type NovModule } from "@/services/novModulesApi"
 import { useUser } from "@/contexts/UserContext"
 import { useToast } from "@/hooks/use-toast"
 import { useNavigate, useLocation } from "react-router-dom"
-import { routesByMencod } from '../routesByMencod'
+import { routesByMencod } from "../routesByMencod"
 
 interface ModuleRepositoryProps {
   onClose: () => void
@@ -134,33 +133,27 @@ export const ModuleRepository = ({ onClose }: ModuleRepositoryProps) => {
   // Detectar si viene del sidebar y establecer portafolio automáticamente
   useEffect(() => {
     if (location.state?.selectedPortfolio) {
-      const portfolio = folders.find(
-        (f) => f.porcod === location.state.selectedPortfolio.porcod
-      )
+      const portfolio = folders.find((f) => f.porcod === location.state.selectedPortfolio.porcod)
       if (portfolio) {
         setSelectedPortafolio(portfolio)
-        
+
         // Si viene del sidebar, mostrar módulos del sistema
         if (location.state?.showSystemModules) {
           setShowingSystemModules(true)
         }
-        
+
         // Si especifica un módulo, expandirlo
         if (location.state?.selectedModuleCode) {
           setExpandedModuleCode(location.state.selectedModuleCode)
-          
+
           // Encontrar el módulo padre y expandir su card
-          const parentModule = novModules.find(
-            (m) => m.mencod === location.state.selectedModuleCode && !m.menter
-          )
+          const parentModule = novModules.find((m) => m.mencod === location.state.selectedModuleCode && !m.menter)
           if (parentModule) {
             setExpandedCards((prev) => ({
               ...prev,
               [parentModule.id]: true,
             }))
-            const children = novModules.filter(
-              (m2) => m2.menter && m2.mencodpad === parentModule.mencod
-            )
+            const children = novModules.filter((m2) => m2.menter && m2.mencodpad === parentModule.mencod)
             setSubModules(children)
           }
         }
@@ -317,11 +310,11 @@ export const ModuleRepository = ({ onClose }: ModuleRepositoryProps) => {
   if (loading) return <div>Cargando módulos...</div>
   if (error) return <div>{error}</div>
   if (modules.length === 0 && !selectedPortafolio) return <div>No hay módulos guardados para este usuario.</div>
-  
+
   // Renderizado principal
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
-      <div className="container mx-auto px-4 py-8 space-y-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 py-8">
+      <div className="w-full px-6 space-y-8">
         {/* Header visual destacado */}
         <div className="relative overflow-hidden rounded-3xl bg-[#F7722F] p-8 text-white shadow-2xl">
           <div className="absolute inset-0 bg-black/10"></div>
@@ -337,7 +330,7 @@ export const ModuleRepository = ({ onClose }: ModuleRepositoryProps) => {
                       {selectedPortafolio ? selectedPortafolio.name : "Portafolios Disponibles"}
                     </h1>
                     <p className="text-indigo-100 text-lg">
-                      {selectedPortafolio 
+                      {selectedPortafolio
                         ? showingSystemModules
                           ? `${filteredSystemModules.length} Módulos del Portafolio disponibles`
                           : `${filteredModules.length} módulos de usuario disponibles`
@@ -578,15 +571,13 @@ export const ModuleRepository = ({ onClose }: ModuleRepositoryProps) => {
                         className="group cursor-pointer hover:shadow-2xl transition-all duration-300 hover:scale-102 bg-white/90 backdrop-blur-sm border-0 shadow-lg overflow-hidden"
                         onClick={(e) => {
                           e.stopPropagation()
-                          setExpandedCards(prev => ({
+                          setExpandedCards((prev) => ({
                             ...prev,
-                            [mod.id]: !prev[mod.id]
+                            [mod.id]: !prev[mod.id],
                           }))
-                          
+
                           if (!expandedCards[mod.id]) {
-                            const children = novModules.filter(
-                              (m2) => m2.menter && m2.mencodpad === mod.mencod
-                            )
+                            const children = novModules.filter((m2) => m2.menter && m2.mencodpad === mod.mencod)
                             setSubModules(children)
                             setExpandedModuleCode(mod.mencod)
                           } else {

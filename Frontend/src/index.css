@@ -53,6 +53,9 @@ All colors MUST be HSL.
     --chart-3: 47 96% 89%;
     --chart-4: 15 86% 65%;
     --chart-5: 217 91% 60%;
+
+    /* Adding sidebar width CSS variable for dynamic layout */
+    --sidebar-width: 256px;
   }
 
   .dark {
@@ -118,6 +121,7 @@ All colors MUST be HSL.
   @apply text-muted-foreground font-medium;
 }
 
+/* Updated z-index hierarchy for proper layering */
 /* Asegurar que los popovers aparezcan por encima de todo */
 .sidebar-popover {
   z-index: 60 !important;
@@ -127,12 +131,6 @@ All colors MUST be HSL.
 .sidebar-collapsed .sidebar-trigger {
   padding: 0.5rem;
 }
-
-/* Asegurar que el header no cubra los popovers */
-.main-header {
-  z-index: 40;
-}
-
 
 /* Gradient backgrounds */
 .gradient-bg {

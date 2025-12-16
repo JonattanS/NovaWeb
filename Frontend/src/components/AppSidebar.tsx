@@ -49,14 +49,18 @@ export function AppSidebar() {
   const [expandedPortfolios, setExpandedPortfolios] = useState<{ [key: number]: boolean }>({})
   const [loading, setLoading] = useState(true)
 
-  // Calcular ancho dinámico basado en portafolios expandidos
   const hasExpandedPortfolios = Object.values(expandedPortfolios).some((expanded) => expanded)
   const sidebarWidth = isCollapsed ? 64 : hasExpandedPortfolios ? 384 : 256
 
-  // Actualizar CSS variable cuando cambia el ancho
   useEffect(() => {
-    document.documentElement.style.setProperty('--sidebar-width', `${sidebarWidth}px`)
-  }, [sidebarWidth])
+    console.log("[v0] Sidebar width changed:", sidebarWidth, "px")
+    console.log("[v0] Sidebar state:", state)
+    console.log("[v0] Has expanded portfolios:", hasExpandedPortfolios)
+    document.documentElement.style.setProperty("--sidebar-width", `${sidebarWidth}px`)
+
+    const appliedWidth = getComputedStyle(document.documentElement).getPropertyValue("--sidebar-width")
+    console.log("[v0] Applied CSS variable:", appliedWidth)
+  }, [sidebarWidth, state, hasExpandedPortfolios])
 
   useEffect(() => {
     const updateDynamicFunctions = () => {
@@ -130,8 +134,8 @@ export function AppSidebar() {
           name: portfolioName,
           id: porcod.toString(),
         },
-        showSystemModules: true,  // Mostrar tab de módulos del sistema
-        selectedModuleCode: module.mencod,  // Expandir este módulo
+        showSystemModules: true, // Mostrar tab de módulos del sistema
+        selectedModuleCode: module.mencod, // Expandir este módulo
       },
     })
   }
@@ -154,9 +158,12 @@ export function AppSidebar() {
 
   return (
     <Sidebar
-      className={`border-r border-slate-200 dark:border-slate-700 bg-[#41B9E8] dark:bg-[#41B9E8] h-screen z-30 transition-all duration-300 ease-in-out ${
-        isCollapsed ? "w-16" : hasExpandedPortfolios ? "w-96" : "w-64"
-      }`}
+      className={`
+        border-r border-slate-200 dark:border-slate-700 
+        bg-[#00264D] dark:bg-[#00264D] 
+        fixed left-0 top-0 h-screen z-50
+        transition-all duration-300 ease-in-out
+      `}
       collapsible="icon"
       style={{
         width: `${sidebarWidth}px`,
@@ -164,20 +171,20 @@ export function AppSidebar() {
     >
       <SidebarContent className="h-full overflow-y-auto overflow-x-hidden py-4">
         {/* Header del Sidebar */}
-        <div className={`px-4 mb-6 ${isCollapsed ? "px-2" : "px-6"}`}>
+        <div className={`mb-6 transition-all duration-300 ${isCollapsed ? "px-2" : "px-6"}`}>
           {!isCollapsed ? (
             <div>
               <NavLink
                 to="/"
-                className="font-bold text-xl bg-[#F7722F] bg-clip-text text-transparent cursor-pointer no-underline hover:underline truncate block"
+                className="font-bold text-xl text-[#F7722F] cursor-pointer no-underline hover:opacity-80 transition-opacity truncate block"
               >
-                {user?.ciaraz || "Nova"}
+                {user?.ciaraz || "CAS"}
               </NavLink>
             </div>
           ) : (
             <div className="flex justify-center">
               <span className="font-bold text-sm text-[#F7722F]">
-                {(user?.ciaraz || "Nova").slice(0, 3).toUpperCase()}
+                {(user?.ciaraz || "CAS").slice(0, 3).toUpperCase()}
               </span>
             </div>
           )}
@@ -193,10 +200,10 @@ export function AppSidebar() {
                     <NavLink
                       to={item.url}
                       className={({ isActive }) =>
-                        `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group text-slate-700 dark:text-slate-300 ${
+                        `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group text-white ${
                           isActive
-                            ? "bg-blue-600 text-white shadow-lg shadow-blue-600/25"
-                            : "hover:bg-slate-100 dark:hover:bg-slate-800 hover:translate-x-1"
+                            ? "bg-[#F7722F] shadow-lg shadow-orange-600/25"
+                            : "hover:bg-slate-700 hover:translate-x-1"
                         }`
                       }
                       end
@@ -213,7 +220,7 @@ export function AppSidebar() {
 
         <SidebarGroup>
           <SidebarGroupLabel
-            className={`${isCollapsed ? "hidden" : "block"} text-[#F7722F] dark:text-[#F7722F] font-semibold px-4 truncate`}
+            className={`${isCollapsed ? "hidden" : "block"} text-[#F7722F] font-semibold px-4 truncate`}
           >
             Portafolio
           </SidebarGroupLabel>
@@ -236,7 +243,7 @@ export function AppSidebar() {
                       {isCollapsed ? (
                         <Popover>
                           <PopoverTrigger asChild>
-                            <SidebarMenuButton className="w-full justify-center p-2 hover:bg-slate-800">
+                            <SidebarMenuButton className="w-full justify-center p-2 hover:bg-slate-700">
                               <Folder className="h-5 w-5 text-[#F7722F]" />
                             </SidebarMenuButton>
                           </PopoverTrigger>
@@ -271,14 +278,11 @@ export function AppSidebar() {
                         </Popover>
                       ) : (
                         <>
-                          <div className="flex items-center gap-2 w-full px-4 py-3">
-                            <SidebarMenuButton
-                              asChild
-                              className="flex-1 min-w-0"
-                            >
+                          <div className="flex items-center gap-2 w-full px-4 py-2">
+                            <SidebarMenuButton asChild className="flex-1 min-w-0 p-0">
                               <button
                                 onClick={() => handlePortfolioClick(porcod, portfolio.name)}
-                                className="flex items-center gap-3 px-0 py-0 rounded-xl transition-all duration-200 group text-[#F7722F] dark:text-[#F7722F] hover:bg-blue-500 dark:hover:bg-[#F7722F] hover:translate-x-1 w-full text-left min-w-0"
+                                className="flex items-center gap-3 px-3 py-2 rounded-xl transition-all duration-200 group text-[#F7722F] hover:bg-slate-700 hover:translate-x-1 w-full text-left min-w-0"
                               >
                                 <Folder className="h-5 w-5 flex-shrink-0" />
                                 <span className="font-medium flex-1 truncate">{portfolio.name}</span>
@@ -286,24 +290,24 @@ export function AppSidebar() {
                             </SidebarMenuButton>
                             <button
                               onClick={() => togglePortfolio(porcod)}
-                              className="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors flex-shrink-0"
+                              className="p-1 hover:bg-slate-700 rounded transition-colors flex-shrink-0"
                             >
                               {isExpanded ? (
-                                <ChevronDown className="h-5 w-5 text-slate-600 dark:text-slate-300" />
+                                <ChevronDown className="h-5 w-5 text-white" />
                               ) : (
-                                <ChevronRight className="h-5 w-5 text-slate-600 dark:text-slate-300" />
+                                <ChevronRight className="h-5 w-5 text-white" />
                               )}
                             </button>
                           </div>
 
                           {isExpanded && (
-                            <>
+                            <div className="transition-all duration-300 ease-in-out">
                               {portfolio.modules.map((module) => (
                                 <SidebarMenuItem key={module.id}>
                                   <SidebarMenuButton asChild>
                                     <button
                                       onClick={() => handleDynamicModuleClick(module, porcod, portfolio.name)}
-                                      className="flex items-center gap-3 px-4 py-3 ml-6 rounded-xl transition-all duration-200 group text-slate-200 dark:text-slate-300 hover:bg-slate-700 dark:hover:bg-slate-800 hover:translate-x-1 text-left w-full min-w-0"
+                                      className="flex items-center gap-3 px-4 py-2 ml-6 rounded-xl transition-all duration-200 group text-slate-300 hover:bg-slate-700 hover:text-white hover:translate-x-1 text-left w-full min-w-0"
                                     >
                                       <Settings className="h-4 w-4 transition-transform group-hover:scale-110 flex-shrink-0" />
                                       <span className="font-medium text-sm truncate">{module.mennom}</span>
@@ -311,7 +315,7 @@ export function AppSidebar() {
                                   </SidebarMenuButton>
                                 </SidebarMenuItem>
                               ))}
-                            </>
+                            </div>
                           )}
                         </>
                       )}
@@ -326,7 +330,7 @@ export function AppSidebar() {
         {/* Herramientas de Desarrollo */}
         <SidebarGroup>
           <SidebarGroupLabel
-            className={`${isCollapsed ? "hidden" : "block"} text-[#F7722F] dark:text-[#F7722F] font-semibold px-4 truncate`}
+            className={`${isCollapsed ? "hidden" : "block"} text-[#F7722F] font-semibold px-4 truncate`}
           >
             Herramientas de Desarrollo
           </SidebarGroupLabel>
@@ -337,20 +341,20 @@ export function AppSidebar() {
                   {isCollapsed ? (
                     <Popover>
                       <PopoverTrigger asChild>
-                        <SidebarMenuButton className="w-full justify-center p-2 hover:bg-slate-800">
+                        <SidebarMenuButton className="w-full justify-center p-2 hover:bg-slate-700">
                           <item.icon className="h-5 w-5 text-slate-300" />
                         </SidebarMenuButton>
                       </PopoverTrigger>
                       <PopoverContent
                         side="right"
                         align="start"
-                        className="w-48 p-2 bg-[#002550] border-slate-600 ml-2 z-50"
+                        className="w-48 p-2 bg-white border-slate-600 ml-2 z-50"
                       >
                         <NavLink
                           to={item.url}
                           className={({ isActive }) =>
                             `flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 group ${
-                              isActive ? "bg-blue-600 text-white" : "text-slate-300 hover:bg-slate-800"
+                              isActive ? "bg-[#F7722F] text-white" : "text-slate-600 hover:bg-slate-100"
                             }`
                           }
                           end
@@ -365,10 +369,10 @@ export function AppSidebar() {
                       <NavLink
                         to={item.url}
                         className={({ isActive }) =>
-                          `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group text-slate-700 dark:text-slate-300 ${
+                          `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group text-white ${
                             isActive
-                              ? "bg-blue-600 text-white shadow-lg shadow-blue-600/25"
-                              : "hover:bg-slate-100 dark:hover:bg-slate-800 hover:translate-x-1"
+                              ? "bg-[#F7722F] shadow-lg shadow-orange-600/25"
+                              : "hover:bg-slate-700 hover:translate-x-1"
                           }`
                         }
                         end
@@ -388,7 +392,7 @@ export function AppSidebar() {
         {dynamicFunctions.length > 0 && (
           <SidebarGroup>
             <SidebarGroupLabel
-              className={`${isCollapsed ? "hidden" : "block"} text-[#F7722F] dark:text-[#F7722F] font-semibold px-4 truncate`}
+              className={`${isCollapsed ? "hidden" : "block"} text-[#F7722F] font-semibold px-4 truncate`}
             >
               Funciones Principales
             </SidebarGroupLabel>
@@ -399,20 +403,20 @@ export function AppSidebar() {
                     {isCollapsed ? (
                       <Popover>
                         <PopoverTrigger asChild>
-                          <SidebarMenuButton className="w-full justify-center p-2 hover:bg-slate-800">
+                          <SidebarMenuButton className="w-full justify-center p-2 hover:bg-slate-700">
                             <Zap className="h-5 w-5 text-slate-300" />
                           </SidebarMenuButton>
                         </PopoverTrigger>
                         <PopoverContent
                           side="right"
                           align="start"
-                          className="w-48 p-2 bg-[#002550] border-slate-600 ml-2 z-50"
+                          className="w-48 p-2 bg-white border-slate-600 ml-2 z-50"
                         >
                           <NavLink
                             to={`/dynamic-function/${func.id}`}
                             className={({ isActive }) =>
                               `flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 group ${
-                                isActive ? "bg-purple-600 text-white" : "text-slate-300 hover:bg-slate-800"
+                                isActive ? "bg-purple-600 text-white" : "text-slate-600 hover:bg-slate-100"
                               }`
                             }
                           >
@@ -426,10 +430,10 @@ export function AppSidebar() {
                         <NavLink
                           to={`/dynamic-function/${func.id}`}
                           className={({ isActive }) =>
-                            `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group text-slate-700 dark:text-slate-300 ${
+                            `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group text-white ${
                               isActive
-                                ? "bg-purple-600 text-white shadow-lg shadow-purple-600/25"
-                                : "hover:bg-slate-100 dark:hover:bg-slate-800 hover:translate-x-1"
+                                ? "bg-purple-600 shadow-lg shadow-purple-600/25"
+                                : "hover:bg-slate-700 hover:translate-x-1"
                             }`
                           }
                         >

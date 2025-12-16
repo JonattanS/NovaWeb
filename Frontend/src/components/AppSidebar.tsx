@@ -49,6 +49,10 @@ export function AppSidebar() {
   const [expandedPortfolios, setExpandedPortfolios] = useState<{ [key: number]: boolean }>({})
   const [loading, setLoading] = useState(true)
 
+  // Calcular ancho dinámico basado en portafolios expandidos
+  const hasExpandedPortfolios = Object.values(expandedPortfolios).some((expanded) => expanded)
+  const dynamicWidth = isCollapsed ? "w-16" : hasExpandedPortfolios ? "w-96" : "w-64"
+
   useEffect(() => {
     const updateDynamicFunctions = () => {
       const newFunctions = moduleService.getMainFunctions()
@@ -145,19 +149,22 @@ export function AppSidebar() {
 
   return (
     <Sidebar
-      className={`border-r border-slate-200 dark:border-slate-700 bg-[#41B9E8] dark:bg-[#41B9E8] h-screen z-30 transition-transform-smooth duration-200 ease-in-out${
-        isCollapsed ? "w-16" : "w-64"
+      className={`border-r border-slate-200 dark:border-slate-700 bg-[#41B9E8] dark:bg-[#41B9E8] h-screen z-30 transition-all duration-300 ease-in-out ${
+        dynamicWidth
       }`}
       collapsible="icon"
+      style={{
+        width: isCollapsed ? '64px' : hasExpandedPortfolios ? '384px' : '256px',
+      }}
     >
-      <SidebarContent className="h-full overflow-y-auto py-4">
+      <SidebarContent className="h-full overflow-y-auto overflow-x-hidden py-4">
         {/* Header del Sidebar */}
         <div className={`px-4 mb-6 ${isCollapsed ? "px-2" : "px-6"}`}>
           {!isCollapsed ? (
             <div>
               <NavLink
                 to="/"
-                className="font-bold text-xl bg-[#F7722F] bg-clip-text text-transparent cursor-pointer no-underline hover:underline"
+                className="font-bold text-xl bg-[#F7722F] bg-clip-text text-transparent cursor-pointer no-underline hover:underline truncate block"
               >
                 {user?.ciaraz || "Nova"}
               </NavLink>
@@ -189,8 +196,8 @@ export function AppSidebar() {
                       }
                       end
                     >
-                      <item.icon className="h-5 w-5 transition-transform group-hover:scale-110" />
-                      {!isCollapsed && <span className="font-medium">{item.title}</span>}
+                      <item.icon className="h-5 w-5 transition-transform group-hover:scale-110 flex-shrink-0" />
+                      {!isCollapsed && <span className="font-medium truncate">{item.title}</span>}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -201,7 +208,7 @@ export function AppSidebar() {
 
         <SidebarGroup>
           <SidebarGroupLabel
-            className={`${isCollapsed ? "hidden" : "block"} text-[#F7722F] dark:text-[#F7722F] font-semibold px-4`}
+            className={`${isCollapsed ? "hidden" : "block"} text-[#F7722F] dark:text-[#F7722F] font-semibold px-4 truncate`}
           >
             Portafolio
           </SidebarGroupLabel>
@@ -210,8 +217,8 @@ export function AppSidebar() {
               {loading ? (
                 <SidebarMenuItem>
                   <div className="flex items-center gap-3 px-4 py-3 text-slate-300">
-                    <Settings className="w-5 h-5 animate-spin" />
-                    {!isCollapsed && <span>Cargando portafolios...</span>}
+                    <Settings className="w-5 h-5 animate-spin flex-shrink-0" />
+                    {!isCollapsed && <span className="truncate">Cargando portafolios...</span>}
                   </div>
                 </SidebarMenuItem>
               ) : (
@@ -231,15 +238,15 @@ export function AppSidebar() {
                           <PopoverContent
                             side="right"
                             align="start"
-                            className="w-64 p-3 bg-white border-slate-600 ml-2 z-50"
+                            className="w-64 p-3 bg-white border-slate-600 ml-2 z-50 max-h-96 overflow-y-auto"
                           >
                             <div className="space-y-2">
                               <button
                                 onClick={() => handlePortfolioClick(porcod, portfolio.name)}
                                 className="flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 text-[#F7722F] hover:bg-blue-100 w-full text-left font-semibold mb-3"
                               >
-                                <Folder className="w-4 h-4" />
-                                <span>{portfolio.name}</span>
+                                <Folder className="w-4 h-4 flex-shrink-0" />
+                                <span className="truncate">{portfolio.name}</span>
                               </button>
                               <div className="border-t pt-2">
                                 <div className="text-xs text-slate-600 font-semibold mb-2 px-1">Módulos:</div>
@@ -247,10 +254,10 @@ export function AppSidebar() {
                                   <button
                                     key={module.id}
                                     onClick={() => handleDynamicModuleClick(module, porcod, portfolio.name)}
-                                    className="flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 text-slate-600 hover:bg-slate-200 w-full text-left text-sm"
+                                    className="flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 text-slate-600 hover:bg-slate-200 w-full text-left text-sm truncate"
                                   >
-                                    <Settings className="w-3 h-3" />
-                                    <span>{module.mennom}</span>
+                                    <Settings className="w-3 h-3 flex-shrink-0" />
+                                    <span className="truncate">{module.mennom}</span>
                                   </button>
                                 ))}
                               </div>
@@ -262,19 +269,19 @@ export function AppSidebar() {
                           <div className="flex items-center gap-2 w-full px-4 py-3">
                             <SidebarMenuButton
                               asChild
-                              className="flex-1"
+                              className="flex-1 min-w-0"
                             >
                               <button
                                 onClick={() => handlePortfolioClick(porcod, portfolio.name)}
-                                className="flex items-center gap-3 px-0 py-0 rounded-xl transition-all duration-200 group text-[#F7722F] dark:text-[#F7722F] hover:bg-blue-500 dark:hover:bg-[#F7722F] hover:translate-x-1 w-full text-left"
+                                className="flex items-center gap-3 px-0 py-0 rounded-xl transition-all duration-200 group text-[#F7722F] dark:text-[#F7722F] hover:bg-blue-500 dark:hover:bg-[#F7722F] hover:translate-x-1 w-full text-left min-w-0"
                               >
-                                <Folder className="h-5 w-5" />
-                                <span className="font-medium flex-1">{portfolio.name}</span>
+                                <Folder className="h-5 w-5 flex-shrink-0" />
+                                <span className="font-medium flex-1 truncate">{portfolio.name}</span>
                               </button>
                             </SidebarMenuButton>
                             <button
                               onClick={() => togglePortfolio(porcod)}
-                              className="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors"
+                              className="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors flex-shrink-0"
                             >
                               {isExpanded ? (
                                 <ChevronDown className="h-5 w-5 text-slate-600 dark:text-slate-300" />
@@ -291,10 +298,10 @@ export function AppSidebar() {
                                   <SidebarMenuButton asChild>
                                     <button
                                       onClick={() => handleDynamicModuleClick(module, porcod, portfolio.name)}
-                                      className="flex items-center gap-3 px-4 py-3 ml-6 rounded-xl transition-all duration-200 group text-slate-200 dark:text-slate-300 hover:bg-slate-700 dark:hover:bg-slate-800 hover:translate-x-1 text-left w-full"
+                                      className="flex items-center gap-3 px-4 py-3 ml-6 rounded-xl transition-all duration-200 group text-slate-200 dark:text-slate-300 hover:bg-slate-700 dark:hover:bg-slate-800 hover:translate-x-1 text-left w-full min-w-0"
                                     >
-                                      <Settings className="h-4 w-4 transition-transform group-hover:scale-110" />
-                                      <span className="font-medium text-sm">{module.mennom}</span>
+                                      <Settings className="h-4 w-4 transition-transform group-hover:scale-110 flex-shrink-0" />
+                                      <span className="font-medium text-sm truncate">{module.mennom}</span>
                                     </button>
                                   </SidebarMenuButton>
                                 </SidebarMenuItem>
@@ -314,7 +321,7 @@ export function AppSidebar() {
         {/* Herramientas de Desarrollo */}
         <SidebarGroup>
           <SidebarGroupLabel
-            className={`${isCollapsed ? "hidden" : "block"} text-[#F7722F] dark:text-[#F7722F] font-semibold px-4`}
+            className={`${isCollapsed ? "hidden" : "block"} text-[#F7722F] dark:text-[#F7722F] font-semibold px-4 truncate`}
           >
             Herramientas de Desarrollo
           </SidebarGroupLabel>
@@ -343,8 +350,8 @@ export function AppSidebar() {
                           }
                           end
                         >
-                          <item.icon className="h-4 w-4" />
-                          <span className="font-medium text-sm">{item.title}</span>
+                          <item.icon className="h-4 w-4 flex-shrink-0" />
+                          <span className="font-medium text-sm truncate">{item.title}</span>
                         </NavLink>
                       </PopoverContent>
                     </Popover>
@@ -361,8 +368,8 @@ export function AppSidebar() {
                         }
                         end
                       >
-                        <item.icon className="h-5 w-5 transition-transform group-hover:scale-110" />
-                        <span className="font-medium">{item.title}</span>
+                        <item.icon className="h-5 w-5 transition-transform group-hover:scale-110 flex-shrink-0" />
+                        <span className="font-medium truncate">{item.title}</span>
                       </NavLink>
                     </SidebarMenuButton>
                   )}
@@ -376,7 +383,7 @@ export function AppSidebar() {
         {dynamicFunctions.length > 0 && (
           <SidebarGroup>
             <SidebarGroupLabel
-              className={`${isCollapsed ? "hidden" : "block"} text-[#F7722F] dark:text-[#F7722F] font-semibold px-4`}
+              className={`${isCollapsed ? "hidden" : "block"} text-[#F7722F] dark:text-[#F7722F] font-semibold px-4 truncate`}
             >
               Funciones Principales
             </SidebarGroupLabel>
@@ -404,8 +411,8 @@ export function AppSidebar() {
                               }`
                             }
                           >
-                            <Zap className="h-4 w-4" />
-                            <span className="font-medium text-sm">{func.name}</span>
+                            <Zap className="h-4 w-4 flex-shrink-0" />
+                            <span className="font-medium text-sm truncate">{func.name}</span>
                           </NavLink>
                         </PopoverContent>
                       </Popover>
@@ -421,8 +428,8 @@ export function AppSidebar() {
                             }`
                           }
                         >
-                          <Zap className="h-5 w-5 transition-transform group-hover:scale-110" />
-                          <span className="font-medium">{func.name}</span>
+                          <Zap className="h-5 w-5 transition-transform group-hover:scale-110 flex-shrink-0" />
+                          <span className="font-medium truncate">{func.name}</span>
                         </NavLink>
                       </SidebarMenuButton>
                     )}

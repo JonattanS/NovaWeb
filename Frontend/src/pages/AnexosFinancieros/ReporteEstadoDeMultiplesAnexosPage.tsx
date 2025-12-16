@@ -42,7 +42,7 @@ type Filtros = {
   anx_cod_fin: string
   ter_nit_ini: string
   ter_nit_fin: string
-  fecha_corte: string
+  fecha_corte: string  
   detallado: boolean
   alfabetico: boolean
 }
@@ -55,7 +55,7 @@ const ReporteEstadoDeMultiplesAnexosPage = () => {
     anx_cod_fin: "",
     ter_nit_ini: "",
     ter_nit_fin: "",
-    fecha_corte: new Date().toISOString().split('T')[0],
+    fecha_corte: "",
     detallado: true,
     alfabetico: true,
   });
@@ -87,29 +87,32 @@ const ReporteEstadoDeMultiplesAnexosPage = () => {
     setPage(1);
 
     try {
-      // Consultar con_anf para obtener datos de anexos
-      const filtrosAnf = {
-        fuente: 'con_anf',
+      // Consultar movimientos de anexos
+      const filtrosConsulta = {
+        fuente: 'con_anf_mov3',
         suc_cod: filtros.suc_cod,
-        anx_cod_ini: filtros.anx_cod_ini,
-        anx_cod_fin: filtros.anx_cod_fin,
+        anf_cod_ini: filtros.anx_cod_ini,
+        anf_cod_fin: filtros.anx_cod_fin,
         ter_nit_ini: filtros.ter_nit_ini,
         ter_nit_fin: filtros.ter_nit_fin,
-        fecha_corte: filtros.fecha_corte,
       };
       
-      const responseAnf = await databaseService.consultaDocumentos(filtrosAnf);
-      console.log("Datos con_anf:", responseAnf);
+      const responseAnf = await databaseService.consultaDocumentos(filtrosConsulta);
       
-      // Procesar datos según si es detallado o resumido
-      const datosProcessados = filtros.detallado 
-        ? procesarDetallado(responseAnf || [], filtros.alfabetico)
-        : procesarResumido(responseAnf || [], filtros.alfabetico);
+      // Procesar datos según modo
+      let datosProcessados = filtros.detallado 
+        ? responseAnf || [] // Detallado: muestra agrupado por tercero y anexo (como viene del backend)
+        : procesarResumido(responseAnf || []); // Resumido: agrupa solo por tercero
       
-      console.log("Datos procesados:", datosProcessados);
+      // Aplicar ordenamiento
+      if (filtros.alfabetico) {
+        datosProcessados.sort((a, b) => (a.ter_raz || '').localeCompare(b.ter_raz || ''));
+      } else {
+        datosProcessados.sort((a, b) => (a.ter_nit || '').localeCompare(b.ter_nit || ''));
+      }
+      
       setResultado(datosProcessados);
     } catch (err: any) {
-      console.error("Error en consulta:", err);
       setError(err.message || "Error al consultar los datos");
       setResultado([]);
     } finally {
@@ -117,148 +120,7 @@ const ReporteEstadoDeMultiplesAnexosPage = () => {
     }
   };
 
-  // Función para procesar datos en modo detallado
-  const procesarDetallado = (datosAnf: any[], alfabetico: boolean) => {
-    console.log("Procesando modo detallado:", { datosAnf, alfabetico });
-    
-    const año = new Date(filtros.fecha_corte).getFullYear();
-    const mesCorte = new Date(filtros.fecha_corte).getMonth() + 1;
-    
-    const resultado = datosAnf.map(item => {
-      // Calcular valores según la lógica del procedimiento original
-      let valorInicial = 0;
-      let debitos = 0;
-      let creditos = 0;
-      
-      // Verificar si es moneda extranjera
-      if (item.mnd_ext) {
-        const tasaCambio = item.anf_nat ? item.tas_act : item.tas_ven;
-        valorInicial = (item.anf_ini_ext || 0) * tasaCambio;
-        
-        // Sumar movimientos hasta el mes de corte
-        for (let i = 1; i <= mesCorte; i++) {
-          debitos += ((item[`anf_deb_ext_${i}`] || 0) * tasaCambio);
-          creditos += ((item[`anf_crd_ext_${i}`] || 0) * tasaCambio);
-        }
-      } else {
-        valorInicial = item.anf_ini || 0;
-        
-        // Sumar movimientos hasta el mes de corte
-        for (let i = 1; i <= mesCorte; i++) {
-          debitos += (item[`anf_deb_${i}`] || 0);
-          creditos += (item[`anf_crd_${i}`] || 0);
-        }
-      }
-      
-      const saldo = valorInicial + debitos + creditos;
-      
-      // Formatear documento
-      const documento = `${item.suc_cod} ${item.clc_cod} ${item.doc_num} ${item.doc_fec} ${item.doc_num_ref}`;
-      
-      return {
-        ter_nit: item.ter_nit,
-        ter_raz: item.ter_raz,
-        anf_cod: item.anf_cod,
-        documento: documento,
-        valor_inicial: valorInicial,
-        debitos: debitos,
-        creditos: creditos,
-        saldo: saldo
-      };
-    }).filter(item => 
-      // Solo incluir si hay valores
-      item.valor_inicial !== 0 || item.debitos !== 0 || item.creditos !== 0 || item.saldo !== 0
-    );
-    
-    // Ordenar según el tipo seleccionado
-    if (alfabetico) {
-      resultado.sort((a, b) => {
-        if (a.ter_raz !== b.ter_raz) return a.ter_raz.localeCompare(b.ter_raz);
-        if (a.anf_cod !== b.anf_cod) return a.anf_cod.localeCompare(b.anf_cod);
-        return a.documento.localeCompare(b.documento);
-      });
-    } else {
-      resultado.sort((a, b) => {
-        if (a.ter_nit !== b.ter_nit) return a.ter_nit.localeCompare(b.ter_nit);
-        if (a.anf_cod !== b.anf_cod) return a.anf_cod.localeCompare(b.anf_cod);
-        return a.documento.localeCompare(b.documento);
-      });
-    }
-    
-    return resultado;
-  };
 
-  // Función para procesar datos en modo resumido
-  const procesarResumido = (datosAnf: any[], alfabetico: boolean) => {
-    console.log("Procesando modo resumido:", { datosAnf, alfabetico });
-    
-    const año = new Date(filtros.fecha_corte).getFullYear();
-    const mesCorte = new Date(filtros.fecha_corte).getMonth() + 1;
-    
-    // Agrupar por NIT
-    const agrupados = datosAnf.reduce((acc, item) => {
-      const key = item.ter_nit;
-      
-      if (!acc[key]) {
-        acc[key] = {
-          ter_nit: item.ter_nit,
-          ter_raz: item.ter_raz,
-          valor_inicial: 0,
-          debitos: 0,
-          creditos: 0
-        };
-      }
-      
-      // Calcular valores según la lógica del procedimiento original
-      let valorInicial = 0;
-      let debitos = 0;
-      let creditos = 0;
-      
-      // Verificar si es moneda extranjera
-      if (item.mnd_ext) {
-        const tasaCambio = item.anf_nat ? item.tas_act : item.tas_ven;
-        valorInicial = (item.anf_ini_ext || 0) * tasaCambio;
-        
-        // Sumar movimientos hasta el mes de corte
-        for (let i = 1; i <= mesCorte; i++) {
-          debitos += ((item[`anf_deb_ext_${i}`] || 0) * tasaCambio);
-          creditos += ((item[`anf_crd_ext_${i}`] || 0) * tasaCambio);
-        }
-      } else {
-        valorInicial = item.anf_ini || 0;
-        
-        // Sumar movimientos hasta el mes de corte
-        for (let i = 1; i <= mesCorte; i++) {
-          debitos += (item[`anf_deb_${i}`] || 0);
-          creditos += (item[`anf_crd_${i}`] || 0);
-        }
-      }
-      
-      acc[key].valor_inicial += valorInicial;
-      acc[key].debitos += debitos;
-      acc[key].creditos += creditos;
-      
-      return acc;
-    }, {});
-    
-    // Convertir a array y calcular saldo
-    const resultado = Object.values(agrupados).map((grupo: any) => ({
-      ...grupo,
-      saldo: grupo.valor_inicial + grupo.debitos + grupo.creditos
-    })).filter(item => 
-      // Solo incluir si hay valores
-      item.valor_inicial !== 0 || item.debitos !== 0 || item.creditos !== 0 || item.saldo !== 0
-    );
-    
-    // Ordenar según el tipo seleccionado
-    if (alfabetico) {
-      resultado.sort((a, b) => a.ter_raz.localeCompare(b.ter_raz));
-    } else {
-      resultado.sort((a, b) => a.ter_nit.localeCompare(b.ter_nit));
-    }
-    
-    return resultado;
-  };
 
   const getActiveFiltersCount = () => {
     let count = 0;
@@ -267,13 +129,39 @@ const ReporteEstadoDeMultiplesAnexosPage = () => {
     if (filtros.anx_cod_fin.trim()) count++;
     if (filtros.ter_nit_ini.trim()) count++;
     if (filtros.ter_nit_fin.trim()) count++;
-    if (filtros.fecha_corte.trim()) count++;
     if (filtros.detallado) count++;
     if (filtros.alfabetico) count++;
     return count;
   }
 
-  // Columnas dinámicas según el modo
+  // Función para procesar datos en modo resumido (agrupar por NIT)
+  const procesarResumido = (datos: any[]) => {
+    const agrupados = datos.reduce((acc, item) => {
+      const key = item.ter_nit;
+      
+      if (!acc[key]) {
+        acc[key] = {
+          ter_nit: item.ter_nit,
+          ter_raz: item.ter_raz,
+          valor_inicial: 0,
+          debitos: 0,
+          creditos: 0,
+          saldo: 0
+        };
+      }
+      
+      acc[key].valor_inicial += parseFloat(item.valor_inicial) || 0;
+      acc[key].debitos += parseFloat(item.debitos) || 0;
+      acc[key].creditos += parseFloat(item.creditos) || 0;
+      acc[key].saldo += parseFloat(item.saldo) || 0;
+      
+      return acc;
+    }, {});
+    
+    return Object.values(agrupados);
+  };
+
+  // Columnas dinámicas según modo
   const getColumns = () => {
     if (filtros.detallado) {
       return [
@@ -406,6 +294,7 @@ const ReporteEstadoDeMultiplesAnexosPage = () => {
                       </div>
                     </div>
 
+
                     {/* Fecha de Corte */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
@@ -422,7 +311,7 @@ const ReporteEstadoDeMultiplesAnexosPage = () => {
                         />
                       </div>
                     </div>
-
+                    
                     {/* Rango de NITs */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
@@ -530,7 +419,7 @@ const ReporteEstadoDeMultiplesAnexosPage = () => {
               <div className="flex items-center justify-between">
                 <CardTitle className="text-xl flex items-center">
                   <FileText className="h-5 w-5 mr-2" />
-                  Reporte Estado de Múltiples Anexos {filtros.detallado ? '(Detallado)' : '(Resumido)'}
+                  Reporte Estado de Múltiples Anexos {filtros.detallado ? '(Detallado)' : '(Resumido)'} - con_anf_mov3
                 </CardTitle>
                 <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
                   {resultado.length} registros
@@ -554,7 +443,7 @@ const ReporteEstadoDeMultiplesAnexosPage = () => {
                       <tr key={i} className="hover:bg-blue-50/50 transition-colors">
                         {getColumns().map((col) => (
                           <td key={col.key} className="px-4 py-3 text-gray-900 whitespace-nowrap">
-                            {col.key.includes('valor') || col.key.includes('debitos') || col.key.includes('creditos') || col.key.includes('saldo') ? (
+                            {['valor_inicial', 'debitos', 'creditos', 'saldo'].includes(col.key) ? (
                               <span className="text-right block">
                                 {new Intl.NumberFormat('es-CO', { minimumFractionDigits: 2 }).format(row[col.key] || 0)}
                               </span>

@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -28,7 +28,7 @@ import {
 } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 
-export const mencod = '010325';
+export const mencod = '011804';
 
 const getColumnDescription = (key: string): string => {
   const col = schemaService.getTableColumns().find((c) => c.name === key)
@@ -54,6 +54,8 @@ type Filtros = {
   anf_cod_fin: string
   doc_est_ini: string
   doc_est_fin: string
+  fecha_ini: string
+  fecha_fin: string
 }
 
 const HojaDeVidaAnexoPage = () => {
@@ -77,21 +79,19 @@ const HojaDeVidaAnexoPage = () => {
     anf_cod_fin: "",
     doc_est_ini: "",
     doc_est_fin: "",
+    fecha_ini: "",
+    fecha_fin: "",
   });
 
   const [resultado, setResultado] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [page, setPage] = useState(1);
-  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+  const [isFiltersOpen, setIsFiltersOpen] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState(0);
 
   const ROWS_PER_PAGE = 100;
-
-  useEffect(() => {
-    handleSubmit(new Event("submit") as unknown as React.FormEvent)
-  }, [])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -127,6 +127,8 @@ const HojaDeVidaAnexoPage = () => {
         anf_cod_fin: filtros.anf_cod_fin,
         doc_est_ini: filtros.doc_est_ini,
         doc_est_fin: filtros.doc_est_fin,
+        fecha_ini: filtros.fecha_ini,
+        fecha_fin: filtros.fecha_fin,
       };
       
       const response = await databaseService.consultaDocumentos(filtrosConsulta);
@@ -279,7 +281,6 @@ const HojaDeVidaAnexoPage = () => {
                     {/* Información General */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <Building className="h-4 w-4" />
                         <span>Información General</span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -303,7 +304,6 @@ const HojaDeVidaAnexoPage = () => {
                     {/* Rango de Documentos */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <Hash className="h-4 w-4" />
                         <span>Rango de Documentos</span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -327,7 +327,6 @@ const HojaDeVidaAnexoPage = () => {
                     {/* Rango de Anexos */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <FileText className="h-4 w-4" />
                         <span>Rango de Anexos</span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -351,7 +350,6 @@ const HojaDeVidaAnexoPage = () => {
                     {/* Rango de NITs */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <Users className="h-4 w-4" />
                         <span>Rango de NITs</span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -375,7 +373,6 @@ const HojaDeVidaAnexoPage = () => {
                     {/* Documento Referencia */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <Hash className="h-4 w-4" />
                         <span>Doc. Num. Ref</span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -399,7 +396,6 @@ const HojaDeVidaAnexoPage = () => {
                     {/* Fecha Referencia */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <Calendar className="h-4 w-4" />
                         <span>Fecha Ref.</span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -425,7 +421,6 @@ const HojaDeVidaAnexoPage = () => {
                     {/* Rango de Cuentas */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <CreditCard className="h-4 w-4" />
                         <span>Rango de Cuentas</span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -449,7 +444,6 @@ const HojaDeVidaAnexoPage = () => {
                     {/* Anexos Financieros */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <FileText className="h-4 w-4" />
                         <span>Anexos Financieros</span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -473,7 +467,6 @@ const HojaDeVidaAnexoPage = () => {
                     {/* Estado */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <CheckCircle className="h-4 w-4" />
                         <span>Estado</span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -488,6 +481,31 @@ const HojaDeVidaAnexoPage = () => {
                           name="doc_est_fin"
                           placeholder="Estado Final"
                           value={filtros.doc_est_fin}
+                          onChange={handleChange}
+                          className="bg-white"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Fecha Documento */}
+                    <div className="space-y-3">
+                      <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+                        <span>Fecha Documento</span>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <Input
+                          type="date"
+                          name="fecha_ini"
+                          placeholder="Fecha Inicial"
+                          value={filtros.fecha_ini}
+                          onChange={handleChange}
+                          className="bg-white"
+                        />
+                        <Input
+                          type="date"
+                          name="fecha_fin"
+                          placeholder="Fecha Final"
+                          value={filtros.fecha_fin}
                           onChange={handleChange}
                           className="bg-white"
                         />

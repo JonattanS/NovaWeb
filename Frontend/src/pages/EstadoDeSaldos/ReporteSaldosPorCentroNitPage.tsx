@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -29,7 +29,7 @@ import {
 } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 
-export const mencod = '010314';
+export const mencod = '011610';
 
 const getColumnDescription = (key: string): string => {
   const col = schemaService.getTableColumns().find((c) => c.name === key)
@@ -68,15 +68,11 @@ const ReporteSaldosPorCentroNitPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [page, setPage] = useState(1);
-  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+  const [isFiltersOpen, setIsFiltersOpen] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState(0);
 
   const ROWS_PER_PAGE = 100;
-
-  useEffect(() => {
-    handleSubmit(new Event("submit") as unknown as React.FormEvent)
-  }, [])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -180,18 +176,12 @@ const ReporteSaldosPorCentroNitPage = () => {
       const salIni = parseFloat(item.sal_ini || 0);
       acc[key].saldo_inicial += salIni;
       
-      // Acumular movimientos hasta el mes de corte
+      // Acumular todos los movimientos del año completo
       const salDeb = parseFloat(item.sal_deb || 0);
       const salCrd = parseFloat(item.sal_crd || 0);
       
-      // Calcular movimientos proporcionales hasta el mes de corte
-      if (item.cor_mes && item.cor_mes <= mesCorte) {
-        acc[key].movimientos_periodo += salDeb + salCrd;
-      } else {
-        // Si no hay cor_mes, usar proporción
-        const proporcion = Math.max(0, mesCorte / 12);
-        acc[key].movimientos_periodo += (salDeb + salCrd) * proporcion;
-      }
+      // Tomar todos los movimientos del año sin restricción de mes
+      acc[key].movimientos_periodo += salDeb + salCrd;
       
       console.log("Acumulando saldos:", { key, salIni, salDeb, salCrd });
       
@@ -342,7 +332,6 @@ const ReporteSaldosPorCentroNitPage = () => {
                     {/* Información General */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <Building className="h-4 w-4" />
                         <span>Información General</span>
                       </div>
                       <div className="grid grid-cols-1 gap-3">
@@ -359,7 +348,6 @@ const ReporteSaldosPorCentroNitPage = () => {
                     {/* Rango de Fechas */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <Calendar className="h-4 w-4" />
                         <span>Rango de Fechas</span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -385,7 +373,6 @@ const ReporteSaldosPorCentroNitPage = () => {
                     {/* Rango de Cuentas */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <CreditCard className="h-4 w-4" />
                         <span>Rango de Cuentas</span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -409,7 +396,6 @@ const ReporteSaldosPorCentroNitPage = () => {
                     {/* Rango de Centros */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <Building2 className="h-4 w-4" />
                         <span>Rango de Centros de Actividad</span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -433,7 +419,6 @@ const ReporteSaldosPorCentroNitPage = () => {
                     {/* Rango de NITs */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <Users className="h-4 w-4" />
                         <span>Rango de NITs</span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -457,7 +442,6 @@ const ReporteSaldosPorCentroNitPage = () => {
                     {/* Toggle Cierre */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <ToggleLeft className="h-4 w-4" />
                         <span>Opciones</span>
                       </div>
                       <div className="flex items-center space-x-2">

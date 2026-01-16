@@ -176,18 +176,12 @@ const ReporteSaldosPorCentroNitPage = () => {
       const salIni = parseFloat(item.sal_ini || 0);
       acc[key].saldo_inicial += salIni;
       
-      // Acumular movimientos hasta el mes de corte
+      // Acumular todos los movimientos del año completo
       const salDeb = parseFloat(item.sal_deb || 0);
       const salCrd = parseFloat(item.sal_crd || 0);
       
-      // Calcular movimientos proporcionales hasta el mes de corte
-      if (item.cor_mes && item.cor_mes <= mesCorte) {
-        acc[key].movimientos_periodo += salDeb + salCrd;
-      } else {
-        // Si no hay cor_mes, usar proporción
-        const proporcion = Math.max(0, mesCorte / 12);
-        acc[key].movimientos_periodo += (salDeb + salCrd) * proporcion;
-      }
+      // Tomar todos los movimientos del año sin restricción de mes
+      acc[key].movimientos_periodo += salDeb + salCrd;
       
       console.log("Acumulando saldos:", { key, salIni, salDeb, salCrd });
       

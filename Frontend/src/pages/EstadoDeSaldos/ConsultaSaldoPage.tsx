@@ -119,7 +119,10 @@ const ConsultaSaldoPage = () => {
       
       // Consultar con_his para movimientos del año
       const fechaIni = `${año}-01-01`;
-      const fechaFin = filtros.doc_fec;
+      //const fechaFin = filtros.doc_fec;
+      const fechaFin = new Date(filtros.doc_fec + 'T23:59:59.999');
+      fechaFin.setDate(fechaFin.getDate() );
+      console.log('fechaFin:', fechaFin);
       
       const filtrosHis = {
         fuente: 'con_his',
@@ -155,6 +158,7 @@ const ConsultaSaldoPage = () => {
     const año = new Date(fechaCorte).getFullYear();
     const mesCorte = new Date(fechaCorte).getMonth() + 1;
     const fechaLimite = new Date(fechaCorte);
+    fechaLimite.setHours(23, 59, 59, 999); // Poner al final del día
     fechaLimite.setDate(fechaLimite.getDate() + 1); // Día siguiente
     
     const meses = [
@@ -195,13 +199,30 @@ const ConsultaSaldoPage = () => {
         item.clc_cod !== 'SI'
       );
       
+      console.log('Total movimientos cuenta:', movimientosCuenta.length);
+      console.log('Fecha límite:', fechaLimite);
+      console.log('Filtros aplicados:', {
+        cta_cod: filtros.cta_cod,
+        año: año,
+        fechaCorte: fechaCorte
+      });
+
       movimientosCuenta.forEach((item) => {
+        /*const fechaDoc = new Date(item.doc_fec);
+        const mesDoc = fechaDoc.getMonth() + 1;
+        const diaDoc = fechaDoc.getDate();*/
+        
         const fechaDoc = new Date(item.doc_fec);
+        const fechaDocSolo = new Date(fechaDoc.getFullYear(), fechaDoc.getMonth(), fechaDoc.getDate());
+        const fechaLimiteSolo = new Date(fechaLimite.getFullYear(), fechaLimite.getMonth(), fechaLimite.getDate());
+        
         const mesDoc = fechaDoc.getMonth() + 1;
         const diaDoc = fechaDoc.getDate();
+        const añoDoc = fechaDoc.getFullYear();
+        const movVal = parseFloat(item.mov_val || 0);
         
         // Solo incluir si la fecha es menor al día siguiente
-        if (fechaDoc < fechaLimite) {
+        if (fechaDocSolo <= fechaLimiteSolo) {
           const movVal = parseFloat(item.mov_val || 0);
           
           if (mesDoc >= 1 && mesDoc <= 12) {
@@ -213,6 +234,8 @@ const ConsultaSaldoPage = () => {
           }
         }
       });
+      console.log('Movimientos procesados - Débito total:', movimientosPorMes[1].debito);
+      console.log('Movimientos procesados - Crédito total:', movimientosPorMes[1].credito);
     }
     
     // Crear resultado
@@ -239,7 +262,7 @@ const ConsultaSaldoPage = () => {
       const credito = movimientosPorMes[i].credito;
       
       // El saldo se calcula: saldo anterior + débitos - créditos
-      saldoAcumulado = saldoAcumulado + debito - credito;
+      saldoAcumulado = saldoAcumulado + debito + credito;
       
       resultado.push({
         suc_cod: suc_cod,
@@ -265,7 +288,7 @@ const ConsultaSaldoPage = () => {
       mes: `TOTAL ${año}`,
       credito: totalCredito,
       debito: totalDebito,
-      saldo: saldoInicial + totalDebito - totalCredito
+      saldo: saldoInicial + totalDebito + totalCredito
     });
     
     return resultado;

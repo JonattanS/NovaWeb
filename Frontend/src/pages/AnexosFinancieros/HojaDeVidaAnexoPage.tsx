@@ -1,6 +1,6 @@
 "use client"
 
-import type React from "react"
+import React from "react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -18,6 +18,7 @@ import {
   Filter,
   ChevronDown,
   ChevronUp,
+  ChevronRight,
   FileText,
   Calendar,
   Building,
@@ -84,6 +85,8 @@ const HojaDeVidaAnexoPage = () => {
   });
 
   const [resultado, setResultado] = useState<any[]>([]);
+  const [detalleMap, setDetalleMap] = useState<{[key: string]: any[]}>({});
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [page, setPage] = useState(1);
@@ -108,7 +111,7 @@ const HojaDeVidaAnexoPage = () => {
     try {
       // Consultar con_his para obtener la hoja de vida del anexo
       const filtrosConsulta = {
-        fuente: 'con_his',
+        fuente: 'anf_con',
         suc_cod: filtros.suc_cod,
         clc_cod: filtros.clc_cod,
         doc_num_ini: filtros.doc_num_ini,
@@ -131,12 +134,11 @@ const HojaDeVidaAnexoPage = () => {
         fecha_fin: filtros.fecha_fin,
       };
       
+      
       const response = await databaseService.consultaDocumentos(filtrosConsulta);
-      console.log("Datos hoja de vida anexo:", response);
       
       // Procesar y filtrar datos relevantes para anexos
       const datosProcessados = procesarHojaDeVidaAnexo(response || []);
-      console.log("Datos procesados:", datosProcessados);
       setResultado(datosProcessados);
     } catch (err: any) {
       console.error("Error en consulta:", err);
@@ -149,7 +151,6 @@ const HojaDeVidaAnexoPage = () => {
 
   // Función para procesar los datos de la hoja de vida del anexo
   const procesarHojaDeVidaAnexo = (datos: any[]) => {
-    console.log("Procesando hoja de vida anexo:", datos);
     
     // Filtrar solo registros que tengan anexo (anx_cod o anf_cod)
     const datosAnexo = datos.filter(item => 
@@ -197,7 +198,6 @@ const HojaDeVidaAnexoPage = () => {
       return (a.mov_cons || '').toString().localeCompare((b.mov_cons || '').toString());
     });
     
-    console.log("Resultado procesado:", resultado);
     return resultado;
   };
 
@@ -208,6 +208,34 @@ const HojaDeVidaAnexoPage = () => {
     });
     return count;
   }
+
+  const handleRowClick = async (row: any) => {
+    const key = `${row.suc_cod}-${row.clc_cod}-${row.doc_num}-${row.cta_cod}`;
+    const newExpanded = new Set(expandedRows);
+    
+    if (expandedRows.has(key)) {
+      newExpanded.delete(key);
+      setExpandedRows(newExpanded);
+    } else {
+      newExpanded.add(key);
+      setExpandedRows(newExpanded);
+      
+      if (!detalleMap[key]) {
+        try {
+          const filtrosDetalle = {
+            fuente: 'con_anf2',
+            doc_num_rel: row.doc_num,
+            cta_cod: row.cta_cod,
+            ter_nit: row.ter_nit
+          };
+          const response = await databaseService.consultaDocumentos(filtrosDetalle);
+          setDetalleMap(prev => ({ ...prev, [key]: response || [] }));
+        } catch (err: any) {
+          console.error("Error cargando detalle:", err);
+        }
+      }
+    }
+  };
 
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
@@ -579,39 +607,102 @@ const HojaDeVidaAnexoPage = () => {
                 <table className="w-full text-sm">
                   <thead className="bg-gray-50 border-b-2 border-gray-200 sticky top-0 z-10">
                     <tr>
-                      <th className="px-4 py-3 font-semibold text-left text-gray-700 whitespace-nowrap">Sucursal</th>
+                      <th className="px-4 py-3 font-semibold text-left text-gray-700 whitespace-nowrap w-10"></th>
+                      
                       <th className="px-4 py-3 font-semibold text-left text-gray-700 whitespace-nowrap">Clase</th>
                       <th className="px-4 py-3 font-semibold text-left text-gray-700 whitespace-nowrap">Documento</th>
                       <th className="px-4 py-3 font-semibold text-left text-gray-700 whitespace-nowrap">Fecha</th>
                       <th className="px-4 py-3 font-semibold text-left text-gray-700 whitespace-nowrap">NIT</th>
                       <th className="px-4 py-3 font-semibold text-left text-gray-700 whitespace-nowrap">Tercero</th>
                       <th className="px-4 py-3 font-semibold text-left text-gray-700 whitespace-nowrap">Cuenta</th>
+                      <th className="px-4 py-3 font-semibold text-right text-gray-700 whitespace-nowrap">Valor</th>
                       <th className="px-4 py-3 font-semibold text-left text-gray-700 whitespace-nowrap">Anexo</th>
                       <th className="px-4 py-3 font-semibold text-left text-gray-700 whitespace-nowrap">Anx. Financiero</th>
-                      <th className="px-4 py-3 font-semibold text-right text-gray-700 whitespace-nowrap">Valor</th>
-                      <th className="px-4 py-3 font-semibold text-left text-gray-700 whitespace-nowrap">Estado</th>
-                      <th className="px-4 py-3 font-semibold text-left text-gray-700 whitespace-nowrap">Observaciones</th>
+                      
+                      <th className="px-4 py-3 font-semibold text-right text-gray-700 whitespace-nowrap">Saldo</th>
+                      <th className="px-4 py-3 font-semibold text-left text-gray-700 whitespace-nowrap">Sucursal</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
-                    {resultado.slice((page - 1) * ROWS_PER_PAGE, page * ROWS_PER_PAGE).map((row, i) => (
-                      <tr key={i} className="hover:bg-blue-50/50 transition-colors">
-                        <td className="px-4 py-3 text-gray-900 whitespace-nowrap">{row.suc_cod}</td>
-                        <td className="px-4 py-3 text-gray-900 whitespace-nowrap">{row.clc_cod}</td>
-                        <td className="px-4 py-3 text-gray-900 whitespace-nowrap">{row.doc_num}</td>
-                        <td className="px-4 py-3 text-gray-900 whitespace-nowrap">{row.doc_fec}</td>
-                        <td className="px-4 py-3 text-gray-900 whitespace-nowrap">{row.ter_nit}</td>
-                        <td className="px-4 py-3 text-gray-900 whitespace-nowrap">{row.ter_raz}</td>
-                        <td className="px-4 py-3 text-gray-900 whitespace-nowrap">{row.cta_cod}</td>
-                        <td className="px-4 py-3 text-gray-900 whitespace-nowrap">{row.anx_cod}</td>
-                        <td className="px-4 py-3 text-gray-900 whitespace-nowrap">{row.anf_cod}</td>
-                        <td className="px-4 py-3 text-gray-900 whitespace-nowrap text-right">
-                          {new Intl.NumberFormat('es-CO', { minimumFractionDigits: 2 }).format(row.mov_val)}
-                        </td>
-                        <td className="px-4 py-3 text-gray-900 whitespace-nowrap">{row.doc_est}</td>
-                        <td className="px-4 py-3 text-gray-900 whitespace-nowrap">{row.doc_obs}</td>
-                      </tr>
-                    ))}
+                    {resultado.slice((page - 1) * ROWS_PER_PAGE, page * ROWS_PER_PAGE).map((row, i) => {
+                      const key = `${row.suc_cod}-${row.clc_cod}-${row.doc_num}-${row.cta_cod}`;
+                      const isExpanded = expandedRows.has(key);
+                      const detalle = detalleMap[key] || [];
+                      const saldo = detalle.reduce((sum, det) => sum + (parseFloat(det.mov_val) || 0), 0);
+                      
+                      return (
+                        <React.Fragment key={key}>
+                          <tr 
+                            className="hover:bg-blue-50/50 transition-colors cursor-pointer"
+                          >
+                            <td className="px-4 py-3 text-gray-900" onClick={() => handleRowClick(row)}>
+                              {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                            </td>
+                            
+                            <td className="px-4 py-3 text-gray-900 whitespace-nowrap">{row.clc_cod}</td>
+                            <td className="px-4 py-3 text-gray-900 whitespace-nowrap">{row.doc_num}</td>
+                            <td className="px-4 py-3 text-gray-900 whitespace-nowrap">{row.doc_fec ? new Date(row.doc_fec).toISOString().split('T')[0] : ''}</td>
+                            <td className="px-4 py-3 text-gray-900 whitespace-nowrap">{row.ter_nit}</td>
+                            <td className="px-4 py-3 text-gray-900 whitespace-nowrap">{row.ter_raz}</td>
+                            <td className="px-4 py-3 text-gray-900 whitespace-nowrap">{row.cta_cod}</td>
+                            <td className="px-4 py-3 text-gray-900 whitespace-nowrap text-right">
+                              {new Intl.NumberFormat('es-CO', { minimumFractionDigits: 2 }).format(row.mov_val)}
+                            </td>
+                            <td className="px-4 py-3 text-gray-900 whitespace-nowrap">{row.anx_cod}</td>
+                            <td className="px-4 py-3 text-gray-900 whitespace-nowrap">{row.anf_cod}</td>
+                            
+                            <td className="px-4 py-3 text-gray-900 whitespace-nowrap text-right">
+                              {new Intl.NumberFormat('es-CO', { minimumFractionDigits: 2 }).format(saldo)}
+                            </td>
+                            <td className="px-4 py-3 text-gray-900 whitespace-nowrap">{row.suc_cod}</td>
+                          </tr>
+                          {isExpanded && (
+                            <tr key={`${key}-detail`}>
+                              <td colSpan={14} className="px-4 py-2 bg-gray-50">
+                                {detalle.length > 0 ? (
+                                  <table className="w-full text-sm">
+                                    <thead className="bg-gray-100">
+                                      <tr>
+                                        <th className="px-2 py-2 text-left text-gray-700 w-20">Clase</th>
+                                        <th className="px-2 py-2 text-left text-gray-700 w-24">Documento</th>
+                                        <th className="px-2 py-2 text-left text-gray-700 w-28">Fecha</th>
+                                        <th className="px-2 py-2 text-left text-gray-700 w-20">Cuota</th>
+                                        <th className="px-2 py-2 text-right text-gray-700 w-32">Valor</th>
+                                        <th className="px-2 py-2 text-left text-gray-700 w-20">Moneda</th>
+                                        <th className="px-2 py-2 text-right text-gray-700 w-24">Tasa</th>
+                                        <th className="px-2 py-2 text-right text-gray-700 w-32">Valor Ext.</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {detalle.map((det, j) => (
+                                        <tr key={j} className="border-t">
+                                          <td className="px-2 py-2">{det.clc_cod}</td>
+                                          <td className="px-2 py-2">{det.doc_num}</td>
+                                          <td className="px-2 py-2">{det.doc_fec ? new Date(det.doc_fec).toISOString().split('T')[0] : ''}</td>
+                                          <td className="px-2 py-2">{det.vcto_nro}</td>
+                                          <td className="px-2 py-2 text-right">
+                                            {new Intl.NumberFormat('es-CO', { minimumFractionDigits: 2 }).format(det.mov_val || 0)}
+                                          </td>
+                                          <td className="px-2 py-2">{det.mnd_cla}</td>
+                                          <td className="px-2 py-2 text-right">
+                                            {new Intl.NumberFormat('es-CO', { minimumFractionDigits: 4 }).format(det.mnd_tas_act || 0)}
+                                          </td>
+                                          <td className="px-2 py-2 text-right">
+                                            {new Intl.NumberFormat('es-CO', { minimumFractionDigits: 2 }).format(det.mov_val_ext || 0)}
+                                          </td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                ) : (
+                                  <div className="text-center py-4 text-gray-500">No hay datos de detalle</div>
+                                )}
+                              </td>
+                            </tr>
+                          )}
+                        </React.Fragment>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

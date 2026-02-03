@@ -112,6 +112,18 @@ function construirWhere(f) {
     where.push(`doc_est <= $${idx++}`)
     values.push(f.doc_est_fin)
   }
+  if (f.cta_cod) {
+    where.push(`cta_cod = $${idx++}`)
+    values.push(f.cta_cod)
+  }
+  if (f.ter_nit) {
+    where.push(`ter_nit = $${idx++}`)
+    values.push(f.ter_nit)
+  }
+  if (f.doc_num_rel) {
+    where.push(`doc_num_rel = $${idx++}`)
+    values.push(f.doc_num_rel)
+  }
 
   // Puedes añadir aquí otros campos siguiendo la misma lógica.
 
@@ -208,6 +220,10 @@ function validateFilters(filtros) {
 router.post("/consultadocumentos", async (req, res) => {
   const { fuente = "con_his", ...filtros } = req.body
 
+  console.log('=== CONSULTA DOCUMENTOS ===')
+  console.log('Fuente:', fuente)
+  console.log('Filtros recibidos:', JSON.stringify(filtros, null, 2))
+
   const validationErrors = validateFilters(filtros)
   if (validationErrors.length > 0) {
     return res.status(400).json({
@@ -217,11 +233,10 @@ router.post("/consultadocumentos", async (req, res) => {
   }
 
   const { sql, values } = construirWhere(filtros)
+  console.log('WHERE generado:', sql)
+  console.log('Valores para query:', values)
 
-  console.log("=== INICIANDO CONSULTA ===")
-  console.log("Fuente:", fuente)
-  console.log("SQL WHERE:", sql)
-  console.log("Values:", values)
+
 
   let baseQuery
 
@@ -256,6 +271,68 @@ router.post("/consultadocumentos", async (req, res) => {
         ORDER BY id
       `
       break
+
+    case "anf_con":
+      const whereAnf = sql ? `${sql} AND anf_cre = 1` : 'WHERE anf_cre = 1'
+      baseQuery = `
+        SELECT id, adm_ciaid, suc_cod, clc_cod, doc_num, doc_fec, doc_tot_deb, doc_tot_crd, doc_pre, doc_num_ref, doc_fec_ref,
+          clc_ord, doc_com_ven, ter_res, doc_ide, doc_obs, cor_ano, cor_mes, cor_dia, doc_ori, usr_cod, usr_fec, usr_hor, doc_est,
+          mov_cons, cta_cod, mov_det, ter_nit, cto_cod, act_cod, cmp_cod, ven_cod, mov_val, mnd_cla, mnd_tas_act, mov_val_ext, mnd_cla1,
+          mnd_tas_act1, mov_val_ext1, bco_cod, mov_pla_che, mov_cheq, mov_fec_che, mov_ben_che, suc_des, anf_cod, clc_cod_rel, doc_num_rel,
+          doc_fec_rel, vcto_nro, anf_tip_cuo, anf_nro_pag, anf_per_pag, anx_cod, cpt_cod, ica_cod, mov_bas, mov_por_apl, anf_int_nom, 
+          mov_dia_bas, anf_tip_int, anf_mod_int, tas_cod, anf_ptos, anf_per_int, mov_cap, mov_cap_ext, mov_mor, mov_mor_ext, anf_vcto1, 
+          anf_vcto, dif_tip_amo, dif_fec_ini, dif_dia, clc_cod_dif, doc_num_dif, doc_fec_dif, dif_con, mov_est, mov_mnd_ext, mov_exp_ext, 
+          mov_ret_igv, pag_ele_num, mov_bas_com, mov_cheq as che_num, suc_nom, clc_nom, clc_ppt, cmp_nom, cta_nom, anx_nom, cpt_nom, anf_nom, anf_cla, anf_tip,
+          anf_cre, ter_raz, cto_nom, act_nom, mnd_nom, usr_nom, est_nom, ven_nom, mnd_nom1, bco_nom, suc_nom_des, clc_nom_rel, ica_nom, tas_nom, 
+          tip_amo_nom, clc_nom_dif, est_nom1, ind_anf, ind_anx, ind_cto, ind_mnd, ind_pre, ind_nit, ind_bco, ind_aju, ind_dif, ind_caj
+        FROM con_his
+        ${whereAnf}
+        ORDER BY id
+      `
+      break  
+
+      case "anf_con2":
+      const whereAnf1 = sql ? `${sql} AND anf_cre = 2` : 'WHERE anf_cre = 2'
+      baseQuery = `
+        SELECT id, adm_ciaid, suc_cod, clc_cod, doc_num, doc_fec, doc_tot_deb, doc_tot_crd, doc_pre, doc_num_ref, doc_fec_ref,
+          clc_ord, doc_com_ven, ter_res, doc_ide, doc_obs, cor_ano, cor_mes, cor_dia, doc_ori, usr_cod, usr_fec, usr_hor, doc_est,
+          mov_cons, cta_cod, mov_det, ter_nit, cto_cod, act_cod, cmp_cod, ven_cod, mov_val, mnd_cla, mnd_tas_act, mov_val_ext, mnd_cla1,
+          mnd_tas_act1, mov_val_ext1, bco_cod, mov_pla_che, mov_cheq, mov_fec_che, mov_ben_che, suc_des, anf_cod, clc_cod_rel, doc_num_rel,
+          doc_fec_rel, vcto_nro, anf_tip_cuo, anf_nro_pag, anf_per_pag, anx_cod, cpt_cod, ica_cod, mov_bas, mov_por_apl, anf_int_nom, 
+          mov_dia_bas, anf_tip_int, anf_mod_int, tas_cod, anf_ptos, anf_per_int, mov_cap, mov_cap_ext, mov_mor, mov_mor_ext, anf_vcto1, 
+          anf_vcto, dif_tip_amo, dif_fec_ini, dif_dia, clc_cod_dif, doc_num_dif, doc_fec_dif, dif_con, mov_est, mov_mnd_ext, mov_exp_ext, 
+          mov_ret_igv, pag_ele_num, mov_bas_com, mov_cheq as che_num, suc_nom, clc_nom, clc_ppt, cmp_nom, cta_nom, anx_nom, cpt_nom, anf_nom, anf_cla, anf_tip,
+          anf_cre, ter_raz, cto_nom, act_nom, mnd_nom, usr_nom, est_nom, ven_nom, mnd_nom1, bco_nom, suc_nom_des, clc_nom_rel, ica_nom, tas_nom, 
+          tip_amo_nom, clc_nom_dif, est_nom1, ind_anf, ind_anx, ind_cto, ind_mnd, ind_pre, ind_nit, ind_bco, ind_aju, ind_dif, ind_caj
+        FROM con_his
+        ${whereAnf1}
+        ORDER BY id
+      `
+      break  
+
+    case "con_anf_mov3":
+      baseQuery = `
+        SELECT 
+          ter_nit,
+          ter_raz,
+          anf_cod,
+          doc_num,
+          SUM(CASE WHEN doc_fec < $${values.length + 1} THEN mov_val ELSE 0 END) as valor_inicial,
+          SUM(CASE WHEN doc_fec >= $${values.length + 1} AND mov_val > 0 THEN mov_val ELSE 0 END) as debitos,
+          SUM(CASE WHEN doc_fec >= $${values.length + 1} AND mov_val < 0 THEN ABS(mov_val) ELSE 0 END) as creditos,
+          SUM(mov_val) as saldo
+        FROM con_his
+        ${sql}
+        GROUP BY ter_nit, ter_raz, anf_cod, doc_num
+        ORDER BY ter_nit, anf_cod
+      `
+      // Agregar fecha_corte a los valores si existe
+      if (filtros.fecha_corte) {
+        values.push(filtros.fecha_corte)
+      } else {
+        values.push(new Date().toISOString().split('T')[0]) // Fecha actual por defecto
+      }
+      break  
 
 
     case "adm_log":
@@ -294,10 +371,13 @@ router.post("/consultadocumentos", async (req, res) => {
     // Agregar más casos según necesidad
   }
 
-  console.log("=== QUERY FINAL ===")
-  console.log(baseQuery)
 
   try {
+    console.log('Query final a ejecutar:')
+    console.log(baseQuery)
+    console.log('Con valores:', values)
+    console.log('========================\n')
+    
     const result = await pool.query(baseQuery, values)
     res.json(result.rows)
   } catch (err) {

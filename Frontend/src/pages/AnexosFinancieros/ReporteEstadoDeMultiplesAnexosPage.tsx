@@ -89,7 +89,7 @@ const ReporteEstadoDeMultiplesAnexosPage = () => {
     try {
       // Consultar movimientos de anexos
       const filtrosConsulta = {
-        fuente: 'con_anf_mov3',
+        fuente: 'anf_con',
         suc_cod: filtros.suc_cod,
         anf_cod_ini: filtros.anx_cod_ini,
         anf_cod_fin: filtros.anx_cod_fin,
@@ -168,7 +168,7 @@ const ReporteEstadoDeMultiplesAnexosPage = () => {
         { key: 'ter_nit', label: 'Nit' },
         { key: 'ter_raz', label: 'Tercero' },
         { key: 'anf_cod', label: 'Anf.' },
-        { key: 'documento', label: 'Documento' },
+        { key: 'doc_num', label: 'Documento' },
         { key: 'valor_inicial', label: 'Valor Inicial' },
         { key: 'debitos', label: 'Débitos' },
         { key: 'creditos', label: 'Créditos' },
@@ -419,7 +419,7 @@ const ReporteEstadoDeMultiplesAnexosPage = () => {
               <div className="flex items-center justify-between">
                 <CardTitle className="text-xl flex items-center">
                   <FileText className="h-5 w-5 mr-2" />
-                  Reporte Estado de Múltiples Anexos {filtros.detallado ? '(Detallado)' : '(Resumido)'} - con_anf_mov3
+                  Reporte Estado de Múltiples Anexos {filtros.detallado ? '(Detallado)' : '(Resumido)'} - anf_con
                 </CardTitle>
                 <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
                   {resultado.length} registros

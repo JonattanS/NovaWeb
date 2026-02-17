@@ -1,16 +1,13 @@
 "use client"
 
-import type React from "react"
-import { useState, useMemo } from "react"
+import React from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Switch } from "@/components/ui/switch"
-import { Label } from "@/components/ui/label"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { databaseService } from "@/services/database"
-import { formatCellValue } from "@/utils/formatters"
 import { schemaService } from "@/services/schemaService"
 import { DataPagination } from "@/components/DataPagination"
 import { ExcelExporter } from "@/components/ExcelExporter"
@@ -20,16 +17,15 @@ import {
   Filter,
   ChevronDown,
   ChevronUp,
-  Table,
+  FileText,
   Calendar,
   Building,
   CreditCard,
-  ToggleLeft,
   Users,
 } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 
-export const mencod = '011606';
+export const mencod = '011805';
 
 const getColumnDescription = (key: string): string => {
   const col = schemaService.getTableColumns().find((c) => c.name === key)
@@ -38,26 +34,32 @@ const getColumnDescription = (key: string): string => {
 
 type Filtros = {
   suc_cod: string
-  cta_cod_ini: string
-  cta_cod_fin: string
+  cta_cod: string
+  anf_cod: string
   ter_nit_ini: string
   ter_nit_fin: string
-  fecha_ini: string
-  fecha_fin: string
-  cierre: boolean
+  fecha1: string
+  fecha2: string
+  fecha3: string
+  fecha4: string
+  fecha5: string
+  fecha6: string
 }
 
-const ReporteSaldosPorNitPage = () => {
+const ReporteVencidosFechasCortePage = () => {
   const navigate = useNavigate()
   const [filtros, setFiltros] = useState<Filtros>({
     suc_cod: "",
-    cta_cod_ini: "",
-    cta_cod_fin: "",
+    cta_cod: "",
+    anf_cod: "",
     ter_nit_ini: "",
     ter_nit_fin: "",
-    fecha_ini: new Date().toISOString().split('T')[0],
-    fecha_fin: new Date().toISOString().split('T')[0],
-    cierre: false,
+    fecha1: "",
+    fecha2: "",
+    fecha3: "",
+    fecha4: "",
+    fecha5: "",
+    fecha6: "",
   });
 
   const [resultado, setResultado] = useState<any[]>([]);
@@ -75,49 +77,46 @@ const ReporteSaldosPorNitPage = () => {
     setFiltros((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleToggleChange = (checked: boolean) => {
-    setFiltros((prev) => ({ ...prev, cierre: checked }));
+  const validateFechas = (): string | null => {
+    const fechas = [filtros.fecha1, filtros.fecha2, filtros.fecha3, filtros.fecha4, filtros.fecha5, filtros.fecha6].filter(f => f);
+    
+    for (let i = 1; i < fechas.length; i++) {
+      if (new Date(fechas[i]) < new Date(fechas[i - 1])) {
+        return `La fecha ${i + 1} no puede ser menor que la fecha ${i}`;
+      }
+    }
+    return null;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    const errorValidacion = validateFechas();
+    if (errorValidacion) {
+      setError(errorValidacion);
+      return;
+    }
+
     setLoading(true);
     setError("");
     setPage(1);
 
     try {
-      // Consultar con_sal para obtener saldos iniciales por NIT (CON_SNIT)
-      const filtrosSal = {
-        fuente: 'con_sal',
+      const filtrosConsulta = {
+        fuente: 'anf_con',
         suc_cod: filtros.suc_cod,
-        cta_cod_ini: filtros.cta_cod_ini,
-        cta_cod_fin: filtros.cta_cod_fin,
+        cta_cod_ini: filtros.cta_cod,
+        cta_cod_fin: filtros.cta_cod,
+        anf_cod_ini: filtros.anf_cod,
+        anf_cod_fin: filtros.anf_cod,
         ter_nit_ini: filtros.ter_nit_ini,
         ter_nit_fin: filtros.ter_nit_fin,
+        fecha_ini: filtros.fecha1 || filtros.fecha2 || filtros.fecha3 || filtros.fecha4 || filtros.fecha5 || filtros.fecha6,
+        fecha_fin: filtros.fecha6 || filtros.fecha5 || filtros.fecha4 || filtros.fecha3 || filtros.fecha2 || filtros.fecha1,
       };
       
-      const responseSal = await databaseService.consultaDocumentos(filtrosSal);
-      console.log("Datos con_sal:", responseSal);
-      
-      // Consultar con_his para obtener movimientos en el rango de fechas
-      const filtrosHis = {
-        fuente: 'con_his',
-        suc_cod: filtros.suc_cod,
-        cta_cod_ini: filtros.cta_cod_ini,
-        cta_cod_fin: filtros.cta_cod_fin,
-        ter_nit_ini: filtros.ter_nit_ini,
-        ter_nit_fin: filtros.ter_nit_fin,
-        fecha_ini: filtros.fecha_ini,
-        fecha_fin: filtros.fecha_fin,
-      };
-      
-      const responseHis = await databaseService.consultaDocumentos(filtrosHis);
-      console.log("Datos con_his:", responseHis);
-      
-      // Procesar datos combinando con_sal y con_his
-      const datosProcessados = await procesarReporteSaldosPorNit(responseSal || [], responseHis || []);
-      console.log("Datos procesados:", datosProcessados);
+      const response = await databaseService.consultaDocumentos(filtrosConsulta);
+      const datosProcessados = procesarReporteVencidosFechasCorte(response || []);
       setResultado(datosProcessados);
     } catch (err: any) {
       console.error("Error en consulta:", err);
@@ -128,112 +127,73 @@ const ReporteSaldosPorNitPage = () => {
     }
   };
 
-  // Función para procesar los datos del reporte de saldos por NIT
-  const procesarReporteSaldosPorNit = async (datosSal: any[], datosHis: any[]) => {
-    console.log("Procesando reporte de saldos por NIT:", { datosSal, datosHis });
+  const procesarReporteVencidosFechasCorte = (datos: any[]) => {
+    const datosAnexo = datos.filter(item => item.anx_cod || item.anf_cod);
+    const fechas = [filtros.fecha1, filtros.fecha2, filtros.fecha3, filtros.fecha4, filtros.fecha5, filtros.fecha6].filter(f => f);
     
-    // Extraer año directamente del string de fecha para evitar problemas de zona horaria
-    const año = filtros.fecha_ini ? parseInt(filtros.fecha_ini.split('-')[0]) : new Date().getFullYear();
-    console.log('Año calculado:', año);
-    const saldosAgrupados: any = {};
+    const agrupado: { [key: string]: any } = {};
     
-    // Procesar movimientos de con_his en el rango de fechas
-    for (const item of datosHis) {
-      if (item.clc_cod && item.doc_num > 0 && item.mov_val !== undefined && item.ter_nit) {
-        // Filtrar documentos válidos
-        if (item.clc_cod === 'SAL') continue;
-        if (!filtros.cierre && item.clc_cod === 'CIE') continue;
-        
-        const key = `${item.cta_cod || 'SIN_CTA'}-${item.ter_nit}`;
-        
-        // Crear entrada si no existe
-        if (!saldosAgrupados[key]) {
-          // Consultar saldo anterior desde con_sal con filtros específicos
-          const filtrosSaldoAnterior = {
-            fuente: 'con_sal',
-            suc_cod: item.suc_cod,
-            cta_cod: item.cta_cod,
-            ter_nit: item.ter_nit,
-            cor_ano: año,
-            sal_tip: 'ter'
-          };
-          
-          let saldoAnterior = 0;
-          try {
-            const responseSaldoAnterior = await databaseService.consultaDocumentos(filtrosSaldoAnterior);
-            if (responseSaldoAnterior && responseSaldoAnterior.length > 0) {
-              saldoAnterior = parseFloat(responseSaldoAnterior[0].sal_ini || 0);
-            }
-          } catch (err) {
-            console.error('Error consultando saldo anterior:', err);
-          }
-          
-          saldosAgrupados[key] = {
-            cta_cod: item.cta_cod || '',
-            cta_nom: item.cta_nom || '',
-            ter_nit: item.ter_nit,
-            ter_raz: item.ter_raz || '',
-            saldo_anterior: saldoAnterior,
-            debitos: 0,
-            creditos: 0
-          };
-        }
-        
-        // Acumular movimientos
-        const movVal = parseFloat(item.mov_val || 0);
-        if (movVal > 0) {
-          saldosAgrupados[key].debitos += movVal;
-        } else {
-          saldosAgrupados[key].creditos += movVal;
-        }
+    datosAnexo.forEach(item => {
+      const nit = item.ter_nit || '';
+      if (!agrupado[nit]) {
+        agrupado[nit] = {
+          ter_nit: nit,
+          ter_raz: item.ter_raz || '',
+          fecha1: 0,
+          fecha2: 0,
+          fecha3: 0,
+          fecha4: 0,
+          fecha5: 0,
+          fecha6: 0,
+        };
       }
-    }
-    
-    // Convertir a array y calcular saldo final
-    const resultado = Object.values(saldosAgrupados).map((grupo: any) => {
-      const saldoFinal = grupo.saldo_anterior + grupo.debitos + grupo.creditos;
-      return {
-        cta_cod: grupo.cta_cod,
-        cta_nom: grupo.cta_nom,
-        ter_nit: grupo.ter_nit,
-        ter_raz: grupo.ter_raz,
-        saldo_anterior: grupo.saldo_anterior,
-        debitos: grupo.debitos,
-        creditos: grupo.creditos,
-        saldo_actual: saldoFinal
-      };
-    }).filter(item => 
-      // Solo incluir si hay saldos o movimientos
-      item.saldo_anterior !== 0 || item.debitos !== 0 || item.creditos !== 0
-    );
-    
-    // Ordenar por cuenta y NIT
-    resultado.sort((a, b) => {
-      if (a.cta_cod !== b.cta_cod) return a.cta_cod.localeCompare(b.cta_cod);
-      return a.ter_nit.localeCompare(b.ter_nit);
+      
+      const valor = parseFloat(item.mov_val || 0);
+      const fechaVcto = item.anf_vcto ? new Date(item.anf_vcto) : null;
+      
+      if (fechaVcto) {
+        fechas.forEach((fecha, index) => {
+          const fechaCorte = new Date(fecha);
+          const diasVencidos = Math.floor((fechaCorte.getTime() - fechaVcto.getTime()) / (1000 * 60 * 60 * 24));
+          
+          if (diasVencidos >= 0) {
+            agrupado[nit][`fecha${index + 1}`] += valor;
+          }
+        });
+      }
     });
     
-    console.log("Resultado procesado:", resultado);
+    const resultado = Object.values(agrupado).map(item => ({
+      ...item,
+      total: item.fecha1 + item.fecha2 + item.fecha3 + item.fecha4 + item.fecha5 + item.fecha6
+    }));
+    
+    resultado.sort((a, b) => a.ter_nit.localeCompare(b.ter_nit));
     return resultado;
   };
 
   const getActiveFiltersCount = () => {
     let count = 0;
-    if (filtros.suc_cod.trim()) count++;
-    if (filtros.cta_cod_ini.trim()) count++;
-    if (filtros.cta_cod_fin.trim()) count++;
-    if (filtros.ter_nit_ini.trim()) count++;
-    if (filtros.ter_nit_fin.trim()) count++;
-    if (filtros.fecha_ini.trim()) count++;
-    if (filtros.fecha_fin.trim()) count++;
-    if (filtros.cierre) count++;
+    Object.values(filtros).forEach(value => {
+      if (value && value.toString().trim()) count++;
+    });
     return count;
   }
+
+  const getFechasActivas = () => {
+    return [
+      { label: 'Fecha 1', value: filtros.fecha1 },
+      { label: 'Fecha 2', value: filtros.fecha2 },
+      { label: 'Fecha 3', value: filtros.fecha3 },
+      { label: 'Fecha 4', value: filtros.fecha4 },
+      { label: 'Fecha 5', value: filtros.fecha5 },
+      { label: 'Fecha 6', value: filtros.fecha6 },
+    ].filter(f => f.value);
+  };
 
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       <div className="max-w-7xl mx-auto py-6 px-4 space-y-6">
-        {/* Header */}
         <div className="flex justify-between items-center">
           <div className="flex items-center space-x-4">
             <Button variant="ghost" size="sm" onClick={() => navigate("/")} className="hover:bg-white/80">
@@ -242,8 +202,8 @@ const ReporteSaldosPorNitPage = () => {
             </Button>
             <div className="h-6 w-px bg-gray-300" />
             <h1 className="text-2xl font-bold text-gray-900 flex items-center">
-              <Users className="h-6 w-6 mr-2 text-blue-600" />
-              Reporte de Saldos por NIT
+              <FileText className="h-6 w-6 mr-2 text-blue-600" />
+              Reporte Vencidos Fechas Corte
             </h1>
           </div>
 
@@ -251,8 +211,8 @@ const ReporteSaldosPorNitPage = () => {
             <div className="flex gap-2">
               <ExcelExporter
                 data={resultado}
-                filename={`reporte_saldos_nit_CSV_${new Date().toISOString().split("T")[0]}`}
-                sheetName="Reporte Saldos por NIT"
+                filename={`reporte_vencidos_fechas_corte_CSV_${new Date().toISOString().split("T")[0]}`}
+                sheetName="Reporte Vencidos Fechas Corte"
                 format="csv"
                 onProgressChange={(progress) => setExportProgress(progress)}
                 onGeneratingChange={(generating) => setIsExporting(generating)}
@@ -260,8 +220,8 @@ const ReporteSaldosPorNitPage = () => {
               />
               <ExcelExporter
                 data={resultado}
-                filename={`reporte_saldos_nit_${new Date().toISOString().split("T")[0]}`}
-                sheetName="Reporte Saldos por NIT"
+                filename={`reporte_vencidos_fechas_corte_${new Date().toISOString().split("T")[0]}`}
+                sheetName="Reporte Vencidos Fechas Corte"
                 format="xlsx"
                 onProgressChange={(progress) => setExportProgress(progress)}
                 onGeneratingChange={(generating) => setIsExporting(generating)}
@@ -271,7 +231,6 @@ const ReporteSaldosPorNitPage = () => {
           )}
         </div>
 
-        {/* Filtros Colapsables */}
         <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
           <Collapsible open={isFiltersOpen} onOpenChange={setIsFiltersOpen}>
             <CollapsibleTrigger asChild>
@@ -299,73 +258,51 @@ const ReporteSaldosPorNitPage = () => {
               <CardContent className="pt-0">
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="grid gap-6">
-                    {/* Información General */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <span>Información General</span>
+                        <Building className="h-4 w-4" />
+                        <span>Sucursal</span>
                       </div>
-                      <div className="grid grid-cols-1 gap-3">
-                        <Input
-                          name="suc_cod"
-                          placeholder="Sucursal"
-                          value={filtros.suc_cod}
-                          onChange={handleChange}
-                          className="bg-white"
-                        />
-                      </div>
+                      <Input
+                        name="suc_cod"
+                        placeholder="Código de Sucursal"
+                        value={filtros.suc_cod}
+                        onChange={handleChange}
+                        className="bg-white"
+                      />
                     </div>
 
-                    {/* Rango de Cuentas */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <span>Rango de Cuentas</span>
+                        <CreditCard className="h-4 w-4" />
+                        <span>Cuenta Contable</span>
                       </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <Input
-                          name="cta_cod_ini"
-                          placeholder="Cuenta Inicial"
-                          value={filtros.cta_cod_ini}
-                          onChange={handleChange}
-                          className="bg-white"
-                        />
-                        <Input
-                          name="cta_cod_fin"
-                          placeholder="Cuenta Final"
-                          value={filtros.cta_cod_fin}
-                          onChange={handleChange}
-                          className="bg-white"
-                        />
-                      </div>
+                      <Input
+                        name="cta_cod"
+                        placeholder="Código de Cuenta"
+                        value={filtros.cta_cod}
+                        onChange={handleChange}
+                        className="bg-white"
+                      />
                     </div>
 
-                    {/* Rango de Fechas */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <span>Rango de Fechas</span>
+                        <FileText className="h-4 w-4" />
+                        <span>Anexo Financiero</span>
                       </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <Input
-                          type="date"
-                          name="fecha_ini"
-                          placeholder="Fecha Inicial"
-                          value={filtros.fecha_ini}
-                          onChange={handleChange}
-                          className="bg-white"
-                        />
-                        <Input
-                          type="date"
-                          name="fecha_fin"
-                          placeholder="Fecha Final"
-                          value={filtros.fecha_fin}
-                          onChange={handleChange}
-                          className="bg-white"
-                        />
-                      </div>
+                      <Input
+                        name="anf_cod"
+                        placeholder="Código de Anexo Financiero"
+                        value={filtros.anf_cod}
+                        onChange={handleChange}
+                        className="bg-white"
+                      />
                     </div>
 
-                    {/* Rango de NITs */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+                        <Users className="h-4 w-4" />
                         <span>Rango de NITs</span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -386,20 +323,65 @@ const ReporteSaldosPorNitPage = () => {
                       </div>
                     </div>
 
-                    {/* Toggle Cierre */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <span>Opciones</span>
+                        <Calendar className="h-4 w-4" />
+                        <span>Fechas de Corte (cada fecha debe ser mayor o igual a la anterior)</span>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <Switch
-                          id="cierre"
-                          checked={filtros.cierre}
-                          onCheckedChange={handleToggleChange}
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                        <Input
+                          type="date"
+                          name="fecha1"
+                          placeholder="Fecha 1"
+                          value={filtros.fecha1}
+                          onChange={handleChange}
+                          className="bg-white"
                         />
-                        <Label htmlFor="cierre" className="text-sm">
-                          Cierre
-                        </Label>
+                        <Input
+                          type="date"
+                          name="fecha2"
+                          placeholder="Fecha 2"
+                          value={filtros.fecha2}
+                          onChange={handleChange}
+                          className="bg-white"
+                          min={filtros.fecha1}
+                        />
+                        <Input
+                          type="date"
+                          name="fecha3"
+                          placeholder="Fecha 3"
+                          value={filtros.fecha3}
+                          onChange={handleChange}
+                          className="bg-white"
+                          min={filtros.fecha2}
+                        />
+                        <Input
+                          type="date"
+                          name="fecha4"
+                          placeholder="Fecha 4"
+                          value={filtros.fecha4}
+                          onChange={handleChange}
+                          className="bg-white"
+                          min={filtros.fecha3}
+                        />
+                        <Input
+                          type="date"
+                          name="fecha5"
+                          placeholder="Fecha 5"
+                          value={filtros.fecha5}
+                          onChange={handleChange}
+                          className="bg-white"
+                          min={filtros.fecha4}
+                        />
+                        <Input
+                          type="date"
+                          name="fecha6"
+                          placeholder="Fecha 6"
+                          value={filtros.fecha6}
+                          onChange={handleChange}
+                          className="bg-white"
+                          min={filtros.fecha5}
+                        />
                       </div>
                     </div>
                   </div>
@@ -442,7 +424,6 @@ const ReporteSaldosPorNitPage = () => {
           </Card>
         )}
 
-        {/* Error */}
         {error && (
           <Card className="border-red-200 bg-red-50">
             <CardContent className="pt-6">
@@ -451,14 +432,13 @@ const ReporteSaldosPorNitPage = () => {
           </Card>
         )}
 
-        {/* Resultados */}
         {resultado.length > 0 && (
           <Card className="shadow-lg border-0 bg-white/90 backdrop-blur-sm">
             <CardHeader className="bg-gradient-to-r from-[#F7722F] to-[#00264D] text-white rounded-t-lg">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-xl flex items-center">
-                  <Users className="h-5 w-5 mr-2" />
-                  Reporte de Saldos por NIT
+                  <FileText className="h-5 w-5 mr-2" />
+                  Reporte Vencidos Fechas Corte
                 </CardTitle>
                 <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
                   {resultado.length} registros
@@ -470,34 +450,28 @@ const ReporteSaldosPorNitPage = () => {
                 <table className="w-full text-sm">
                   <thead className="bg-gray-50 border-b-2 border-gray-200 sticky top-0 z-10">
                     <tr>
-                      <th className="px-4 py-3 font-semibold text-left text-gray-700 whitespace-nowrap">Cuenta</th>
-                      <th className="px-4 py-3 font-semibold text-left text-gray-700 whitespace-nowrap">Nombre Cuenta</th>
                       <th className="px-4 py-3 font-semibold text-left text-gray-700 whitespace-nowrap">NIT</th>
                       <th className="px-4 py-3 font-semibold text-left text-gray-700 whitespace-nowrap">Razón Social</th>
-                      <th className="px-4 py-3 font-semibold text-right text-gray-700 whitespace-nowrap">Saldo Anterior</th>
-                      <th className="px-4 py-3 font-semibold text-right text-gray-700 whitespace-nowrap">Débitos</th>
-                      <th className="px-4 py-3 font-semibold text-right text-gray-700 whitespace-nowrap">Créditos</th>
-                      <th className="px-4 py-3 font-semibold text-right text-gray-700 whitespace-nowrap">Saldo Actual</th>
+                      {getFechasActivas().map((fecha, index) => (
+                        <th key={index} className="px-4 py-3 font-semibold text-right text-gray-700 whitespace-nowrap">
+                          {fecha.value}
+                        </th>
+                      ))}
+                      <th className="px-4 py-3 font-semibold text-right text-gray-700 whitespace-nowrap">Total</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
                     {resultado.slice((page - 1) * ROWS_PER_PAGE, page * ROWS_PER_PAGE).map((row, i) => (
-                      <tr key={i} className="hover:bg-blue-50/50 transition-colors">
-                        <td className="px-4 py-3 text-gray-900 whitespace-nowrap">{row.cta_cod}</td>
-                        <td className="px-4 py-3 text-gray-900 whitespace-nowrap">{row.cta_nom}</td>
+                      <tr key={row.ter_nit} className="hover:bg-blue-50/50 transition-colors">
                         <td className="px-4 py-3 text-gray-900 whitespace-nowrap">{row.ter_nit}</td>
                         <td className="px-4 py-3 text-gray-900 whitespace-nowrap">{row.ter_raz}</td>
-                        <td className="px-4 py-3 text-gray-900 whitespace-nowrap text-right">
-                          {new Intl.NumberFormat('es-CO', { minimumFractionDigits: 2 }).format(row.saldo_anterior)}
-                        </td>
-                        <td className="px-4 py-3 text-gray-900 whitespace-nowrap text-right">
-                          {new Intl.NumberFormat('es-CO', { minimumFractionDigits: 2 }).format(row.debitos)}
-                        </td>
-                        <td className="px-4 py-3 text-gray-900 whitespace-nowrap text-right">
-                          {new Intl.NumberFormat('es-CO', { minimumFractionDigits: 2 }).format(row.creditos)}
-                        </td>
-                        <td className="px-4 py-3 text-gray-900 whitespace-nowrap text-right">
-                          {new Intl.NumberFormat('es-CO', { minimumFractionDigits: 2 }).format(row.saldo_actual)}
+                        {getFechasActivas().map((_, index) => (
+                          <td key={index} className="px-4 py-3 text-gray-900 whitespace-nowrap text-right">
+                            {new Intl.NumberFormat('es-CO', { minimumFractionDigits: 2 }).format(row[`fecha${index + 1}`] || 0)}
+                          </td>
+                        ))}
+                        <td className="px-4 py-3 text-gray-900 whitespace-nowrap text-right font-semibold">
+                          {new Intl.NumberFormat('es-CO', { minimumFractionDigits: 2 }).format(row.total)}
                         </td>
                       </tr>
                     ))}
@@ -521,4 +495,4 @@ const ReporteSaldosPorNitPage = () => {
   )
 }
 
-export default ReporteSaldosPorNitPage
+export default ReporteVencidosFechasCortePage

@@ -40,8 +40,15 @@ import ReporteSaldosPorCentroNitPage from "./pages/EstadoDeSaldos/ReporteSaldosP
 import ReporteDeSaldosDeBancosPage from "./pages/EstadoDeSaldos/ReporteDeSaldosDeBancosPage"
 import ReporteEstadoDeMultiplesAnexosPage from "./pages/AnexosFinancieros/ReporteEstadoDeMultiplesAnexosPage"
 import HojaDeVidaAnexoPage from "./pages/AnexosFinancieros/HojaDeVidaAnexoPage"
-import ReporteAnalisisAnexosVencidosPage from "./pages/AnexosFinancieros/ReporteAnalisisAnexosVencidosPage"
+import ReporteAnalisisAnexosVencidosPorEdadesPage from "./pages/AnexosFinancieros/ReporteAnalisisAnexosVencidosPorEdadesPage"
 import ReporteAnexosVencidosEdadesPage from "./pages/AnexosFinancieros/ReporteAnexosVencidosEdadesPage"
+import ReporteAnalisisAnexosVencidosSemanalPage from "./pages/AnexosFinancieros/ReporteAnalisisAnexosVencidosSemanalPage"
+import ReporteVencidosFechasCortePage from "./pages/AnexosFinancieros/ReporteVencidosFechasCortePage"
+import ReporteAnexosVencidosRangosPersonalizadosPage from "./pages/AnexosFinancieros/ReporteAnexosVencidosRangosPersonalizadosPage"
+import ReporteAnexosPorVencerDolarMonLocalPage from "./pages/AnexosFinancieros/ReporteAnexosPorVencerDolarMonLocalPage"
+import ReporteAnexosVencidosDolarMonLocalPage from "./pages/AnexosFinancieros/ReporteAnexosVencidosDolarMonLocalPage"
+import ConsultaAnexosPorNitPage from "./pages/AnexosFinancieros/ConsultaAnexosPorNitPage"
+import ConsultaAnexosDobleMonedaPage from "./pages/AnexosFinancieros/ConsultaAnexosDobleMonedaPage"
 import { ModuleRepository } from "./components/ModuleRepository"
 import { AuditLogViewer } from "./components/AuditLogViewer"
 import type React from "react"
@@ -425,11 +432,11 @@ const AppRoutes = () => {
         }
       />
       <Route
-        path="/ReporteAnalisisAnexosVencidosPage"
+        path="/ReporteAnalisisAnexosVencidosPorEdadesPage"
         element={
           <ProtectedRoute>
             <MainLayout>
-              <ReporteAnalisisAnexosVencidosPage />
+              <ReporteAnalisisAnexosVencidosPorEdadesPage />
             </MainLayout>
           </ProtectedRoute>
         }
@@ -440,6 +447,76 @@ const AppRoutes = () => {
           <ProtectedRoute>
             <MainLayout>
               <ReporteAnexosVencidosEdadesPage />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/ReporteAnalisisAnexosVencidosSemanalPage"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <ReporteAnalisisAnexosVencidosSemanalPage />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/ReporteVencidosFechasCortePage"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <ReporteVencidosFechasCortePage />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/ReporteAnexosVencidosRangosPersonalizadosPage"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <ReporteAnexosVencidosRangosPersonalizadosPage />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/ReporteAnexosPorVencerDolarMonLocalPage"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <ReporteAnexosPorVencerDolarMonLocalPage />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/ReporteAnexosVencidosDolarMonLocalPage"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <ReporteAnexosVencidosDolarMonLocalPage />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/ConsultaAnexosPorNitPage"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <ConsultaAnexosPorNitPage />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/ConsultaAnexosDobleMonedaPage"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <ConsultaAnexosDobleMonedaPage />
             </MainLayout>
           </ProtectedRoute>
         }

@@ -80,6 +80,10 @@ function construirWhere(f) {
     where.push(`anx_cod <= $${idx++}`)
     values.push(f.anx_cod_fin)
   }
+  if (f.anf_cod) {
+    where.push(`anf_cod = $${idx++}`)
+    values.push(f.anf_cod)
+  }
   if (f.anf_cod_ini) {
     where.push(`anf_cod >= $${idx++}`)
     values.push(f.anf_cod_ini)
@@ -123,6 +127,18 @@ function construirWhere(f) {
   if (f.doc_num_rel) {
     where.push(`doc_num_rel = $${idx++}`)
     values.push(f.doc_num_rel)
+  }
+  if (f.cor_ano) {
+    where.push(`cor_ano = $${idx++}`)
+    values.push(f.cor_ano)
+  }
+  if (f.cor_mes) {
+    where.push(`cor_mes = $${idx++}`)
+    values.push(f.cor_mes)
+  }
+  if (f.sal_tip) {
+    where.push(`sal_tip = $${idx++}`)
+    values.push(f.sal_tip)
   }
 
   // Puedes añadir aquí otros campos siguiendo la misma lógica.
@@ -243,6 +259,7 @@ router.post("/consultadocumentos", async (req, res) => {
   switch (fuente) {
     case "con_his":
     default:
+      const whereConHis = sql ? `${sql} AND clc_cod != 'SI'` : "WHERE clc_cod != 'SI'"
       baseQuery = `
         SELECT id, adm_ciaid, suc_cod, clc_cod, doc_num, doc_fec, doc_tot_deb, doc_tot_crd, doc_pre, doc_num_ref, doc_fec_ref,
           clc_ord, doc_com_ven, ter_res, doc_ide, doc_obs, cor_ano, cor_mes, cor_dia, doc_ori, usr_cod, usr_fec, usr_hor, doc_est,
@@ -255,7 +272,7 @@ router.post("/consultadocumentos", async (req, res) => {
           anf_cre, ter_raz, cto_nom, act_nom, mnd_nom, usr_nom, est_nom, ven_nom, mnd_nom1, bco_nom, suc_nom_des, clc_nom_rel, ica_nom, tas_nom, 
           tip_amo_nom, clc_nom_dif, est_nom1, ind_anf, ind_anx, ind_cto, ind_mnd, ind_pre, ind_nit, ind_bco, ind_aju, ind_dif, ind_caj
         FROM con_his
-        ${sql}
+        ${whereConHis}
         ORDER BY cta_cod, doc_fec, mov_cons
       `
       break
@@ -271,6 +288,63 @@ router.post("/consultadocumentos", async (req, res) => {
         ORDER BY id
       `
       break
+
+     case "acu_sal":
+      // Limpiar y reconstruir values para acu_sal
+      const acuSalValues = []
+      const whereSalConditions = []
+      const whereHisConditions = []
+      let paramIdx = 1
+      
+      if (filtros.suc_cod) {
+        whereSalConditions.push(`suc_cod = $${paramIdx}`)
+        whereHisConditions.push(`suc_cod = $${paramIdx}`)
+        acuSalValues.push(filtros.suc_cod)
+        paramIdx++
+      }
+      if (filtros.cta_cod) {
+        whereSalConditions.push(`cta_cod = $${paramIdx}`)
+        whereHisConditions.push(`cta_cod = $${paramIdx}`)
+        acuSalValues.push(filtros.cta_cod)
+        paramIdx++
+      }
+      if (filtros.cor_ano) {
+        whereSalConditions.push(`cor_ano = $${paramIdx}`)
+        whereHisConditions.push(`cor_ano = $${paramIdx}`)
+        acuSalValues.push(filtros.cor_ano)
+        paramIdx++
+      }
+      whereSalConditions.push('sal_ini != 0')
+      
+      if (filtros.cor_mes) {
+        whereHisConditions.push(`cor_mes <= $${paramIdx}`)
+        acuSalValues.push(filtros.cor_mes)
+        paramIdx++
+      }
+      whereHisConditions.push("clc_cod != 'SI'")
+      
+      const whereSalStr = whereSalConditions.length > 0 ? `WHERE ${whereSalConditions.join(' AND ')}` : ''
+      const whereHisStr = whereHisConditions.length > 0 ? `WHERE ${whereHisConditions.join(' AND ')}` : "WHERE clc_cod != 'SI'"
+      
+      baseQuery = `
+        SELECT 
+          COALESCE((
+            SELECT sal_ini
+            FROM con_sal 
+            ${whereSalStr}
+            ORDER BY id DESC
+            LIMIT 1
+          ), 0) + COALESCE((
+            SELECT SUM(mov_val) 
+            FROM con_his 
+            ${whereHisStr}
+          ), 0) as valor
+      `
+      
+      // Reemplazar values con los valores específicos de acu_sal
+      values.length = 0
+      values.push(...acuSalValues)
+      break 
 
     case "anf_con":
       const whereAnf = sql ? `${sql} AND anf_cre = 1` : 'WHERE anf_cre = 1'
@@ -334,6 +408,84 @@ router.post("/consultadocumentos", async (req, res) => {
       }
       break  
 
+
+    case "con_vctos_edades":
+      const whereVctos = []
+      const vctoValues = []
+      let vctoIdx = 1
+
+      whereVctos.push(`ch.cor_ano = EXTRACT(YEAR FROM CURRENT_DATE)`)
+      whereVctos.push(`ch.anf_cre = 1`)
+      whereVctos.push(`ch.anf_vcto IS NOT NULL`)
+      
+      if (filtros.suc_cod) {
+        whereVctos.push(`ch.suc_cod LIKE $${vctoIdx++} || '%'`)
+        vctoValues.push(filtros.suc_cod)
+      }
+      if (filtros.cta_cod) {
+        whereVctos.push(`ch.cta_cod LIKE $${vctoIdx++} || '%'`)
+        vctoValues.push(filtros.cta_cod)
+      }
+      if (filtros.anf_cod) {
+        whereVctos.push(`ch.anf_cod = $${vctoIdx++}`)
+        vctoValues.push(filtros.anf_cod)
+      }
+      if (filtros.ter_nit_ini) {
+        whereVctos.push(`ch.ter_nit >= $${vctoIdx++}`)
+        vctoValues.push(filtros.ter_nit_ini)
+      }
+      if (filtros.ter_nit_fin) {
+        whereVctos.push(`ch.ter_nit <= $${vctoIdx++}`)
+        vctoValues.push(filtros.ter_nit_fin)
+      }
+      whereVctos.push(`ch.doc_est <> 9`)
+
+      const orderBy = filtros.tipoOrden === 'alfabetico' 
+        ? 'ch.ter_raz, ch.anf_vcto, ch.doc_num' 
+        : 'ch.ter_nit, ch.anf_vcto, ch.doc_num'
+
+      baseQuery = `
+        SELECT 
+          ch.clc_cod,
+          ch.doc_num::text,
+          ch.doc_fec::text,
+          ch.anf_vcto::text as vcto_fec,
+          ch.ter_nit,
+          ch.ter_raz,
+          CASE 
+            WHEN ch.anf_vcto >= CURRENT_DATE THEN ch.mov_val 
+            ELSE 0 
+          END as sin_vencer,
+          CASE 
+            WHEN ch.anf_vcto < CURRENT_DATE AND ch.anf_vcto >= CURRENT_DATE - INTERVAL '30 days' 
+            THEN ch.mov_val ELSE 0 
+          END as dias_1_30,
+          CASE 
+            WHEN ch.anf_vcto < CURRENT_DATE - INTERVAL '30 days' AND ch.anf_vcto >= CURRENT_DATE - INTERVAL '60 days' 
+            THEN ch.mov_val ELSE 0 
+          END as dias_31_60,
+          CASE 
+            WHEN ch.anf_vcto < CURRENT_DATE - INTERVAL '60 days' AND ch.anf_vcto >= CURRENT_DATE - INTERVAL '90 days' 
+            THEN ch.mov_val ELSE 0 
+          END as dias_61_90,
+          CASE 
+            WHEN ch.anf_vcto < CURRENT_DATE - INTERVAL '90 days' 
+            THEN ch.mov_val ELSE 0 
+          END as mas_90_dias,
+          ch.mov_val as total,
+          CASE 
+            WHEN ch.anf_vcto < CURRENT_DATE 
+            THEN CURRENT_DATE - ch.anf_vcto 
+            ELSE 0 
+          END as dias_vencido
+        FROM con_his ch
+        WHERE ${whereVctos.join(' AND ')}
+        ORDER BY ${orderBy}
+      `
+      
+      values.length = 0
+      values.push(...vctoValues)
+      break
 
     case "adm_log":
       const { sql: sqlAudit, values: valuesAudit } = construirWhereAuditLog(filtros)

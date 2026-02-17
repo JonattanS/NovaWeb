@@ -6,8 +6,6 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Switch } from "@/components/ui/switch"
-import { Label } from "@/components/ui/label"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { databaseService } from "@/services/database"
 import { formatCellValue } from "@/utils/formatters"
@@ -43,7 +41,7 @@ type Filtros = {
   cto_cod_fin: string
   fecha_ini: string
   fecha_fin: string
-  cierre: boolean
+  periodo: 'mes' | 'ejercicio'
 }
 
 const ReporteSaldosPorCentroPage = () => {
@@ -56,7 +54,7 @@ const ReporteSaldosPorCentroPage = () => {
     cto_cod_fin: "",
     fecha_ini: new Date().toISOString().split('T')[0],
     fecha_fin: new Date().toISOString().split('T')[0],
-    cierre: false,
+    periodo: 'mes',
   });
 
   const [resultado, setResultado] = useState<any[]>([]);
@@ -69,13 +67,9 @@ const ReporteSaldosPorCentroPage = () => {
 
   const ROWS_PER_PAGE = 100;
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFiltros((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleToggleChange = (checked: boolean) => {
-    setFiltros((prev) => ({ ...prev, cierre: checked }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -188,7 +182,6 @@ const ReporteSaldosPorCentroPage = () => {
       if (item.clc_cod && item.doc_num > 0 && item.mov_val !== undefined && item.cto_cod) {
         // Filtrar documentos válidos
         if (item.clc_cod === 'SAL') return; // Excluir saldos iniciales
-        if (!filtros.cierre && item.clc_cod === 'CIE') return; // Excluir cierre si no está habilitado
         
         const key = `${item.cto_cod}-${item.cta_cod || 'SIN_CTA'}`;
         
@@ -244,7 +237,6 @@ const ReporteSaldosPorCentroPage = () => {
     if (filtros.cto_cod_fin.trim()) count++;
     if (filtros.fecha_ini.trim()) count++;
     if (filtros.fecha_fin.trim()) count++;
-    if (filtros.cierre) count++;
     return count;
   }
 
@@ -404,20 +396,21 @@ const ReporteSaldosPorCentroPage = () => {
                       </div>
                     </div>
 
-                    {/* Toggle Cierre */}
+                    {/* Periodo */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
                         <span>Opciones</span>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <Switch
-                          id="cierre"
-                          checked={filtros.cierre}
-                          onCheckedChange={handleToggleChange}
-                        />
-                        <Label htmlFor="cierre" className="text-sm">
-                          Cierre
-                        </Label>
+                      <div className="grid grid-cols-1 gap-3">
+                        <select
+                          name="periodo"
+                          value={filtros.periodo}
+                          onChange={handleChange}
+                          className="flex h-10 w-full rounded-md border border-input bg-white px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                        >
+                          <option value="mes">Mes</option>
+                          <option value="ejercicio">Ejercicio</option>
+                        </select>
                       </div>
                     </div>
                   </div>

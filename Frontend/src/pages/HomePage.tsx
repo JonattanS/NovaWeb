@@ -2,13 +2,15 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Code, Database, FolderOpen } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Code, Database, FolderOpen, Search } from "lucide-react"
 import { useNavigate } from "react-router-dom"
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { ModuleCarousel } from "@/components/ModuleCarousel"
 import { ModuleRepository } from "@/components/ModuleRepository"
 import type { PersistentModule } from "@/services/moduleService"
 import { useUser } from "@/contexts/UserContext"
+import { routesByMencod } from "@/routesByMencod"
 
 const HomePage = () => {
   const navigate = useNavigate()
@@ -16,12 +18,59 @@ const HomePage = () => {
   const [mostUsedModules, setMostUsedModules] = useState<PersistentModule[]>([])
   const [personalModules, setPersonalModules] = useState<PersistentModule[]>([])
   const [showRepository, setShowRepository] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
 
   const { user } = useUser()
   const userPortafolios = user?.portafolios || []
 
+  // Mapeo de rutas a nombres amigables
+  const menuOptions = useMemo(() => [
+    { name: "Consulta de Documentos", route: "/ConsultaDocumentosPage" },
+    { name: "Diario por Documentos", route: "/DiarioPorDocumentosPage" },
+    { name: "Auxiliar de Cuentas", route: "/AuxiliarDeCuentasPage" },
+    { name: "Auxiliar de Cuentas Extranjeras", route: "/AuxiliarDeCuentasExtranjerasPage" },
+    { name: "Comprobante Diario", route: "/ComprobanteDiarioPage" },
+    { name: "Libro Diario por Sucursal", route: "/LibroDiarioPorSucursalPage" },
+    { name: "Libro Mayor y Balances por Sucursal", route: "/LibroMayorBalancesPorSucursalPage" },
+    { name: "Libro Mayor y Balances Simplificado", route: "/LibroMayorBalancesSimplificadoPage" },
+    { name: "Libros de Inventarios y Balances", route: "/LibrosInventariosBalancesPage" },
+    { name: "Balance de Comprobación", route: "/ConsultaBalanceComprobacionPage" },
+    { name: "Balance de Comprobación Rango Fechas", route: "/BalanceComprobacionRangoFechasCentroTercerosPage" },
+    { name: "Balance General por Sucursal", route: "/BalanceGeneralPorSucursalPage" },
+    { name: "Estado de Resultados por Centro de Actividad", route: "/EstadoResultadosPorCentroActividadPage" },
+    { name: "Consulta de Saldos", route: "/ConsultaSaldoPage" },
+    { name: "Reporte de Saldos por Cuenta", route: "/ReporteSaldosPorCuentaPage" },
+    { name: "Reporte de Saldos por NIT", route: "/ReporteSaldosPorNitPage" },
+    { name: "Reporte de Saldos por Centro", route: "/ReporteSaldosPorCentroPage" },
+    { name: "Reporte de Saldos por Centro y NIT", route: "/ReporteSaldosPorCentroNitPage" },
+    { name: "Reporte de Saldos de Bancos", route: "/ReporteDeSaldosDeBancosPage" },
+    { name: "Reporte Estado de Múltiples Anexos", route: "/ReporteEstadoDeMultiplesAnexosPage" },
+    { name: "Hoja de Vida de Anexo", route: "/HojaDeVidaAnexoPage" },
+    { name: "Reporte Análisis Anexos Vencidos por Edades", route: "/ReporteAnalisisAnexosVencidosPorEdadesPage" },
+    { name: "Reporte Anexos Vencidos por Edades", route: "/ReporteAnexosVencidosEdadesPage" },
+    { name: "Reporte Análisis Anexos Vencidos Semanal", route: "/ReporteAnalisisAnexosVencidosSemanalPage" },
+    { name: "Reporte Vencidos Fechas de Corte", route: "/ReporteVencidosFechasCortePage" },
+    { name: "Reporte Anexos Vencidos Rangos Personalizados", route: "/ReporteAnexosVencidosRangosPersonalizadosPage" },
+    { name: "Reporte Anexos Por Vencer Dolar/Moneda Local", route: "/ReporteAnexosPorVencerDolarMonLocalPage" },
+    { name: "Reporte Anexos Vencidos Dolar/Moneda Local", route: "/ReporteAnexosVencidosDolarMonLocalPage" },
+    { name: "Consulta Anexos por NIT", route: "/ConsultaAnexosPorNitPage" },
+  ], [])
+
+  const filteredOptions = useMemo(() => {
+    if (!searchQuery.trim()) return []
+    const query = searchQuery.toLowerCase()
+    return menuOptions.filter(option => 
+      option.name.toLowerCase().includes(query)
+    ).slice(0, 10)
+  }, [searchQuery, menuOptions])
+
   const handlePersonalModuleClick = (module: PersistentModule) => {
     navigate("/query-manual", { state: { loadModule: module } })
+  }
+
+  const handleOptionClick = (route: string) => {
+    navigate(route)
+    setSearchQuery("")
   }
 
   if (showRepository) {
@@ -31,9 +80,41 @@ const HomePage = () => {
   return (
     <div className="min-h-screen w-full py-6">
       <div className="px-6">
-        <h1 className="text-4xl font-bold tracking-tight leading-tight bg-[#F7722F] bg-clip-text text-transparent mb-8">
-          Página de Inicio
+        <h1 className="text-3xl font-bold tracking-tight leading-tight bg-[#F7722F] bg-clip-text text-transparent mb-8">
+          ¿Qué quieres hacer hoy?
         </h1>
+
+        {/* Buscador de Opciones de Menú */}
+        <div className="mb-8 relative">
+          <div className="relative">
+            <Search className="absolute left-5 top-1/2 transform -translate-y-1/2 h-8 w-8 text-gray-400" />
+            <Input
+              type="text"
+              placeholder=""
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-16 h-20 shadow-2xl border-2 focus:border-blue-500 rounded-2xl font-medium"
+              style={{ fontSize: '1.2rem' }}
+            />
+          </div>
+          
+          {filteredOptions.length > 0 && (
+            <div className="absolute z-50 w-full mt-2 bg-white dark:bg-slate-800 rounded-lg shadow-2xl border border-slate-200 dark:border-slate-700 max-h-96 overflow-y-auto">
+              {filteredOptions.map((option, index) => (
+                <div
+                  key={index}
+                  onClick={() => handleOptionClick(option.route)}
+                  className="px-4 py-3 hover:bg-blue-50 dark:hover:bg-slate-700 cursor-pointer transition-colors border-b border-slate-100 dark:border-slate-700 last:border-b-0"
+                >
+                  <div className="flex items-center space-x-3">
+                    <Database className="h-5 w-5 text-blue-600" />
+                    <span className="text-slate-800 dark:text-slate-200 font-medium">{option.name}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
         <div className="w-full space-y-12">
           <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700 overflow-hidden">

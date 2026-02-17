@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,16 +14,15 @@ import { ExcelExporter } from '@/components/ExcelExporter';
 import { databaseService } from '@/services/database';
 import { useToast } from '@/hooks/use-toast';
 
-export const mencod = '011814';
+export const mencod = '011808';
 
 interface FiltrosReporte {
-  sucursal: string;
-  cuentaContable: string;
-  codigoAnexo: string;
+  suc_cod: string;
+  cta_cod: string;
+  anf_cod: string;
   tipoOrden: 'alfabetico' | 'numerico';
-  nitInicial: string;
-  nitFinal: string;
-  detallado: boolean;
+  ter_nit_ini: string;
+  ter_nit_fin: string;
 }
 
 interface RegistroAnexoVencido {
@@ -42,18 +41,17 @@ interface RegistroAnexoVencido {
   dias_vencido: number;
 }
 
-const ReporteAnalisisAnexosVencidosDolMonLocalPage = () => {
+const ReporteAnexosVencidosDolarMonLocalPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   
   const [filtros, setFiltros] = useState<FiltrosReporte>({
-    sucursal: '',
-    cuentaContable: '',
-    codigoAnexo: '',
+    suc_cod: '',
+    cta_cod: '',
+    anf_cod: '',
     tipoOrden: 'alfabetico',
-    nitInicial: '',
-    nitFinal: 'ZZZZZZZZZZZZZZ',
-    detallado: true
+    ter_nit_ini: '',
+    ter_nit_fin: 'ZZZZZZZZZZZZZZ'
   });
 
   const [resultados, setResultados] = useState<RegistroAnexoVencido[]>([]);
@@ -65,7 +63,7 @@ const ReporteAnalisisAnexosVencidosDolMonLocalPage = () => {
   const registrosPorPagina = 50;
 
   const ejecutarConsulta = async () => {
-    if (!filtros.codigoAnexo) {
+    if (!filtros.anf_cod) {
       toast({
         title: "Campo requerido",
         description: "Debe especificar el código del anexo financiero",
@@ -76,64 +74,23 @@ const ReporteAnalisisAnexosVencidosDolMonLocalPage = () => {
 
     setCargando(true);
     try {
-      const query = `
-        SELECT 
-          cv.clc_cod,
-          cv.doc_num::text,
-          cv.doc_fec::text,
-          cv.vcto_fec::text,
-          cv.ter_nit,
-          nt.ter_raz,
-          CASE 
-            WHEN cv.vcto_fec >= CURRENT_DATE THEN cv.anf_val 
-            ELSE 0 
-          END as sin_vencer,
-          CASE 
-            WHEN cv.vcto_fec < CURRENT_DATE AND cv.vcto_fec >= CURRENT_DATE - INTERVAL '30 days' 
-            THEN cv.anf_val ELSE 0 
-          END as dias_1_30,
-          CASE 
-            WHEN cv.vcto_fec < CURRENT_DATE - INTERVAL '30 days' AND cv.vcto_fec >= CURRENT_DATE - INTERVAL '60 days' 
-            THEN cv.anf_val ELSE 0 
-          END as dias_31_60,
-          CASE 
-            WHEN cv.vcto_fec < CURRENT_DATE - INTERVAL '60 days' AND cv.vcto_fec >= CURRENT_DATE - INTERVAL '90 days' 
-            THEN cv.anf_val ELSE 0 
-          END as dias_61_90,
-          CASE 
-            WHEN cv.vcto_fec < CURRENT_DATE - INTERVAL '90 days' 
-            THEN cv.anf_val ELSE 0 
-          END as mas_90_dias,
-          cv.anf_val as total,
-          CASE 
-            WHEN cv.vcto_fec < CURRENT_DATE 
-            THEN CURRENT_DATE - cv.vcto_fec 
-            ELSE 0 
-          END as dias_vencido
-        FROM public.con_vctos cv
-        LEFT JOIN public.nov_ter nt ON cv.ter_nit = nt.ter_nit
-        WHERE cv.cor_ano = EXTRACT(YEAR FROM CURRENT_DATE)
-          ${filtros.sucursal ? `AND cv.suc_cod LIKE '${filtros.sucursal}%'` : ''}
-          ${filtros.cuentaContable ? `AND cv.cta_cod LIKE '${filtros.cuentaContable}%'` : ''}
-          AND cv.anf_cod = ${filtros.codigoAnexo}
-          AND cv.ter_nit >= '${filtros.nitInicial}'
-          AND cv.ter_nit <= '${filtros.nitFinal}'
-          AND EXISTS (
-            SELECT 1 FROM public.con_anf ca 
-            WHERE ca.clc_cod = cv.clc_cod 
-              AND ca.doc_num = cv.doc_num 
-              AND ca.est_cod <> 9
-          )
-        ORDER BY ${filtros.tipoOrden === 'alfabetico' ? 'nt.ter_raz, cv.vcto_fec' : 'cv.ter_nit, cv.vcto_fec'}, cv.doc_num
-      `;
+      const filtrosConsulta = {
+        fuente: 'con_vctos_edades',
+        suc_cod: filtros.suc_cod,
+        cta_cod: filtros.cta_cod,
+        anf_cod: filtros.anf_cod,
+        ter_nit_ini: filtros.ter_nit_ini,
+        ter_nit_fin: filtros.ter_nit_fin,
+        tipoOrden: filtros.tipoOrden
+      };
 
-      const datos = await databaseService.executeCustomQuery(query);
-      setResultados(datos);
+      const datos = await databaseService.consultaDocumentos(filtrosConsulta);
+      setResultados(datos || []);
       setPaginaActual(1);
       
       toast({
         title: "Consulta ejecutada",
-        description: `Se encontraron ${datos.length} registros`
+        description: `Se encontraron ${datos?.length || 0} registros`
       });
     } catch (error) {
       toast({
@@ -148,13 +105,12 @@ const ReporteAnalisisAnexosVencidosDolMonLocalPage = () => {
 
   const limpiarFiltros = () => {
     setFiltros({
-      sucursal: '',
-      cuentaContable: '',
-      codigoAnexo: '',
+      suc_cod: '',
+      cta_cod: '',
+      anf_cod: '',
       tipoOrden: 'alfabetico',
-      nitInicial: '',
-      nitFinal: 'ZZZZZZZZZZZZZZ',
-      detallado: true
+      ter_nit_ini: '',
+      ter_nit_fin: 'ZZZZZZZZZZZZZZ'
     });
     setResultados([]);
   };
@@ -204,7 +160,6 @@ const ReporteAnalisisAnexosVencidosDolMonLocalPage = () => {
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       <div className="max-w-7xl mx-auto py-6 px-4 space-y-6">
-        {/* Header */}
         <div className="flex justify-between items-center">
           <div className="flex items-center space-x-4">
             <Button variant="ghost" size="sm" onClick={() => navigate('/')} className="hover:bg-white/80">
@@ -214,7 +169,7 @@ const ReporteAnalisisAnexosVencidosDolMonLocalPage = () => {
             <div className="h-6 w-px bg-gray-300" />
             <h1 className="text-2xl font-bold text-gray-900 flex items-center">
               <Table className="h-6 w-6 mr-2 text-blue-600" />
-              Reporte Análisis Anexos Vencidos DolMonLocal
+              Reporte Anexos Vencidos por Dolar/Moneda Local
             </h1>
           </div>
 
@@ -222,8 +177,8 @@ const ReporteAnalisisAnexosVencidosDolMonLocalPage = () => {
             <div className="flex gap-2">
               <ExcelExporter
                 data={resultados}
-                filename={`analisis_anexos_vencidos_dolmonlocal_CSV_${new Date().toISOString().split('T')[0]}`}
-                sheetName="Anexos Vencidos DolMonLocal"
+                filename={`anexos_vencidos_dolar_mon_CSV_${new Date().toISOString().split('T')[0]}`}
+                sheetName="Anexos Vencidos Dolar/Mon Local"
                 format="csv"
                 onProgressChange={(progress) => setExportProgress(progress)}
                 onGeneratingChange={(generating) => setIsExporting(generating)}
@@ -231,8 +186,8 @@ const ReporteAnalisisAnexosVencidosDolMonLocalPage = () => {
               />
               <ExcelExporter
                 data={resultados}
-                filename={`analisis_anexos_vencidos_dolmonlocal_${new Date().toISOString().split('T')[0]}`}
-                sheetName="Anexos Vencidos DolMonLocal"
+                filename={`anexos_vencidos_dolar_mon_${new Date().toISOString().split('T')[0]}`}
+                sheetName="Anexos Vencidos Dolar/Mon Local"
                 format="xlsx"
                 onProgressChange={(progress) => setExportProgress(progress)}
                 onGeneratingChange={(generating) => setIsExporting(generating)}
@@ -242,7 +197,6 @@ const ReporteAnalisisAnexosVencidosDolMonLocalPage = () => {
           )}
         </div>
 
-        {/* Filtros Colapsables */}
         <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
           <Collapsible open={isFiltersOpen} onOpenChange={setIsFiltersOpen}>
             <CollapsibleTrigger asChild>
@@ -270,27 +224,26 @@ const ReporteAnalisisAnexosVencidosDolMonLocalPage = () => {
               <CardContent className="pt-0">
                 <div className="space-y-6">
                   <div className="grid gap-6">
-                    {/* Información General */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
                         <span>Información General</span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                         <Input
-                          value={filtros.sucursal}
-                          onChange={(e) => setFiltros(prev => ({ ...prev, sucursal: e.target.value }))}
+                          value={filtros.suc_cod}
+                          onChange={(e) => setFiltros(prev => ({ ...prev, suc_cod: e.target.value }))}
                           placeholder="Sucursal/Agencia"
                           className="bg-white"
                         />
                         <Input
-                          value={filtros.cuentaContable}
-                          onChange={(e) => setFiltros(prev => ({ ...prev, cuentaContable: e.target.value }))}
+                          value={filtros.cta_cod}
+                          onChange={(e) => setFiltros(prev => ({ ...prev, cta_cod: e.target.value }))}
                           placeholder="Cuenta Contable"
                           className="bg-white"
                         />
                         <Input
-                          value={filtros.codigoAnexo}
-                          onChange={(e) => setFiltros(prev => ({ ...prev, codigoAnexo: e.target.value }))}
+                          value={filtros.anf_cod}
+                          onChange={(e) => setFiltros(prev => ({ ...prev, anf_cod: e.target.value }))}
                           placeholder="Código Anexo Financiero *"
                           className="bg-white"
                           required
@@ -298,7 +251,6 @@ const ReporteAnalisisAnexosVencidosDolMonLocalPage = () => {
                       </div>
                     </div>
 
-                    {/* Configuración */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
                         <span>Configuración</span>
@@ -318,34 +270,23 @@ const ReporteAnalisisAnexosVencidosDolMonLocalPage = () => {
                             <SelectItem value="numerico">Numérico</SelectItem>
                           </SelectContent>
                         </Select>
-                        <div className="flex items-center space-x-2">
-                          <Checkbox
-                            id="detallado"
-                            checked={filtros.detallado}
-                            onCheckedChange={(checked) => 
-                              setFiltros(prev => ({ ...prev, detallado: checked as boolean }))
-                            }
-                          />
-                          <Label htmlFor="detallado">Reporte Detallado</Label>
-                        </div>
                       </div>
                     </div>
 
-                    {/* Rango de Terceros */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
                         <span>Rango de Terceros (NIT)</span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <Input
-                          value={filtros.nitInicial}
-                          onChange={(e) => setFiltros(prev => ({ ...prev, nitInicial: e.target.value }))}
+                          value={filtros.ter_nit_ini}
+                          onChange={(e) => setFiltros(prev => ({ ...prev, ter_nit_ini: e.target.value }))}
                           placeholder="NIT Inicial"
                           className="bg-white"
                         />
                         <Input
-                          value={filtros.nitFinal}
-                          onChange={(e) => setFiltros(prev => ({ ...prev, nitFinal: e.target.value }))}
+                          value={filtros.ter_nit_fin}
+                          onChange={(e) => setFiltros(prev => ({ ...prev, ter_nit_fin: e.target.value }))}
                           placeholder="NIT Final"
                           className="bg-white"
                         />
@@ -396,14 +337,13 @@ const ReporteAnalisisAnexosVencidosDolMonLocalPage = () => {
           </Card>
         )}
 
-        {/* Resultados */}
         {resultados.length > 0 && (
           <Card className="shadow-lg border-0 bg-white/90 backdrop-blur-sm">
             <CardHeader className="bg-gradient-to-r from-[#F7722F] to-[#00264D] text-white rounded-t-lg">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-xl flex items-center">
                   <Table className="h-5 w-5 mr-2" />
-                  Resultados del Análisis DolMonLocal
+                  Resultados del Reporte Anexos Vencidos por Dolar/Moneda Local
                 </CardTitle>
                 <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
                   {resultados.length} registros
@@ -482,4 +422,4 @@ const ReporteAnalisisAnexosVencidosDolMonLocalPage = () => {
   );
 };
 
-export default ReporteAnalisisAnexosVencidosDolMonLocalPage;
+export default ReporteAnexosVencidosDolarMonLocalPage;

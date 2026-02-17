@@ -1,13 +1,11 @@
 "use client"
 
-import type React from "react"
+import React from "react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Switch } from "@/components/ui/switch"
-import { Label } from "@/components/ui/label"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { databaseService } from "@/services/database"
 import { formatCellValue } from "@/utils/formatters"
@@ -20,15 +18,18 @@ import {
   Filter,
   ChevronDown,
   ChevronUp,
-  Table,
+  ChevronRight,
+  FileText,
   Calendar,
   Building,
   CreditCard,
-  ToggleLeft,
+  Users,
+  Hash,
+  CheckCircle,
 } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 
-export const mencod = '011604';
+export const mencod = '011804';
 
 const getColumnDescription = (key: string): string => {
   const col = schemaService.getTableColumns().find((c) => c.name === key)
@@ -39,18 +40,24 @@ type Filtros = {
   suc_cod: string
   cta_cod_ini: string
   cta_cod_fin: string
-  doc_fec: string
-  cierre: boolean
+  anf_cod_ini: string
+  anf_cod_fin: string
+  ter_nit_ini: string
+  ter_nit_fin: string
+  fecha_corte: string
 }
 
-const ReporteSaldosPorCuentaPage = () => {
+const ReporteAnalisisAnexosVencidosSemanalPage = () => {
   const navigate = useNavigate()
   const [filtros, setFiltros] = useState<Filtros>({
     suc_cod: "",
     cta_cod_ini: "",
     cta_cod_fin: "",
-    doc_fec: new Date().toISOString().split('T')[0], // Fecha actual por defecto
-    cierre: false,
+    anf_cod_ini: "",
+    anf_cod_fin: "",
+    ter_nit_ini: "",
+    ter_nit_fin: "",
+    fecha_corte: "",
   });
 
   const [resultado, setResultado] = useState<any[]>([]);
@@ -68,10 +75,6 @@ const ReporteSaldosPorCuentaPage = () => {
     setFiltros((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleToggleChange = (checked: boolean) => {
-    setFiltros((prev) => ({ ...prev, cierre: checked }));
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -80,29 +83,25 @@ const ReporteSaldosPorCuentaPage = () => {
     setPage(1);
 
     try {
-      const fechaCorte = new Date(filtros.doc_fec);
-      const año = fechaCorte.getFullYear();
-      const mes = fechaCorte.getMonth() + 1;
-      
-      // Consultar con_his para obtener movimientos del mes
-      const fechaIni = new Date(año, mes - 1, 1);
-      
-      const filtrosHis = {
-        fuente: 'con_his',
+      // Consultar con_his para obtener la reporte vencidos semanal
+      const filtrosConsulta = {
+        fuente: 'anf_con',
         suc_cod: filtros.suc_cod,
         cta_cod_ini: filtros.cta_cod_ini,
         cta_cod_fin: filtros.cta_cod_fin,
-        fecha_ini: fechaIni.toISOString().split('T')[0],
-        fecha_fin: filtros.doc_fec,
-        cor_mes: mes
+        anf_cod_ini: filtros.anf_cod_ini,
+        anf_cod_fin: filtros.anf_cod_fin,
+        ter_nit_ini: filtros.ter_nit_ini,
+        ter_nit_fin: filtros.ter_nit_fin,
+        fecha_ini: filtros.fecha_corte,
+        fecha_fin: filtros.fecha_corte,
       };
       
-      const responseHis = await databaseService.consultaDocumentos(filtrosHis);
-      console.log("Datos con_his:", responseHis);
       
-      // Procesar datos
-      const datosProcessados = await procesarReporteSaldos(responseHis || [], filtros.doc_fec, año, mes);
-      console.log("Datos procesados:", datosProcessados);
+      const response = await databaseService.consultaDocumentos(filtrosConsulta);
+      
+      // Procesar y filtrar datos relevantes para anexos
+      const datosProcessados = procesarReporteAnexosVencidosSemanal(response || []);
       setResultado(datosProcessados);
     } catch (err: any) {
       console.error("Error en consulta:", err);
@@ -113,102 +112,74 @@ const ReporteSaldosPorCuentaPage = () => {
     }
   };
 
-  // Función para procesar los datos del reporte de saldos por cuenta
-  const procesarReporteSaldos = async (datosHis: any[], fechaCorte: string, año: number, mes: number) => {
-    console.log("Procesando reporte de saldos:", { datosHis, fechaCorte, año, mes });
+  // Función para procesar los datos de la Reporte Anexos Vencidos Semanal
+  const procesarReporteAnexosVencidosSemanal = (datos: any[]) => {
+    const datosAnexo = datos.filter(item => item.anx_cod || item.anf_cod);
+    const fechaCorte = filtros.fecha_corte ? new Date(filtros.fecha_corte) : new Date();
     
-    const saldosAgrupados: any = {};
+    // Agrupar por NIT
+    const agrupado: { [key: string]: any } = {};
     
-    // Procesar movimientos de con_his del mes actual
-    for (const item of datosHis) {
-      if (item.clc_cod && item.doc_num > 0 && item.mov_val !== undefined) {
-        // Filtrar documentos válidos
-        if (item.clc_cod === 'SAL' || item.clc_cod === 'SI') continue;
-        if (!filtros.cierre && item.clc_cod === 'CIE') continue;
+    datosAnexo.forEach(item => {
+      const nit = item.ter_nit || '';
+      if (!agrupado[nit]) {
+        agrupado[nit] = {
+          ter_nit: nit,
+          ter_raz: item.ter_raz || '',
+          sin_vencer: 0,
+          dias_1_5: 0,
+          dias_6_7: 0,
+          dias_8_14: 0,
+          dias_15_21: 0,
+          dias_22_30: 0,
+          dias_mas_31: 0,
+        };
+      }
+      
+      const valor = parseFloat(item.mov_val || 0);
+      const fechaVcto = item.anf_vcto ? new Date(item.anf_vcto) : null;
+      
+      if (fechaVcto) {
+        const diasVencidos = Math.floor((fechaCorte.getTime() - fechaVcto.getTime()) / (1000 * 60 * 60 * 24));
         
-        const key = `${item.suc_cod || 'SIN_SUC'}-${item.cta_cod || 'SIN_CTA'}`;
-        
-        // Crear entrada si no existe
-        if (!saldosAgrupados[key]) {
-          // Consultar saldo anterior usando acu_sal
-          const filtrosAcuSal = {
-            fuente: 'acu_sal',
-            suc_cod: item.suc_cod,
-            cta_cod: item.cta_cod,
-            cor_ano: año,
-            cor_mes: mes - 1 // Mes anterior
-          };
-          
-          let saldoAnterior = 0;
-          try {
-            const responseAcuSal = await databaseService.consultaDocumentos(filtrosAcuSal);
-            if (responseAcuSal && responseAcuSal.length > 0) {
-              saldoAnterior = parseFloat(responseAcuSal[0].valor || 0);
-            }
-          } catch (err) {
-            console.error('Error consultando acu_sal:', err);
-          }
-          
-          saldosAgrupados[key] = {
-            suc_cod: item.suc_cod || '',
-            suc_nom: item.suc_nom || '',
-            cta_cod: item.cta_cod || '',
-            cta_nom: item.cta_nom || '',
-            saldo_anterior: saldoAnterior,
-            debitos_mes: 0,
-            creditos_mes: 0
-          };
-        }
-        
-        // Acumular movimientos del mes
-        const movVal = parseFloat(item.mov_val || 0);
-        if (movVal > 0) {
-          saldosAgrupados[key].debitos_mes += movVal;
-        } else {
-          saldosAgrupados[key].creditos_mes += movVal;
+        if (diasVencidos < 0) {
+          agrupado[nit].sin_vencer += valor;
+        } else if (diasVencidos >= 1 && diasVencidos <= 5) {
+          agrupado[nit].dias_1_5 += valor;
+        } else if (diasVencidos >= 6 && diasVencidos <= 7) {
+          agrupado[nit].dias_6_7 += valor;
+        } else if (diasVencidos >= 8 && diasVencidos <= 14) {
+          agrupado[nit].dias_8_14 += valor;
+        } else if (diasVencidos >= 15 && diasVencidos <= 21) {
+          agrupado[nit].dias_15_21 += valor;
+        } else if (diasVencidos >= 22 && diasVencidos <= 30) {
+          agrupado[nit].dias_22_30 += valor;
+        } else if (diasVencidos > 30) {
+          agrupado[nit].dias_mas_31 += valor;
         }
       }
-    }
-    
-    // Convertir a array y calcular saldo final
-    const resultado = Object.values(saldosAgrupados).map((grupo: any) => {
-      const saldoFinal = grupo.saldo_anterior + grupo.debitos_mes + grupo.creditos_mes;
-      return {
-        suc_cod: grupo.suc_cod,
-        suc_nom: grupo.suc_nom,
-        cta_cod: grupo.cta_cod,
-        cta_nom: grupo.cta_nom,
-        saldo_anterior: grupo.saldo_anterior,
-        debitos_mes: grupo.debitos_mes,
-        creditos_mes: grupo.creditos_mes,
-        saldo: saldoFinal
-      };
-    }).filter(item => 
-      item.saldo_anterior !== 0 || item.debitos_mes !== 0 || item.creditos_mes !== 0
-    );
-    
-    // Ordenar por sucursal y cuenta
-    resultado.sort((a, b) => {
-      if (a.suc_cod !== b.suc_cod) return a.suc_cod.localeCompare(b.suc_cod);
-      return a.cta_cod.localeCompare(b.cta_cod);
     });
     
-    console.log("Saldos agrupados:", saldosAgrupados);
-    console.log("Resultado procesado:", resultado);
+    // Convertir a array y calcular totales
+    const resultado = Object.values(agrupado).map(item => ({
+      ...item,
+      total_vencido: item.dias_1_5 + item.dias_6_7 + item.dias_8_14 + item.dias_15_21 + item.dias_22_30 + item.dias_mas_31,
+      total_general: item.sin_vencer + item.dias_1_5 + item.dias_6_7 + item.dias_8_14 + item.dias_15_21 + item.dias_22_30 + item.dias_mas_31
+    }));
+    
+    resultado.sort((a, b) => a.ter_nit.localeCompare(b.ter_nit));
     return resultado;
   };
 
-
-
   const getActiveFiltersCount = () => {
     let count = 0;
-    if (filtros.suc_cod.trim()) count++;
-    if (filtros.cta_cod_ini.trim()) count++;
-    if (filtros.cta_cod_fin.trim()) count++;
-    if (filtros.doc_fec.trim()) count++;
-    if (filtros.cierre) count++;
+    Object.values(filtros).forEach(value => {
+      if (value && value.toString().trim()) count++;
+    });
     return count;
   }
+
+
 
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
@@ -222,8 +193,8 @@ const ReporteSaldosPorCuentaPage = () => {
             </Button>
             <div className="h-6 w-px bg-gray-300" />
             <h1 className="text-2xl font-bold text-gray-900 flex items-center">
-              <Table className="h-6 w-6 mr-2 text-blue-600" />
-              Reporte de Saldos por Cuenta
+              <FileText className="h-6 w-6 mr-2 text-blue-600" />
+              Reporte Anexos Vencidos Semanal
             </h1>
           </div>
 
@@ -231,8 +202,8 @@ const ReporteSaldosPorCuentaPage = () => {
             <div className="flex gap-2">
               <ExcelExporter
                 data={resultado}
-                filename={`reporte_saldos_cuenta_CSV_${new Date().toISOString().split("T")[0]}`}
-                sheetName="Reporte Saldos por Cuenta"
+                filename={`reporte_anexos_vencidos_semanal_CSV_${new Date().toISOString().split("T")[0]}`}
+                sheetName="Reporte Anexos Vencidos Semanal"
                 format="csv"
                 onProgressChange={(progress) => setExportProgress(progress)}
                 onGeneratingChange={(generating) => setIsExporting(generating)}
@@ -240,8 +211,8 @@ const ReporteSaldosPorCuentaPage = () => {
               />
               <ExcelExporter
                 data={resultado}
-                filename={`reporte_saldos_cuenta_${new Date().toISOString().split("T")[0]}`}
-                sheetName="Reporte Saldos por Cuenta"
+                filename={`reporte_anexos_vencidos_semanal_${new Date().toISOString().split("T")[0]}`}
+                sheetName="Reporte Anexos Vencidos Semanal"
                 format="xlsx"
                 onProgressChange={(progress) => setExportProgress(progress)}
                 onGeneratingChange={(generating) => setIsExporting(generating)}
@@ -279,34 +250,26 @@ const ReporteSaldosPorCuentaPage = () => {
               <CardContent className="pt-0">
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="grid gap-6">
-                    {/* Información General */}
+                    {/* Sucursal */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <span>Información General</span>
+                        <Building className="h-4 w-4" />
+                        <span>Sucursal</span>
                       </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <Input
-                          name="suc_cod"
-                          placeholder="Sucursal"
-                          value={filtros.suc_cod}
-                          onChange={handleChange}
-                          className="bg-white"
-                        />
-                        <Input
-                          type="date"
-                          name="doc_fec"
-                          placeholder="Fecha de Corte"
-                          value={filtros.doc_fec}
-                          onChange={handleChange}
-                          className="bg-white"
-                        />
-                      </div>
+                      <Input
+                        name="suc_cod"
+                        placeholder="Código de Sucursal"
+                        value={filtros.suc_cod}
+                        onChange={handleChange}
+                        className="bg-white"
+                      />
                     </div>
 
-                    {/* Rango de Cuentas */}
+                    {/* Rango de Cuentas Contables */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <span>Rango de Cuentas</span>
+                        <CreditCard className="h-4 w-4" />
+                        <span>Rango de Cuentas Contables</span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <Input
@@ -326,21 +289,68 @@ const ReporteSaldosPorCuentaPage = () => {
                       </div>
                     </div>
 
-                    {/* Toggle Cierre */}
+                    {/* Anexo Financiero */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <span>Opciones</span>
+                        <FileText className="h-4 w-4" />
+                        <span>Rango de Anexos Financieros</span>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <Switch
-                          id="cierre"
-                          checked={filtros.cierre}
-                          onCheckedChange={handleToggleChange}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <Input
+                          name="anf_cod_ini"
+                          placeholder="Anexo Financiero Inicial"
+                          value={filtros.anf_cod_ini}
+                          onChange={handleChange}
+                          className="bg-white"
                         />
-                        <Label htmlFor="cierre" className="text-sm">
-                          Cierre
-                        </Label>
+                        <Input
+                          name="anf_cod_fin"
+                          placeholder="Anexo Financiero Final"
+                          value={filtros.anf_cod_fin}
+                          onChange={handleChange}
+                          className="bg-white"
+                        />
                       </div>
+                    </div>
+
+                    {/* Rango de NITs */}
+                    <div className="space-y-3">
+                      <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+                        <Users className="h-4 w-4" />
+                        <span>Rango de NITs</span>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <Input
+                          name="ter_nit_ini"
+                          placeholder="NIT Inicial"
+                          value={filtros.ter_nit_ini}
+                          onChange={handleChange}
+                          className="bg-white"
+                        />
+                        <Input
+                          name="ter_nit_fin"
+                          placeholder="NIT Final"
+                          value={filtros.ter_nit_fin}
+                          onChange={handleChange}
+                          className="bg-white"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Fecha de Corte */}
+                    <div className="space-y-3">
+                      <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+                        <Calendar className="h-4 w-4" />
+                        <span>Fecha de Corte</span>
+                      </div>
+                      <Input
+                        type="date"
+                        name="fecha_corte"
+                        placeholder="Fecha de Corte"
+                        value={filtros.fecha_corte}
+                        onChange={handleChange}
+                        className="bg-white"
+                      />
                     </div>
                   </div>
 
@@ -397,8 +407,8 @@ const ReporteSaldosPorCuentaPage = () => {
             <CardHeader className="bg-gradient-to-r from-[#F7722F] to-[#00264D] text-white rounded-t-lg">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-xl flex items-center">
-                  <Table className="h-5 w-5 mr-2" />
-                  Reporte de Saldos por Cuenta
+                  <FileText className="h-5 w-5 mr-2" />
+                  Reporte Anexos Vencidos Semanal
                 </CardTitle>
                 <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
                   {resultado.length} registros
@@ -410,34 +420,50 @@ const ReporteSaldosPorCuentaPage = () => {
                 <table className="w-full text-sm">
                   <thead className="bg-gray-50 border-b-2 border-gray-200 sticky top-0 z-10">
                     <tr>
-                      <th className="px-4 py-3 font-semibold text-left text-gray-700 whitespace-nowrap">Sucursal</th>
-                      <th className="px-4 py-3 font-semibold text-left text-gray-700 whitespace-nowrap">Nombre Sucursal</th>
-                      <th className="px-4 py-3 font-semibold text-left text-gray-700 whitespace-nowrap">Cuenta</th>
-                      <th className="px-4 py-3 font-semibold text-left text-gray-700 whitespace-nowrap">Nombre Cuenta</th>
-                      <th className="px-4 py-3 font-semibold text-right text-gray-700 whitespace-nowrap">Saldo Anterior</th>
-                      <th className="px-4 py-3 font-semibold text-right text-gray-700 whitespace-nowrap">Débitos Mes</th>
-                      <th className="px-4 py-3 font-semibold text-right text-gray-700 whitespace-nowrap">Créditos Mes</th>
-                      <th className="px-4 py-3 font-semibold text-right text-gray-700 whitespace-nowrap">Saldo</th>
+                      <th className="px-4 py-3 font-semibold text-left text-gray-700 whitespace-nowrap">NIT</th>
+                      <th className="px-4 py-3 font-semibold text-left text-gray-700 whitespace-nowrap">Razón Social</th>
+                      <th className="px-4 py-3 font-semibold text-right text-gray-700 whitespace-nowrap">Sin Vencer</th>
+                      <th className="px-4 py-3 font-semibold text-right text-gray-700 whitespace-nowrap">1 - 5 Días</th>
+                      <th className="px-4 py-3 font-semibold text-right text-gray-700 whitespace-nowrap">6 - 7 Días</th>
+                      <th className="px-4 py-3 font-semibold text-right text-gray-700 whitespace-nowrap">8 - 14 Días</th>
+                      <th className="px-4 py-3 font-semibold text-right text-gray-700 whitespace-nowrap">15 - 21 Días</th>
+                      <th className="px-4 py-3 font-semibold text-right text-gray-700 whitespace-nowrap">22 - 30 Días</th>
+                      <th className="px-4 py-3 font-semibold text-right text-gray-700 whitespace-nowrap">Más de 31 Días</th>
+                      <th className="px-4 py-3 font-semibold text-right text-gray-700 whitespace-nowrap">Total Vencido</th>
+                      <th className="px-4 py-3 font-semibold text-right text-gray-700 whitespace-nowrap">Total General</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
                     {resultado.slice((page - 1) * ROWS_PER_PAGE, page * ROWS_PER_PAGE).map((row, i) => (
-                      <tr key={i} className="hover:bg-blue-50/50 transition-colors">
-                        <td className="px-4 py-3 text-gray-900 whitespace-nowrap">{row.suc_cod}</td>
-                        <td className="px-4 py-3 text-gray-900 whitespace-nowrap">{row.suc_nom}</td>
-                        <td className="px-4 py-3 text-gray-900 whitespace-nowrap">{row.cta_cod}</td>
-                        <td className="px-4 py-3 text-gray-900 whitespace-nowrap">{row.cta_nom}</td>
+                      <tr key={row.ter_nit} className="hover:bg-blue-50/50 transition-colors">
+                        <td className="px-4 py-3 text-gray-900 whitespace-nowrap">{row.ter_nit}</td>
+                        <td className="px-4 py-3 text-gray-900 whitespace-nowrap">{row.ter_raz}</td>
                         <td className="px-4 py-3 text-gray-900 whitespace-nowrap text-right">
-                          {new Intl.NumberFormat('es-CO', { minimumFractionDigits: 2 }).format(row.saldo_anterior)}
+                          {new Intl.NumberFormat('es-CO', { minimumFractionDigits: 2 }).format(row.sin_vencer)}
                         </td>
                         <td className="px-4 py-3 text-gray-900 whitespace-nowrap text-right">
-                          {new Intl.NumberFormat('es-CO', { minimumFractionDigits: 2 }).format(row.debitos_mes)}
+                          {new Intl.NumberFormat('es-CO', { minimumFractionDigits: 2 }).format(row.dias_1_5)}
                         </td>
                         <td className="px-4 py-3 text-gray-900 whitespace-nowrap text-right">
-                          {new Intl.NumberFormat('es-CO', { minimumFractionDigits: 2, signDisplay: 'auto' }).format(row.creditos_mes)}
+                          {new Intl.NumberFormat('es-CO', { minimumFractionDigits: 2 }).format(row.dias_6_7)}
                         </td>
                         <td className="px-4 py-3 text-gray-900 whitespace-nowrap text-right">
-                          {new Intl.NumberFormat('es-CO', { minimumFractionDigits: 2 }).format(row.saldo)}
+                          {new Intl.NumberFormat('es-CO', { minimumFractionDigits: 2 }).format(row.dias_8_14)}
+                        </td>
+                        <td className="px-4 py-3 text-gray-900 whitespace-nowrap text-right">
+                          {new Intl.NumberFormat('es-CO', { minimumFractionDigits: 2 }).format(row.dias_15_21)}
+                        </td>
+                        <td className="px-4 py-3 text-gray-900 whitespace-nowrap text-right">
+                          {new Intl.NumberFormat('es-CO', { minimumFractionDigits: 2 }).format(row.dias_22_30)}
+                        </td>
+                        <td className="px-4 py-3 text-gray-900 whitespace-nowrap text-right">
+                          {new Intl.NumberFormat('es-CO', { minimumFractionDigits: 2 }).format(row.dias_mas_31)}
+                        </td>
+                        <td className="px-4 py-3 text-gray-900 whitespace-nowrap text-right font-semibold">
+                          {new Intl.NumberFormat('es-CO', { minimumFractionDigits: 2 }).format(row.total_vencido)}
+                        </td>
+                        <td className="px-4 py-3 text-gray-900 whitespace-nowrap text-right font-semibold">
+                          {new Intl.NumberFormat('es-CO', { minimumFractionDigits: 2 }).format(row.total_general)}
                         </td>
                       </tr>
                     ))}
@@ -461,4 +487,4 @@ const ReporteSaldosPorCuentaPage = () => {
   )
 }
 
-export default ReporteSaldosPorCuentaPage
+export default ReporteAnalisisAnexosVencidosSemanalPage

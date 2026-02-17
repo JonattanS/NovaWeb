@@ -24,8 +24,13 @@ export const routesByMencod: Record<string, string> = {
   '011612': '/ReporteDeSaldosDeBancosPage',
   '011802': '/ReporteEstadoDeMultiplesAnexosPage',
   '011810': '/ReporteAnexosVencidosEdadesPage',
-  '011804': '/HojaDeVidaAnexoPage',
-  '011814': '/ReporteAnalisisAnexosVencidosPage',
+  '011804': '/ReporteAnalisisAnexosVencidosSemanalPage',
+  '011805': '/ReporteVencidosFechasCortePage',
+  '011806': '/ReporteAnexosVencidosRangosPersonalizadosPage',
+  '011807': '/ReporteAnexosPorVencerDolarMonLocalPage',
+  '011808': '/ReporteAnexosVencidosDolarMonLocalPage',
+  '011814': '/ReporteAnalisisAnexosVencidosPorEdadesPage',
+  '011815': '/ConsultaAnexosDobleMonedaPage',
   // Agrega aquí todas las demás entradas:
   // 'mencod': '/ruta-definida-en-App'
 };

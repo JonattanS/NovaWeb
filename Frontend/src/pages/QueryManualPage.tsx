@@ -15,7 +15,7 @@ import { QueryBuilder } from '@/components/query-builder/QueryBuilder';
 import { Card, CardContent } from '@/components/ui/card';
 import { ArrowLeft, Filter, Search, } from 'lucide-react';
 import { FilterConfigDialog } from '@/components/query-manual/FilterConfigDialog';
-import { saveUserModule } from '@/services/userModulesApi';
+import { saveUserModule, getUserModules } from '@/services/userModulesApi';
 import { useUser } from '@/contexts/UserContext';
 
 import jsPDF from 'jspdf';
@@ -66,8 +66,24 @@ const QueryManualPage = () => {
   // Obtener campos disponibles de la tabla
   const availableFields = schemaService.getTableColumns().map(col => col.name);
 
-  const updateModules = () => {
-    setSavedModules(moduleService.getAllModules().filter(m => !m.isMainFunction));
+  const updateModules = async () => {
+    const hardcoded = moduleService.getAllModules();
+    try {
+      const backend = await getUserModules(user.token, user.id);
+
+      // Merge preventing duplicates (prefer backend if collision)
+      const backendIds = new Set(backend.map((m: any) => String(m.id)));
+      const combined = [
+        ...backend,
+        ...hardcoded.filter(m => !backendIds.has(String(m.id)))
+      ];
+
+      setSavedModules(combined.filter((m: any) => !m.isMainFunction));
+    } catch (error) {
+      console.error("Error fetching modules:", error);
+      // Fallback to hardcoded only
+      setSavedModules(hardcoded.filter(m => !m.isMainFunction));
+    }
   };
 
   useEffect(() => {

@@ -126,15 +126,7 @@ const HomePage = () => {
                     Accede rápidamente a las opciones que más utilizas
                   </p>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => navigate("/portafolios")}
-                  className="bg-white dark:bg-slate-800 shadow-md hover:shadow-lg transition-all duration-200"
-                >
-                  <FolderOpen className="h-4 w-4 mr-2" />
-                  Ver Portafolios
-                </Button>
+
               </div>
             </div>
 

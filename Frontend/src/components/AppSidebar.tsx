@@ -56,10 +56,7 @@ export function AppSidebar() {
     console.log("[v0] Sidebar width changed:", sidebarWidth, "px")
     console.log("[v0] Sidebar state:", state)
     console.log("[v0] Has expanded portfolios:", hasExpandedPortfolios)
-    document.documentElement.style.setProperty("--sidebar-width", `${sidebarWidth}px`)
-
-    const appliedWidth = getComputedStyle(document.documentElement).getPropertyValue("--sidebar-width")
-    console.log("[v0] Applied CSS variable:", appliedWidth)
+    document.documentElement.style.setProperty("--sidebar-main-width", `${sidebarWidth}px`)
   }, [sidebarWidth, state, hasExpandedPortfolios])
 
   useEffect(() => {

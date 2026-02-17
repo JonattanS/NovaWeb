@@ -15,8 +15,13 @@ export async function saveUserModule(data: any, token: string) {
   return result.module;
 }
 
-export async function getUserModules(token: string) {
-  const response = await fetch(`${BACKEND_URL}/api/usr-modules`, {
+export async function getUserModules(token: string, userId?: number) {
+  let url = `${BACKEND_URL}/api/usr-modules`;
+  if (userId) {
+    url += `?user_id=${userId}`;
+  }
+
+  const response = await fetch(url, {
     headers: {
       Authorization: `Bearer ${token}`
     }

@@ -92,7 +92,7 @@ const DynamicFunctionPage = () => {
       let backendError = false;
 
       try {
-        backendModules = await getUserModules(user.token);
+        backendModules = await getUserModules(user.token, user.id);
       } catch (e) {
         backendError = true;
         toast({

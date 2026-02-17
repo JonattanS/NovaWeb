@@ -56,10 +56,7 @@ export function AppSidebar() {
     console.log("[v0] Sidebar width changed:", sidebarWidth, "px")
     console.log("[v0] Sidebar state:", state)
     console.log("[v0] Has expanded portfolios:", hasExpandedPortfolios)
-    document.documentElement.style.setProperty("--sidebar-width", `${sidebarWidth}px`)
-
-    const appliedWidth = getComputedStyle(document.documentElement).getPropertyValue("--sidebar-width")
-    console.log("[v0] Applied CSS variable:", appliedWidth)
+    document.documentElement.style.setProperty("--sidebar-main-width", `${sidebarWidth}px`)
   }, [sidebarWidth, state, hasExpandedPortfolios])
 
   useEffect(() => {
@@ -200,10 +197,9 @@ export function AppSidebar() {
                     <NavLink
                       to={item.url}
                       className={({ isActive }) =>
-                        `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group text-white ${
-                          isActive
-                            ? "bg-[#F7722F] shadow-lg shadow-orange-600/25"
-                            : "hover:bg-slate-700 hover:translate-x-1"
+                        `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group text-white ${isActive
+                          ? "bg-[#F7722F] shadow-lg shadow-orange-600/25"
+                          : "hover:bg-slate-700 hover:translate-x-1"
                         }`
                       }
                       end
@@ -353,8 +349,7 @@ export function AppSidebar() {
                         <NavLink
                           to={item.url}
                           className={({ isActive }) =>
-                            `flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 group ${
-                              isActive ? "bg-[#F7722F] text-white" : "text-slate-600 hover:bg-slate-100"
+                            `flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 group ${isActive ? "bg-[#F7722F] text-white" : "text-slate-600 hover:bg-slate-100"
                             }`
                           }
                           end
@@ -369,10 +364,9 @@ export function AppSidebar() {
                       <NavLink
                         to={item.url}
                         className={({ isActive }) =>
-                          `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group text-white ${
-                            isActive
-                              ? "bg-[#F7722F] shadow-lg shadow-orange-600/25"
-                              : "hover:bg-slate-700 hover:translate-x-1"
+                          `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group text-white ${isActive
+                            ? "bg-[#F7722F] shadow-lg shadow-orange-600/25"
+                            : "hover:bg-slate-700 hover:translate-x-1"
                           }`
                         }
                         end
@@ -415,8 +409,7 @@ export function AppSidebar() {
                           <NavLink
                             to={`/dynamic-function/${func.id}`}
                             className={({ isActive }) =>
-                              `flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 group ${
-                                isActive ? "bg-purple-600 text-white" : "text-slate-600 hover:bg-slate-100"
+                              `flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 group ${isActive ? "bg-purple-600 text-white" : "text-slate-600 hover:bg-slate-100"
                               }`
                             }
                           >
@@ -430,10 +423,9 @@ export function AppSidebar() {
                         <NavLink
                           to={`/dynamic-function/${func.id}`}
                           className={({ isActive }) =>
-                            `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group text-white ${
-                              isActive
-                                ? "bg-purple-600 shadow-lg shadow-purple-600/25"
-                                : "hover:bg-slate-700 hover:translate-x-1"
+                            `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group text-white ${isActive
+                              ? "bg-purple-600 shadow-lg shadow-purple-600/25"
+                              : "hover:bg-slate-700 hover:translate-x-1"
                             }`
                           }
                         >

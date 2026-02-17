@@ -13,9 +13,9 @@ import { ResultsTable } from '@/components/query-manual/ResultsTable';
 import { SaveModuleDialog } from '@/components/query-manual/SaveModuleDialog';
 import { QueryBuilder } from '@/components/query-builder/QueryBuilder';
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowLeft, Filter,  Search, } from 'lucide-react';
+import { ArrowLeft, Filter, Search, } from 'lucide-react';
 import { FilterConfigDialog } from '@/components/query-manual/FilterConfigDialog';
-import { saveUserModule } from '@/services/userModulesApi';
+import { saveUserModule, getUserModules } from '@/services/userModulesApi';
 import { useUser } from '@/contexts/UserContext';
 
 import jsPDF from 'jspdf';
@@ -66,8 +66,24 @@ const QueryManualPage = () => {
   // Obtener campos disponibles de la tabla
   const availableFields = schemaService.getTableColumns().map(col => col.name);
 
-  const updateModules = () => {
-    setSavedModules(moduleService.getAllModules().filter(m => !m.isMainFunction));
+  const updateModules = async () => {
+    const hardcoded = moduleService.getAllModules();
+    try {
+      const backend = await getUserModules(user.token, user.id);
+
+      // Merge preventing duplicates (prefer backend if collision)
+      const backendIds = new Set(backend.map((m: any) => String(m.id)));
+      const combined = [
+        ...backend,
+        ...hardcoded.filter(m => !backendIds.has(String(m.id)))
+      ];
+
+      setSavedModules(combined.filter((m: any) => !m.isMainFunction));
+    } catch (error) {
+      console.error("Error fetching modules:", error);
+      // Fallback to hardcoded only
+      setSavedModules(hardcoded.filter(m => !m.isMainFunction));
+    }
   };
 
   useEffect(() => {
@@ -91,7 +107,7 @@ const QueryManualPage = () => {
       setError('No hay consulta para ejecutar');
       return;
     }
-    
+
     console.log(">>> Consulta enviada al backend:", query); // DEBUG
 
     setIsLoading(true);
@@ -122,7 +138,7 @@ const QueryManualPage = () => {
     }
   };
 
-    
+
 
   const applyDynamicFilters = (filters: FilterValue[]) => {
     let filtered = [...results];
@@ -135,7 +151,7 @@ const QueryManualPage = () => {
 
       filtered = filtered.filter(row => {
         const cellValue = row[filter.columnName];
-        
+
         if (column.type === 'boolean') {
           return cellValue === filter.value;
         }
@@ -143,7 +159,7 @@ const QueryManualPage = () => {
         if (column.isDate) {
           const rowDate = new Date(cellValue);
           const filterDate = new Date(filter.value);
-          
+
           switch (filter.operator) {
             case '=':
               return rowDate.toDateString() === filterDate.toDateString();
@@ -165,7 +181,7 @@ const QueryManualPage = () => {
         if (column.isNumeric) {
           const numValue = Number(cellValue);
           const filterNum = Number(filter.value);
-          
+
           switch (filter.operator) {
             case '=':
               return numValue === filterNum;
@@ -191,7 +207,7 @@ const QueryManualPage = () => {
         // Campo de texto
         const strValue = String(cellValue).toLowerCase();
         const filterStr = String(filter.value).toLowerCase();
-        
+
         switch (filter.operator) {
           case '=':
             return strValue === filterStr;
@@ -219,7 +235,7 @@ const QueryManualPage = () => {
   const handleFilterConfigSave = (newFilterConfig: FilterConfig[]) => {
     setFilterConfig(newFilterConfig);
     setAppliedFilters([]); // Limpiar filtros aplicados al cambiar configuración
-    
+
     const enabledCount = newFilterConfig.filter(f => f.enabled).length;
     toast({
       title: "Filtros configurados",
@@ -253,7 +269,7 @@ const QueryManualPage = () => {
     }
   };
 
-  const saveAsModule = async () => {
+  const saveAsModule = async (dashboardConfig?: any, dynamicFilterConfig?: FilterConfig[]) => {
     if (!moduleForm.name.trim() || !selectedPortafolio) {
       toast({
         title: "Datos requeridos",
@@ -269,8 +285,8 @@ const QueryManualPage = () => {
       description: moduleForm.description.trim(),
       query: query,
       filters: queryConfig,
-      dynamic_filters: filterConfig,
-      dashboard_config: { charts: [], kpis: [] },
+      dynamic_filters: dynamicFilterConfig || filterConfig,
+      dashboard_config: dashboardConfig || { charts: [], kpis: [] },
       is_main_function: true,
       shared: false
     };
@@ -299,20 +315,20 @@ const QueryManualPage = () => {
 
   const loadModule = (module: PersistentModule) => {
     setQuery(module.query);
-    
+
     if (module.filters && typeof module.filters === 'object' && 'selectedFields' in module.filters) {
       setQueryConfig(module.filters as QueryConfiguration);
     }
-    
+
     // Cargar configuración de filtros dinámicos
     if (module.dynamicFilters) {
       setFilterConfig(module.dynamicFilters as FilterConfig[]);
     } else {
       setFilterConfig([]);
     }
-    
+
     setAppliedFilters([]);
-    
+
     moduleService.updateModuleLastUsed(module.id);
     updateModules();
 
@@ -389,7 +405,7 @@ const QueryManualPage = () => {
   const enabledFiltersCount = filterConfig.filter(f => f.enabled).length;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6">
       <div className="flex items-center space-x-4 mb-4">
         <Button variant="ghost" size="sm" onClick={() => navigate("/")} className="hover:bg-white/80">
           <ArrowLeft className="h-4 w-4 mr-2" />
@@ -461,7 +477,7 @@ const QueryManualPage = () => {
                     Exportar PDF
                   </Button>
                   {enabledFiltersCount === 0 && (
-                    <Button 
+                    <Button
                       onClick={() => setShowFilterConfigDialog(true)}
                       variant="outline"
                     >
@@ -470,7 +486,7 @@ const QueryManualPage = () => {
                     </Button>
                   )}
                 </div>
-                
+
                 {enabledFiltersCount > 0 ? (
                   <DynamicFilterPanel
                     filterConfig={filterConfig}
@@ -496,7 +512,7 @@ const QueryManualPage = () => {
                     </CardContent>
                   </Card>
                 )}
-                
+
                 <ResultsTable results={filteredResults} />
               </>
             ) : (
@@ -513,19 +529,19 @@ const QueryManualPage = () => {
                       También puedes configurar qué filtros estarán disponibles para este módulo.
                     </p>
                     <div className="flex justify-center gap-3">
-                      <Button 
+                      <Button
                         onClick={() => setActiveTab('visual')}
                         variant="outline"
                       >
                         Ir al Constructor Visual
                       </Button>
-                      <Button 
+                      <Button
                         onClick={() => setActiveTab('sql')}
                         variant="outline"
                       >
                         Ir al Editor SQL
                       </Button>
-                      <Button 
+                      <Button
                         onClick={() => setShowFilterConfigDialog(true)}
                       >
                         <Filter className="h-4 w-4 mr-2" />

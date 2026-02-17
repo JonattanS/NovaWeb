@@ -31,6 +31,10 @@ app.use('/api/nov-modules', novModulesRoutes);
 const auditLogsRouter = require('./routes/auditLogs');
 app.use('/api', auditLogsRouter);
 
+// Rutas de administración de usuarios
+const usersRouter = require('./routes/users');
+app.use('/api/users', usersRouter);
+
 // Endpoint para ejecutar queries con configuración dinámica (pool temporal)
 
 const pool = require('./db');

@@ -15,8 +15,13 @@ export async function saveUserModule(data: any, token: string) {
   return result.module;
 }
 
-export async function getUserModules(token: string) {
-  const response = await fetch(`${BACKEND_URL}/api/usr-modules`, {
+export async function getUserModules(token: string, userId?: number) {
+  let url = `${BACKEND_URL}/api/usr-modules`;
+  if (userId) {
+    url += `?user_id=${userId}`;
+  }
+
+  const response = await fetch(url, {
     headers: {
       Authorization: `Bearer ${token}`
     }
@@ -24,7 +29,14 @@ export async function getUserModules(token: string) {
 
   if (!response.ok) throw new Error('Error al obtener los módulos');
   const result = await response.json();
-  return result.modules;
+
+  // Normalizar datos de snake_case (backend) a camelCase (frontend)
+  return result.modules.map((m: any) => ({
+    ...m,
+    dashboardConfig: m.dashboard_config || { charts: [], kpis: [] },
+    dynamicFilters: m.dynamic_filters || [],
+    isMainFunction: m.is_main_function
+  }));
 }
 
 export async function deleteUserModule(id: number, token: string) {

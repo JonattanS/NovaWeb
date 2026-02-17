@@ -59,7 +59,7 @@ const HomePage = () => {
   const filteredOptions = useMemo(() => {
     if (!searchQuery.trim()) return []
     const query = searchQuery.toLowerCase()
-    return menuOptions.filter(option => 
+    return menuOptions.filter(option =>
       option.name.toLowerCase().includes(query)
     ).slice(0, 10)
   }, [searchQuery, menuOptions])
@@ -97,7 +97,7 @@ const HomePage = () => {
               style={{ fontSize: '1.2rem' }}
             />
           </div>
-          
+
           {filteredOptions.length > 0 && (
             <div className="absolute z-50 w-full mt-2 bg-white dark:bg-slate-800 rounded-lg shadow-2xl border border-slate-200 dark:border-slate-700 max-h-96 overflow-y-auto">
               {filteredOptions.map((option, index) => (
@@ -144,69 +144,7 @@ const HomePage = () => {
               </div>
 
               <div className="grid gap-6 md:grid-cols-2">
-                <Card
-                  className="cursor-pointer transition-all duration-300 hover:shadow-xl hover:scale-[1.02] hover:-translate-y-1 border-0 bg-gradient-to-br from-white to-slate-50 dark:from-slate-800 dark:to-slate-900 shadow-md"
-                  onClick={() => navigate("/ConsultaDocumentosPage")}
-                >
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center space-x-3">
-                      <div className="p-3 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg">
-                        <Database className="h-6 w-6" />
-                      </div>
-                      <div>
-                        <CardTitle className="text-xl text-slate-800 dark:text-slate-200">
-                          Consulta de Documentos
-                        </CardTitle>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <CardDescription className="text-sm mb-4 text-slate-600 dark:text-slate-400">
-                      Consulta avanzada de documentos contables con filtros personalizados.
-                    </CardDescription>
 
-                    <div className="mt-6">
-                      <Button
-                        className="w-full shadow-lg transition-all duration-200 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
-                        variant="default"
-                      >
-                        Ir a Consulta de Documentos
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card
-                  className="cursor-pointer transition-all duration-300 hover:shadow-xl hover:scale-[1.02] hover:-translate-y-1 border-0 bg-gradient-to-br from-white to-slate-50 dark:from-slate-800 dark:to-slate-900 shadow-md"
-                  onClick={() => navigate("/AuxiliarDeCuentasPage")}
-                >
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center space-x-3">
-                      <div className="p-3 rounded-xl bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg">
-                        <Database className="h-6 w-6" />
-                      </div>
-                      <div>
-                        <CardTitle className="text-xl text-slate-800 dark:text-slate-200">
-                          Auxiliar de Cuentas
-                        </CardTitle>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <CardDescription className="text-sm mb-4 text-slate-600 dark:text-slate-400">
-                      Consulta detallada del auxiliar de cuentas contables con filtros avanzados.
-                    </CardDescription>
-
-                    <div className="mt-6">
-                      <Button
-                        className="w-full shadow-lg transition-all duration-200 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
-                        variant="default"
-                      >
-                        Ir a Auxiliar de Cuentas
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
               </div>
             </div>
           </div>

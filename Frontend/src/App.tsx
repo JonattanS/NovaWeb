@@ -17,6 +17,7 @@ import DynamicFunctionPage from "./pages/DynamicFunctionPage"
 import NotFound from "./pages/NotFound"
 import ProtectedRoute from "@/components/ProtectedRoute"
 import Login from "./pages/Login"
+import ProfilePage from "./pages/ProfilePage"
 import ConsultaDocumentosPage from "./pages/ProcesoDocumentos/ConsultaDocumentosPage"
 import AuxiliarDeCuentasPage from "./pages/ProcesoDocumentos/AuxiliarDeCuentasPage"
 import AuxiliarDeCuentasExtranjerasPage from "./pages/ProcesoDocumentos/AuxiliarDeCuentasExtranjerasPage"
@@ -162,6 +163,16 @@ const AppRoutes = () => {
           <ProtectedRoute>
             <MainLayout>
               <HomePage />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/profile"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <ProfilePage />
             </MainLayout>
           </ProtectedRoute>
         }

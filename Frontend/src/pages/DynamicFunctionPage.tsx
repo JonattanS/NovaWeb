@@ -1,19 +1,31 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, BarChart3 } from 'lucide-react';
 import { moduleService, type PersistentModule } from '@/services/moduleService';
-import { FilterPanel } from '@/components/query-manual/FilterPanel';
+import { DynamicFilterPanel } from '@/components/query-manual/DynamicFilterPanel';
 import { ResultsTable } from '@/components/query-manual/ResultsTable';
 import { databaseService } from '@/services/database';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
-import { getUserModules } from "@/services/userModulesApi"; 
+import { getUserModules } from "@/services/userModulesApi";
 import { useUser } from '@/contexts/UserContext';
+import { schemaService } from '@/services/schemaService';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
+
+interface FilterConfig {
+  columnName: string;
+  enabled: boolean;
+}
+
+interface FilterValue {
+  columnName: string;
+  value: any;
+  operator?: string;
+  secondValue?: any;
+}
 
 const DynamicFunctionPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -23,17 +35,13 @@ const DynamicFunctionPage = () => {
   const [query, setQuery] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState('filters');
   const [results, setResults] = useState<any[]>([]);
   const [filteredResults, setFilteredResults] = useState<any[]>([]);
-  const [filters, setFilters] = useState({
-    ter_nit: '',
-    fecha_desde: '',
-    fecha_hasta: '',
-    clc_cod: '',
-    min_valor: '',
-    max_valor: ''
-  });
+
+  // Estados para filtros dinámicos
+  const [filterConfig, setFilterConfig] = useState<FilterConfig[]>([]);
+  const [appliedFilters, setAppliedFilters] = useState<FilterValue[]>([]);
+
   const [module, setModule] = useState<any>(null);
   const { user } = useUser();
 
@@ -57,7 +65,6 @@ const DynamicFunctionPage = () => {
       const result = await databaseService.executeCustomQuery(usedQuery);
       setResults(result);
       setFilteredResults(result);
-      setActiveTab('filters');
 
       toast({
         title: "Query ejecutado",
@@ -79,96 +86,156 @@ const DynamicFunctionPage = () => {
   };
 
   useEffect(() => {
-  const loadModule = async () => {
-    const hardcodedModules = moduleService.getAllModules();
-    let backendModules: PersistentModule[] = [];
-    let backendError = false;
+    const loadModule = async () => {
+      const hardcodedModules = moduleService.getAllModules();
+      let backendModules: PersistentModule[] = [];
+      let backendError = false;
 
-    try {
-      backendModules = await getUserModules(user.token);
-    } catch (e) {
-      backendError = true;
-      toast({
-        title: "Error cargando módulos personalizados",
-        description: "No se pudieron obtener los módulos personalizados del servidor. Se mostrarán solo los predefinidos.",
-        variant: "destructive",
-      });
-    }
-
-    // Combina y deduplica
-    const allModules: PersistentModule[] = [
-      ...backendModules,
-      ...hardcodedModules.filter(hm => !backendModules.some(bm => String(bm.id) === String(hm.id)))
-    ];
-
-    const foundModule = allModules.find(m => String(m.id) === String(id));
-
-    if (foundModule) {
-      setModule(foundModule);
-      setQuery(foundModule.query || "");
-
-      // Adaptar a tus nombres de filtro y formato según exactamente cómo estén guardados
-      const moduleFilters = Array.isArray(foundModule.filters) ? {} : (foundModule.filters || {});
-      setFilters({
-        ter_nit: moduleFilters.ter_nit || '',
-        fecha_desde: moduleFilters.fecha_desde || '',
-        fecha_hasta: moduleFilters.fecha_hasta || '',
-        clc_cod: moduleFilters.clc_cod || '',
-        min_valor: moduleFilters.min_valor || '',
-        max_valor: moduleFilters.max_valor || ''
-      });
-
-      // Ejecutar query sólo si lo tienes definido
-      if (foundModule.query) executeQuery(foundModule);
-
-      // Solo para hardcodeados
-      if (hardcodedModules.find(hm => String(hm.id) === String(foundModule.id))) {
-        moduleService.updateModuleLastUsed(foundModule.id);
+      try {
+        backendModules = await getUserModules(user.token);
+      } catch (e) {
+        backendError = true;
+        toast({
+          title: "Error cargando módulos personalizados",
+          description: "No se pudieron obtener los módulos personalizados del servidor. Se mostrarán solo los predefinidos.",
+          variant: "destructive",
+        });
       }
 
-    } else {
-      // Si vino error del backend y no encontró el módulo, detalla el mensaje
-      toast({
-        title: backendError ? "Error general de conexión" : "Módulo no encontrado",
-        description: backendError
-          ? "No se encontraron módulos personalizados y hubo un error al conectar con el backend."
-          : "El módulo solicitado no existe.",
-        variant: "destructive",
+      // Combina y deduplica
+      const allModules: PersistentModule[] = [
+        ...backendModules,
+        ...hardcodedModules.filter(hm => !backendModules.some(bm => String(bm.id) === String(hm.id)))
+      ];
+
+      const foundModule = allModules.find(m => String(m.id) === String(id));
+
+      if (foundModule) {
+        setModule(foundModule);
+        setQuery(foundModule.query || "");
+
+        // Cargar configuración de filtros dinámicos si existe
+        if (foundModule.dynamicFilters) {
+          setFilterConfig(foundModule.dynamicFilters as FilterConfig[]);
+        } else {
+          setFilterConfig([]); // O manejar compatibilidad con `filters` antiguos si es necesario
+        }
+
+        setAppliedFilters([]);
+
+        // Ejecutar query sólo si lo tienes definido
+        if (foundModule.query) executeQuery(foundModule);
+
+        // Solo para hardcodeados
+        if (hardcodedModules.find(hm => String(hm.id) === String(foundModule.id))) {
+          moduleService.updateModuleLastUsed(foundModule.id);
+        }
+
+      } else {
+        // Si vino error del backend y no encontró el módulo, detalla el mensaje
+        toast({
+          title: backendError ? "Error general de conexión" : "Módulo no encontrado",
+          description: backendError
+            ? "No se encontraron módulos personalizados y hubo un error al conectar con el backend."
+            : "El módulo solicitado no existe.",
+          variant: "destructive",
+        });
+        navigate('/');
+      }
+    };
+
+    if (id && user?.token) loadModule();
+  }, [id, user?.token, navigate, toast]);
+
+  const applyDynamicFilters = (filters: FilterValue[]) => {
+    let filtered = [...results];
+
+    filters.forEach(filter => {
+      if (!filter.value && filter.value !== false) return;
+
+      const column = schemaService.getTableColumns().find(col => col.name === filter.columnName);
+      if (!column) return;
+
+      filtered = filtered.filter(row => {
+        const cellValue = row[filter.columnName];
+
+        if (column.type === 'boolean') {
+          return cellValue === filter.value;
+        }
+
+        if (column.isDate) {
+          const rowDate = new Date(cellValue);
+          const filterDate = new Date(filter.value);
+
+          switch (filter.operator) {
+            case '=':
+              return rowDate.toDateString() === filterDate.toDateString();
+            case '>=':
+              return rowDate >= filterDate;
+            case '<=':
+              return rowDate <= filterDate;
+            case 'BETWEEN':
+              if (filter.secondValue) {
+                const endDate = new Date(filter.secondValue);
+                return rowDate >= filterDate && rowDate <= endDate;
+              }
+              return true;
+            default:
+              return true;
+          }
+        }
+
+        if (column.isNumeric) {
+          const numValue = Number(cellValue);
+          const filterNum = Number(filter.value);
+
+          switch (filter.operator) {
+            case '=':
+              return numValue === filterNum;
+            case '>':
+              return numValue > filterNum;
+            case '>=':
+              return numValue >= filterNum;
+            case '<':
+              return numValue < filterNum;
+            case '<=':
+              return numValue <= filterNum;
+            case 'BETWEEN':
+              if (filter.secondValue) {
+                const endNum = Number(filter.secondValue);
+                return numValue >= filterNum && numValue <= endNum;
+              }
+              return true;
+            default:
+              return true;
+          }
+        }
+
+        // Campo de texto
+        const strValue = String(cellValue).toLowerCase();
+        const filterStr = String(filter.value).toLowerCase();
+
+        switch (filter.operator) {
+          case '=':
+            return strValue === filterStr;
+          case 'LIKE':
+            return strValue.includes(filterStr);
+          case 'STARTS_WITH':
+            return strValue.startsWith(filterStr);
+          case 'ENDS_WITH':
+            return strValue.endsWith(filterStr);
+          default:
+            return strValue.includes(filterStr);
+        }
       });
-      navigate('/');
-    }
-  };
-
-  if (id && user?.token) loadModule();
-}, [id, user?.token, navigate, toast]);
-
-  const applyFilters = () => {
-    let filtered = results;
-
-    if (filters.ter_nit) {
-      filtered = filtered.filter(r => r.ter_nit?.toString().includes(filters.ter_nit));
-    }
-    if (filters.fecha_desde) {
-      filtered = filtered.filter(r => r.doc_fec >= filters.fecha_desde);
-    }
-    if (filters.fecha_hasta) {
-      filtered = filtered.filter(r => r.doc_fec <= filters.fecha_hasta);
-    }
-    if (filters.clc_cod) {
-      filtered = filtered.filter(r => r.clc_cod === filters.clc_cod);
-    }
-    if (filters.min_valor) {
-      filtered = filtered.filter(r => Math.abs(r.mov_val) >= Number(filters.min_valor));
-    }
-    if (filters.max_valor) {
-      filtered = filtered.filter(r => Math.abs(r.mov_val) <= Number(filters.max_valor));
-    }
+    });
 
     setFilteredResults(filtered);
+    setAppliedFilters(filters);
 
     toast({
       title: "Filtros aplicados",
-      description: `Se encontraron ${filtered.length} registros`,
+      description: `Se filtraron ${filtered.length} de ${results.length} registros`,
     });
   };
 
@@ -190,7 +257,7 @@ const DynamicFunctionPage = () => {
             acc[key].count += 1;
             return acc;
           }, {});
-          
+
           let result = Object.values(grouped);
           if (chart.topN) {
             result = result
@@ -200,7 +267,7 @@ const DynamicFunctionPage = () => {
           return result;
         }
         break;
-      
+
       case 'line':
         if (chart.xField && chart.yField) {
           return data.map(item => ({
@@ -250,7 +317,7 @@ const DynamicFunctionPage = () => {
 
   const renderChart = (chart: any) => {
     const chartData = processDataForChart(chart, filteredResults);
-    
+
     if (chartData.length === 0) {
       return (
         <div className="h-64 flex items-center justify-center text-slate-500">
@@ -272,7 +339,7 @@ const DynamicFunctionPage = () => {
             </BarChart>
           </ResponsiveContainer>
         );
-      
+
       case 'pie':
         return (
           <ResponsiveContainer width="100%" height={300}>
@@ -295,7 +362,7 @@ const DynamicFunctionPage = () => {
             </PieChart>
           </ResponsiveContainer>
         );
-      
+
       case 'line':
         return (
           <ResponsiveContainer width="100%" height={300}>
@@ -308,7 +375,7 @@ const DynamicFunctionPage = () => {
             </LineChart>
           </ResponsiveContainer>
         );
-      
+
       default:
         return <div>Tipo de gráfico no soportado</div>;
     }
@@ -324,11 +391,11 @@ const DynamicFunctionPage = () => {
     );
   }
 
-  const hasDashboardConfig = module.dashboardConfig && 
+  const hasDashboardConfig = module.dashboardConfig &&
     (module.dashboardConfig.charts?.length > 0 || module.dashboardConfig.kpis?.length > 0);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6">
       <div className="flex items-center space-x-4">
         <Button variant="ghost" size="sm" onClick={() => navigate('/')}>
           <ArrowLeft className="h-4 w-4 mr-2" />
@@ -427,10 +494,17 @@ const DynamicFunctionPage = () => {
         </div>
       ) : (
         <div className="space-y-6">
-          <FilterPanel
-            filters={filters}
-            setFilters={setFilters}
-            onApplyFilters={applyFilters}
+          <DynamicFilterPanel
+            filterConfig={filterConfig}
+            appliedFilters={appliedFilters}
+            setAppliedFilters={setAppliedFilters}
+            onFiltersApply={applyDynamicFilters}
+            onConfigureFilters={() => {
+              toast({
+                title: "Modo de solo lectura",
+                description: "Para configurar filtros, edita el módulo desde Query Manual.",
+              });
+            }}
           />
           <ResultsTable results={filteredResults} />
         </div>

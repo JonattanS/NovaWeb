@@ -54,6 +54,7 @@ const HomePage = () => {
     { name: "Reporte Anexos Por Vencer Dolar/Moneda Local", route: "/ReporteAnexosPorVencerDolarMonLocalPage" },
     { name: "Reporte Anexos Vencidos Dolar/Moneda Local", route: "/ReporteAnexosVencidosDolarMonLocalPage" },
     { name: "Consulta Anexos por NIT", route: "/ConsultaAnexosPorNitPage" },
+    { name: "Consulta Anexos Doble Moneda", route: "/ConsultaAnexosDobleMonedaPage" },
   ], [])
 
   const filteredOptions = useMemo(() => {

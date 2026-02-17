@@ -65,18 +65,19 @@ const ConsultaAnexosDobleMonedaPage = () => {
   const ejecutarConsulta = async () => {
     setCargando(true);
     try {
-      const filtrosConsulta = {
-        fuente: 'con_vctos_edades',
-        suc_cod: filtros.suc_cod,
-        fecha_ini: filtros.fecha_ini,
-        fecha_fin: filtros.fecha_fin,
-        ter_nit_ini: filtros.ter_nit_ini,
-        ter_nit_fin: filtros.ter_nit_fin,
-        cta_cod_ini: filtros.cta_cod_ini,
-        cta_cod_fin: filtros.cta_cod_fin,
-        anf_cod_ini: filtros.anf_cod_ini,
-        anf_cod_fin: filtros.anf_cod_fin
+      const filtrosConsulta: any = {
+        fuente: 'anf_con2'
       };
+
+      if (filtros.suc_cod) filtrosConsulta.suc_cod = filtros.suc_cod;
+      if (filtros.fecha_ini) filtrosConsulta.fecha_ini = filtros.fecha_ini;
+      if (filtros.fecha_fin) filtrosConsulta.fecha_fin = filtros.fecha_fin;
+      if (filtros.ter_nit_ini) filtrosConsulta.ter_nit_ini = filtros.ter_nit_ini;
+      if (filtros.ter_nit_fin && filtros.ter_nit_fin !== 'ZZZZZZZZZZZZZZ') filtrosConsulta.ter_nit_fin = filtros.ter_nit_fin;
+      if (filtros.cta_cod_ini) filtrosConsulta.cta_cod_ini = filtros.cta_cod_ini;
+      if (filtros.cta_cod_fin && filtros.cta_cod_fin !== 'ZZZZZZZZZZZZZZ') filtrosConsulta.cta_cod_fin = filtros.cta_cod_fin;
+      if (filtros.anf_cod_ini) filtrosConsulta.anf_cod_ini = filtros.anf_cod_ini;
+      if (filtros.anf_cod_fin && filtros.anf_cod_fin !== 'ZZZZZZZZZZZZZZ') filtrosConsulta.anf_cod_fin = filtros.anf_cod_fin;
 
       const datos = await databaseService.consultaDocumentos(filtrosConsulta);
       setResultados(datos || []);

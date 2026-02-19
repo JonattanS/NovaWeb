@@ -17,14 +17,14 @@ router.post('/login', async (req, res) => {
   try {
     // Consulta al usuario
     const { rows } = await pool.query('SELECT * FROM adm_usr WHERE usrcod = $1', [usrcod]);
-    
+
     if (rows.length === 0) {
       // Usuario no existe - registrar intento fallido
       console.warn(`[LOGIN] Intento con usuario no existente: ${usrcod}`);
-      
+
       // Intentamos registrar con una cia por defecto (ID 1, ajusta según tu BD)
       await logLoginFailure(1, usrcod, 'Usuario no existe');
-      
+
       return res.status(200).json({ success: false, message: "Usuario no existe" });
     }
 
@@ -33,9 +33,9 @@ router.post('/login', async (req, res) => {
     if (user.usrpsw !== usrpsw) {
       // Contraseña incorrecta - registrar intento fallido
       console.warn(`[LOGIN] Contraseña incorrecta para usuario: ${usrcod}`);
-      
+
       await logLoginFailure(user.adm_ciaid, usrcod, 'Contraseña incorrecta');
-      
+
       return res.status(200).json({ success: false, message: "Contraseña incorrecta" });
     }
 
@@ -44,7 +44,7 @@ router.post('/login', async (req, res) => {
     const ciaraz = ciaRows.length > 0 ? ciaRows[0].ciaraz : null;
 
     // Consulta los portafolios habilitados para esta cia
-    const { rows: portafolioRows } = await pool.query('SELECT porcod FROM nov_por WHERE adm_ciaid = $1',[user.adm_ciaid]);
+    const { rows: portafolioRows } = await pool.query('SELECT porcod FROM nov_por WHERE adm_ciaid = $1', [user.adm_ciaid]);
     const portafolios = portafolioRows.map(row => row.porcod);
 
     // Consulta el rol del usuario
@@ -64,7 +64,7 @@ router.post('/login', async (req, res) => {
         roldes: rol.roldes
       },
       JWT_SECRET,
-      { expiresIn: '1h' }
+      { expiresIn: '8h' }
     );
 
     // Login exitoso - registrar en auditoría

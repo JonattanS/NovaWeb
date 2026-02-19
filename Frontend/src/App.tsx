@@ -120,7 +120,7 @@ const MainLayoutContent = ({ children }: { children: React.ReactNode }) => {
             <div className="flex items-center space-x-4">
               <SidebarTrigger className="hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors rounded-lg p-2" />
               <div>
-                <h2 className="text-xl font-bold bg-gradient-to-r from-[#00264D] to-[#F7722F] bg-clip-text text-transparent truncate">
+                <h2 className="text-xl font-bold bg-gradient-to-r from-brand-primary to-brand-accent bg-clip-text text-transparent truncate">
                   Nova Web
                 </h2>
               </div>
@@ -144,7 +144,7 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => {
   const { user } = useUser()
 
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={false}>
       <MainLayoutContent>{children}</MainLayoutContent>
     </SidebarProvider>
   )

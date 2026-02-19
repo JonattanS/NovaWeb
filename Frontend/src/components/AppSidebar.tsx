@@ -157,7 +157,7 @@ export function AppSidebar() {
     <Sidebar
       className={`
         border-r border-slate-200 dark:border-slate-700 
-        bg-[#00264D] dark:bg-[#00264D] 
+        bg-brand-primary dark:bg-brand-primary 
         fixed left-0 top-0 h-screen z-50
         transition-all duration-300 ease-in-out
       `}
@@ -173,14 +173,14 @@ export function AppSidebar() {
             <div>
               <NavLink
                 to="/"
-                className="font-bold text-xl text-[#F7722F] cursor-pointer no-underline hover:opacity-80 transition-opacity truncate block"
+                className="font-bold text-xl text-brand-accent cursor-pointer no-underline hover:opacity-80 transition-opacity truncate block"
               >
                 {user?.ciaraz || "CAS"}
               </NavLink>
             </div>
           ) : (
             <div className="flex justify-center">
-              <span className="font-bold text-sm text-[#F7722F]">
+              <span className="font-bold text-sm text-brand-accent">
                 {(user?.ciaraz || "CAS").slice(0, 3).toUpperCase()}
               </span>
             </div>
@@ -198,7 +198,7 @@ export function AppSidebar() {
                       to={item.url}
                       className={({ isActive }) =>
                         `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group text-white ${isActive
-                          ? "bg-[#F7722F] shadow-lg shadow-orange-600/25"
+                          ? "bg-brand-accent shadow-lg shadow-brand-accent/25"
                           : "hover:bg-slate-700 hover:translate-x-1"
                         }`
                       }
@@ -216,7 +216,7 @@ export function AppSidebar() {
 
         <SidebarGroup>
           <SidebarGroupLabel
-            className={`${isCollapsed ? "hidden" : "block"} text-[#F7722F] font-semibold px-4 truncate`}
+            className={`${isCollapsed ? "hidden" : "block"} text-brand-accent font-semibold px-4 truncate`}
           >
             Portafolio
           </SidebarGroupLabel>
@@ -240,7 +240,7 @@ export function AppSidebar() {
                         <Popover>
                           <PopoverTrigger asChild>
                             <SidebarMenuButton className="w-full justify-center p-2 hover:bg-slate-700">
-                              <Folder className="h-5 w-5 text-[#F7722F]" />
+                              <Folder className="h-5 w-5 text-brand-accent" />
                             </SidebarMenuButton>
                           </PopoverTrigger>
                           <PopoverContent
@@ -251,7 +251,7 @@ export function AppSidebar() {
                             <div className="space-y-2">
                               <button
                                 onClick={() => handlePortfolioClick(porcod, portfolio.name)}
-                                className="flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 text-[#F7722F] hover:bg-blue-100 w-full text-left font-semibold mb-3"
+                                className="flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 text-brand-accent hover:bg-blue-100 w-full text-left font-semibold mb-3"
                               >
                                 <Folder className="w-4 h-4 flex-shrink-0" />
                                 <span className="truncate">{portfolio.name}</span>
@@ -278,7 +278,7 @@ export function AppSidebar() {
                             <SidebarMenuButton asChild className="flex-1 min-w-0 p-0">
                               <button
                                 onClick={() => handlePortfolioClick(porcod, portfolio.name)}
-                                className="flex items-center gap-3 px-3 py-2 rounded-xl transition-all duration-200 group text-[#F7722F] hover:bg-slate-700 hover:translate-x-1 w-full text-left min-w-0"
+                                className="flex items-center gap-3 px-3 py-2 rounded-xl transition-all duration-200 group text-brand-accent hover:bg-slate-700 hover:translate-x-1 w-full text-left min-w-0"
                               >
                                 <Folder className="h-5 w-5 flex-shrink-0" />
                                 <span className="font-medium flex-1 truncate">{portfolio.name}</span>
@@ -326,7 +326,7 @@ export function AppSidebar() {
         {/* Herramientas de Desarrollo */}
         <SidebarGroup>
           <SidebarGroupLabel
-            className={`${isCollapsed ? "hidden" : "block"} text-[#F7722F] font-semibold px-4 truncate`}
+            className={`${isCollapsed ? "hidden" : "block"} text-brand-accent font-semibold px-4 truncate`}
           >
             Herramientas de Desarrollo
           </SidebarGroupLabel>
@@ -349,7 +349,7 @@ export function AppSidebar() {
                         <NavLink
                           to={item.url}
                           className={({ isActive }) =>
-                            `flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 group ${isActive ? "bg-[#F7722F] text-white" : "text-slate-600 hover:bg-slate-100"
+                            `flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 group ${isActive ? "bg-brand-accent text-white" : "text-slate-600 hover:bg-slate-100"
                             }`
                           }
                           end
@@ -365,7 +365,7 @@ export function AppSidebar() {
                         to={item.url}
                         className={({ isActive }) =>
                           `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group text-white ${isActive
-                            ? "bg-[#F7722F] shadow-lg shadow-orange-600/25"
+                            ? "bg-brand-accent shadow-lg shadow-brand-accent/25"
                             : "hover:bg-slate-700 hover:translate-x-1"
                           }`
                         }
@@ -386,7 +386,7 @@ export function AppSidebar() {
         {dynamicFunctions.length > 0 && (
           <SidebarGroup>
             <SidebarGroupLabel
-              className={`${isCollapsed ? "hidden" : "block"} text-[#F7722F] font-semibold px-4 truncate`}
+              className={`${isCollapsed ? "hidden" : "block"} text-brand-accent font-semibold px-4 truncate`}
             >
               Funciones Principales
             </SidebarGroupLabel>

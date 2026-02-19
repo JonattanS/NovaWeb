@@ -343,40 +343,14 @@ export const ModuleRepository = ({ onClose }: ModuleRepositoryProps) => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 py-8">
       <div className="w-full px-6 space-y-8">
-        {/* Header visual destacado */}
-        <div className="relative overflow-hidden rounded-3xl bg-[#F7722F] p-8 text-white shadow-2xl">
-          <div className="absolute inset-0 bg-black/10"></div>
-          <div className="relative z-10">
-            <div className="flex items-center justify-between">
-              <div className="space-y-2">
-                <div className="flex items-center space-x-3">
-                  <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-sm">
-                    <FolderOpen className="h-8 w-8" />
-                  </div>
-                  <div>
-                    <h1 className="text-4xl font-bold tracking-tight">
-                      {selectedPortafolio ? selectedPortafolio.name : "Portafolios Disponibles"}
-                    </h1>
-                    <p className="text-indigo-100 text-lg">
-                      {selectedPortafolio
-                        ? showingSystemModules
-                          ? `${filteredSystemModules.length} Módulos del Portafolio disponibles`
-                          : `${filteredModules.length} módulos de usuario disponibles`
-                        : `${folders.length} portafolios para explorar`}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+
 
         <div className="flex items-center justify-between">
           <Button
             variant="outline"
             size="lg"
             onClick={() => navigate("/")}
-            className="hover:bg-[#f7722f13] hover:border-[#F7722F] hover:text-[#F7722F] transition-all duration-200"
+            className="hover:bg-brand-primary/150 hover:border-brand-accent hover:text-brand-accent transition-all duration-200"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Volver al inicio
@@ -412,7 +386,7 @@ export const ModuleRepository = ({ onClose }: ModuleRepositoryProps) => {
                   variant={!showingSystemModules ? "default" : "outline"}
                   onClick={() => setShowingSystemModules(false)}
                   size="sm"
-                  className={!showingSystemModules ? "bg-[#F7722F] hover:bg-[#78B437]" : ""}
+                  className={!showingSystemModules ? "bg-brand-accent hover:bg-[#78B437]" : ""}
                 >
                   <Database className="h-4 w-4 mr-2" />
                   Usuario ({filteredModules.length})
@@ -421,7 +395,7 @@ export const ModuleRepository = ({ onClose }: ModuleRepositoryProps) => {
                   variant={showingSystemModules ? "default" : "outline"}
                   onClick={() => setShowingSystemModules(true)}
                   size="sm"
-                  className={showingSystemModules ? "bg-[#F7722F] hover:bg-[#78B437]" : ""}
+                  className={showingSystemModules ? "bg-brand-accent hover:bg-[#78B437]" : ""}
                 >
                   <Settings className="h-4 w-4 mr-2" />
                   Modulos del Portafolio ({filteredSystemModules.length})
@@ -497,7 +471,7 @@ export const ModuleRepository = ({ onClose }: ModuleRepositoryProps) => {
                         <div className="flex space-x-2">
                           <Button
                             size="sm"
-                            className="flex-1 bg-[#F7722F] hover:bg-[#78B437] text-white transition-all duration-200"
+                            className="flex-1 bg-brand-accent hover:bg-brand-primary text-white transition-all duration-200"
                             onClick={() => handleModuleClick(mod)}
                           >
                             <Play className="h-4 w-4 mr-1" />

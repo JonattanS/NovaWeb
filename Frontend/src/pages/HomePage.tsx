@@ -81,7 +81,7 @@ const HomePage = () => {
   return (
     <div className="min-h-screen w-full py-6">
       <div className="px-6">
-        <h1 className="text-3xl font-bold tracking-tight leading-tight bg-[#F7722F] bg-clip-text text-transparent mb-8">
+        <h1 className="text-3xl font-bold tracking-tight leading-tight bg-brand-accent bg-clip-text text-transparent mb-8">
           ¿Qué quieres hacer hoy?
         </h1>
 

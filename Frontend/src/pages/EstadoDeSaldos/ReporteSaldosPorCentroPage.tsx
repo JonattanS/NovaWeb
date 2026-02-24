@@ -1,13 +1,11 @@
 "use client"
 
 import type React from "react"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Switch } from "@/components/ui/switch"
-import { Label } from "@/components/ui/label"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { databaseService } from "@/services/database"
 import { formatCellValue } from "@/utils/formatters"
@@ -28,7 +26,7 @@ import {
 } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 
-export const mencod = '010313';
+export const mencod = '011608';
 
 const getColumnDescription = (key: string): string => {
   const col = schemaService.getTableColumns().find((c) => c.name === key)
@@ -43,7 +41,7 @@ type Filtros = {
   cto_cod_fin: string
   fecha_ini: string
   fecha_fin: string
-  cierre: boolean
+  periodo: 'mes' | 'ejercicio'
 }
 
 const ReporteSaldosPorCentroPage = () => {
@@ -56,30 +54,22 @@ const ReporteSaldosPorCentroPage = () => {
     cto_cod_fin: "",
     fecha_ini: new Date().toISOString().split('T')[0],
     fecha_fin: new Date().toISOString().split('T')[0],
-    cierre: false,
+    periodo: 'mes',
   });
 
   const [resultado, setResultado] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [page, setPage] = useState(1);
-  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+  const [isFiltersOpen, setIsFiltersOpen] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState(0);
 
   const ROWS_PER_PAGE = 100;
 
-  useEffect(() => {
-    handleSubmit(new Event("submit") as unknown as React.FormEvent)
-  }, [])
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFiltros((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleToggleChange = (checked: boolean) => {
-    setFiltros((prev) => ({ ...prev, cierre: checked }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -192,7 +182,6 @@ const ReporteSaldosPorCentroPage = () => {
       if (item.clc_cod && item.doc_num > 0 && item.mov_val !== undefined && item.cto_cod) {
         // Filtrar documentos válidos
         if (item.clc_cod === 'SAL') return; // Excluir saldos iniciales
-        if (!filtros.cierre && item.clc_cod === 'CIE') return; // Excluir cierre si no está habilitado
         
         const key = `${item.cto_cod}-${item.cta_cod || 'SIN_CTA'}`;
         
@@ -248,7 +237,6 @@ const ReporteSaldosPorCentroPage = () => {
     if (filtros.cto_cod_fin.trim()) count++;
     if (filtros.fecha_ini.trim()) count++;
     if (filtros.fecha_fin.trim()) count++;
-    if (filtros.cierre) count++;
     return count;
   }
 
@@ -324,7 +312,6 @@ const ReporteSaldosPorCentroPage = () => {
                     {/* Información General */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <Building className="h-4 w-4" />
                         <span>Información General</span>
                       </div>
                       <div className="grid grid-cols-1 gap-3">
@@ -341,7 +328,6 @@ const ReporteSaldosPorCentroPage = () => {
                     {/* Rango de Fechas */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <Calendar className="h-4 w-4" />
                         <span>Rango de Fechas</span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -367,7 +353,6 @@ const ReporteSaldosPorCentroPage = () => {
                     {/* Rango de Cuentas */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <CreditCard className="h-4 w-4" />
                         <span>Rango de Cuentas</span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -391,7 +376,6 @@ const ReporteSaldosPorCentroPage = () => {
                     {/* Rango de Centros */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <Building2 className="h-4 w-4" />
                         <span>Rango de Centros de Actividad</span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -412,21 +396,21 @@ const ReporteSaldosPorCentroPage = () => {
                       </div>
                     </div>
 
-                    {/* Toggle Cierre */}
+                    {/* Periodo */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <ToggleLeft className="h-4 w-4" />
                         <span>Opciones</span>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <Switch
-                          id="cierre"
-                          checked={filtros.cierre}
-                          onCheckedChange={handleToggleChange}
-                        />
-                        <Label htmlFor="cierre" className="text-sm">
-                          Cierre
-                        </Label>
+                      <div className="grid grid-cols-1 gap-3">
+                        <select
+                          name="periodo"
+                          value={filtros.periodo}
+                          onChange={handleChange}
+                          className="flex h-10 w-full rounded-md border border-input bg-white px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                        >
+                          <option value="mes">Mes</option>
+                          <option value="ejercicio">Ejercicio</option>
+                        </select>
                       </div>
                     </div>
                   </div>

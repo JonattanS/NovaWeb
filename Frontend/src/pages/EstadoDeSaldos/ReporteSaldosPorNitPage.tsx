@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useEffect, useState } from "react"
+import { useState, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -29,7 +29,7 @@ import {
 } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 
-export const mencod = '010312';
+export const mencod = '011606';
 
 const getColumnDescription = (key: string): string => {
   const col = schemaService.getTableColumns().find((c) => c.name === key)
@@ -64,15 +64,11 @@ const ReporteSaldosPorNitPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [page, setPage] = useState(1);
-  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+  const [isFiltersOpen, setIsFiltersOpen] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState(0);
 
   const ROWS_PER_PAGE = 100;
-
-  useEffect(() => {
-    handleSubmit(new Event("submit") as unknown as React.FormEvent)
-  }, [])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -120,7 +116,7 @@ const ReporteSaldosPorNitPage = () => {
       console.log("Datos con_his:", responseHis);
       
       // Procesar datos combinando con_sal y con_his
-      const datosProcessados = procesarReporteSaldosPorNit(responseSal || [], responseHis || []);
+      const datosProcessados = await procesarReporteSaldosPorNit(responseSal || [], responseHis || []);
       console.log("Datos procesados:", datosProcessados);
       setResultado(datosProcessados);
     } catch (err: any) {
@@ -133,65 +129,51 @@ const ReporteSaldosPorNitPage = () => {
   };
 
   // Función para procesar los datos del reporte de saldos por NIT
-  const procesarReporteSaldosPorNit = (datosSal: any[], datosHis: any[]) => {
+  const procesarReporteSaldosPorNit = async (datosSal: any[], datosHis: any[]) => {
     console.log("Procesando reporte de saldos por NIT:", { datosSal, datosHis });
     
-    const añoInicial = filtros.fecha_ini ? new Date(filtros.fecha_ini).getFullYear() : new Date().getFullYear();
-    
-    // Agrupar saldos de con_sal por cuenta y NIT (CON_SNIT)
-    const saldosAgrupados = datosSal.reduce((acc, item) => {
-      console.log("Procesando item con_sal:", item);
-      
-      // Verificar sal_tip para saldos de con_snit (equivalente a CON_SNIT)
-      const salTip = item.sal_tip;
-      const esSaldoSnit = salTip === 'snit' || salTip === 'con_snit';
-      
-      console.log("Filtros sal_tip:", { salTip, esSaldoSnit, cor_ano: item.cor_ano, añoInicial });
-      
-      if (!esSaldoSnit || item.cor_ano !== añoInicial) {
-        console.log("Item filtrado por sal_tip o año");
-        return acc;
-      }
-      
-      const key = `${item.cta_cod || 'SIN_CTA'}-${item.ter_nit || 'SIN_NIT'}`;
-      if (!acc[key]) {
-        acc[key] = {
-          cta_cod: item.cta_cod || '',
-          cta_nom: item.cta_nom || '',
-          ter_nit: item.ter_nit || '',
-          ter_raz: item.ter_raz || '',
-          saldo_anterior: 0,
-          debitos: 0,
-          creditos: 0
-        };
-      }
-      
-      // Calcular saldo anterior usando saldo_cuenta.p logic
-      // Acumular saldo inicial (sal_ini)
-      const salIni = parseFloat(item.sal_ini || 0);
-      acc[key].saldo_anterior += salIni;
-      console.log("Acumulando sal_ini:", { key, salIni, saldoAnterior: acc[key].saldo_anterior });
-      
-      return acc;
-    }, {});
+    // Extraer año directamente del string de fecha para evitar problemas de zona horaria
+    const año = filtros.fecha_ini ? parseInt(filtros.fecha_ini.split('-')[0]) : new Date().getFullYear();
+    console.log('Año calculado:', año);
+    const saldosAgrupados: any = {};
     
     // Procesar movimientos de con_his en el rango de fechas
-    datosHis.forEach(item => {
+    for (const item of datosHis) {
       if (item.clc_cod && item.doc_num > 0 && item.mov_val !== undefined && item.ter_nit) {
         // Filtrar documentos válidos
-        if (item.clc_cod === 'SAL') return; // Excluir saldos iniciales
-        if (!filtros.cierre && item.clc_cod === 'CIE') return; // Excluir cierre si no está habilitado
+        if (item.clc_cod === 'SAL') continue;
+        if (!filtros.cierre && item.clc_cod === 'CIE') continue;
         
         const key = `${item.cta_cod || 'SIN_CTA'}-${item.ter_nit}`;
         
         // Crear entrada si no existe
         if (!saldosAgrupados[key]) {
+          // Consultar saldo anterior desde con_sal con filtros específicos
+          const filtrosSaldoAnterior = {
+            fuente: 'con_sal',
+            suc_cod: item.suc_cod,
+            cta_cod: item.cta_cod,
+            ter_nit: item.ter_nit,
+            cor_ano: año,
+            sal_tip: 'ter'
+          };
+          
+          let saldoAnterior = 0;
+          try {
+            const responseSaldoAnterior = await databaseService.consultaDocumentos(filtrosSaldoAnterior);
+            if (responseSaldoAnterior && responseSaldoAnterior.length > 0) {
+              saldoAnterior = parseFloat(responseSaldoAnterior[0].sal_ini || 0);
+            }
+          } catch (err) {
+            console.error('Error consultando saldo anterior:', err);
+          }
+          
           saldosAgrupados[key] = {
             cta_cod: item.cta_cod || '',
             cta_nom: item.cta_nom || '',
             ter_nit: item.ter_nit,
             ter_raz: item.ter_raz || '',
-            saldo_anterior: 0,
+            saldo_anterior: saldoAnterior,
             debitos: 0,
             creditos: 0
           };
@@ -202,14 +184,14 @@ const ReporteSaldosPorNitPage = () => {
         if (movVal > 0) {
           saldosAgrupados[key].debitos += movVal;
         } else {
-          saldosAgrupados[key].creditos += Math.abs(movVal);
+          saldosAgrupados[key].creditos += movVal;
         }
       }
-    });
+    }
     
     // Convertir a array y calcular saldo final
     const resultado = Object.values(saldosAgrupados).map((grupo: any) => {
-      const saldoFinal = grupo.saldo_anterior + grupo.debitos - grupo.creditos;
+      const saldoFinal = grupo.saldo_anterior + grupo.debitos + grupo.creditos;
       return {
         cta_cod: grupo.cta_cod,
         cta_nom: grupo.cta_nom,
@@ -320,7 +302,6 @@ const ReporteSaldosPorNitPage = () => {
                     {/* Información General */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <Building className="h-4 w-4" />
                         <span>Información General</span>
                       </div>
                       <div className="grid grid-cols-1 gap-3">
@@ -337,7 +318,6 @@ const ReporteSaldosPorNitPage = () => {
                     {/* Rango de Cuentas */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <CreditCard className="h-4 w-4" />
                         <span>Rango de Cuentas</span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -361,7 +341,6 @@ const ReporteSaldosPorNitPage = () => {
                     {/* Rango de Fechas */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <Calendar className="h-4 w-4" />
                         <span>Rango de Fechas</span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -387,7 +366,6 @@ const ReporteSaldosPorNitPage = () => {
                     {/* Rango de NITs */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <Users className="h-4 w-4" />
                         <span>Rango de NITs</span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -411,7 +389,6 @@ const ReporteSaldosPorNitPage = () => {
                     {/* Toggle Cierre */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <ToggleLeft className="h-4 w-4" />
                         <span>Opciones</span>
                       </div>
                       <div className="flex items-center space-x-2">

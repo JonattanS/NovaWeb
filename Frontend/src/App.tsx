@@ -17,6 +17,7 @@ import DynamicFunctionPage from "./pages/DynamicFunctionPage"
 import NotFound from "./pages/NotFound"
 import ProtectedRoute from "@/components/ProtectedRoute"
 import Login from "./pages/Login"
+import ProfilePage from "./pages/ProfilePage"
 import ConsultaDocumentosPage from "./pages/ProcesoDocumentos/ConsultaDocumentosPage"
 import AuxiliarDeCuentasPage from "./pages/ProcesoDocumentos/AuxiliarDeCuentasPage"
 import AuxiliarDeCuentasExtranjerasPage from "./pages/ProcesoDocumentos/AuxiliarDeCuentasExtranjerasPage"
@@ -40,12 +41,20 @@ import ReporteSaldosPorCentroNitPage from "./pages/EstadoDeSaldos/ReporteSaldosP
 import ReporteDeSaldosDeBancosPage from "./pages/EstadoDeSaldos/ReporteDeSaldosDeBancosPage"
 import ReporteEstadoDeMultiplesAnexosPage from "./pages/AnexosFinancieros/ReporteEstadoDeMultiplesAnexosPage"
 import HojaDeVidaAnexoPage from "./pages/AnexosFinancieros/HojaDeVidaAnexoPage"
-import ReporteAnalisisAnexosVencidosPage from "./pages/AnexosFinancieros/ReporteAnalisisAnexosVencidosPage"
+import ReporteAnalisisAnexosVencidosPorEdadesPage from "./pages/AnexosFinancieros/ReporteAnalisisAnexosVencidosPorEdadesPage"
 import ReporteAnexosVencidosEdadesPage from "./pages/AnexosFinancieros/ReporteAnexosVencidosEdadesPage"
+import ReporteAnalisisAnexosVencidosSemanalPage from "./pages/AnexosFinancieros/ReporteAnalisisAnexosVencidosSemanalPage"
+import ReporteVencidosFechasCortePage from "./pages/AnexosFinancieros/ReporteVencidosFechasCortePage"
+import ReporteAnexosVencidosRangosPersonalizadosPage from "./pages/AnexosFinancieros/ReporteAnexosVencidosRangosPersonalizadosPage"
+import ReporteAnexosPorVencerDolarMonLocalPage from "./pages/AnexosFinancieros/ReporteAnexosPorVencerDolarMonLocalPage"
+import ReporteAnexosVencidosDolarMonLocalPage from "./pages/AnexosFinancieros/ReporteAnexosVencidosDolarMonLocalPage"
+import ConsultaAnexosPorNitPage from "./pages/AnexosFinancieros/ConsultaAnexosPorNitPage"
+import ConsultaAnexosDobleMonedaPage from "./pages/AnexosFinancieros/ConsultaAnexosDobleMonedaPage"
 import { ModuleRepository } from "./components/ModuleRepository"
+import { AuditLogViewer } from "./components/AuditLogViewer"
+import type React from "react"
 import { useEffect, useCallback, useRef } from "react"
 import { useNavigate } from "react-router-dom"
-import type React from "react"
 import { ModuleViewer } from "./components/ModuleViewer"
 
 const queryClient = new QueryClient()
@@ -79,38 +88,48 @@ function useAutoLogout(onLogout: () => void, delay = 30 * 60 * 1000) {
  */
 const MainLayoutContent = ({ children }: { children: React.ReactNode }) => {
   const { state } = useSidebar()
-  const isCollapsed = state === "collapsed"
+
+  useEffect(() => {
+    const sidebarWidth = getComputedStyle(document.documentElement).getPropertyValue("--sidebar-width")
+    console.log("[v0] MainLayoutContent - CSS variable value:", sidebarWidth)
+    console.log("[v0] MainLayoutContent - Sidebar state:", state)
+  }, [state])
 
   return (
     <div className="min-h-screen flex w-full">
       <AppSidebar />
-      
-      <div className="flex-1 flex flex-col transition-all duration-200 overflow-x-hidden">
-        {/* Header fijo con la MISMA transición que el sidebar */}
-        <header 
-          className={`
-          border-b bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl 
-          supports-[backdrop-filter]:bg-white/60 shadow-sm 
-          fixed top-0 right-0 z-40 
-          transition-transform-smooth duration-200 ease-in-out
-          ${isCollapsed ? 'left-12' : 'left-64'}`}
-          >
-        
-          <div className="flex h-16 items-center justify-between px-6">
+
+      <div
+        className="flex-1 flex flex-col min-h-screen w-full"
+        style={{
+          transition: "margin-left 300ms ease-in-out",
+        }}
+      >
+        <header
+          className="
+            border-b bg-white dark:bg-slate-900 
+            shadow-sm 
+            sticky top-0 z-40
+            h-16 w-full
+          "
+          style={{
+            transition: "all 300ms ease-in-out",
+          }}
+        >
+          <div className="flex h-16 items-center justify-between px-4">
             <div className="flex items-center space-x-4">
-              <SidebarTrigger className="hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" />
+              <SidebarTrigger className="hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors rounded-lg p-2" />
               <div>
-                <h2 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-[#F7722F] bg-clip-text text-transparent">
-              Nova Web
+                <h2 className="text-xl font-bold bg-gradient-to-r from-brand-primary to-brand-accent bg-clip-text text-transparent truncate">
+                  Nova Web
                 </h2>
               </div>
             </div>
             <UserMenu />
           </div>
         </header>
-        
-        {/* Contenido principal */}
-        <main className="flex-1 p-6 overflow-y-auto bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 pt-16">
+
+        <main className="flex-1 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 w-full">
           {children}
         </main>
       </div>
@@ -125,7 +144,7 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => {
   const { user } = useUser()
 
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={false}>
       <MainLayoutContent>{children}</MainLayoutContent>
     </SidebarProvider>
   )
@@ -144,6 +163,16 @@ const AppRoutes = () => {
           <ProtectedRoute>
             <MainLayout>
               <HomePage />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/profile"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <ProfilePage />
             </MainLayout>
           </ProtectedRoute>
         }
@@ -413,11 +442,11 @@ const AppRoutes = () => {
         }
       />
       <Route
-        path="/ReporteAnalisisAnexosVencidosPage"
+        path="/ReporteAnalisisAnexosVencidosPorEdadesPage"
         element={
           <ProtectedRoute>
             <MainLayout>
-              <ReporteAnalisisAnexosVencidosPage />
+              <ReporteAnalisisAnexosVencidosPorEdadesPage />
             </MainLayout>
           </ProtectedRoute>
         }
@@ -433,11 +462,91 @@ const AppRoutes = () => {
         }
       />
       <Route
+        path="/ReporteAnalisisAnexosVencidosSemanalPage"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <ReporteAnalisisAnexosVencidosSemanalPage />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/ReporteVencidosFechasCortePage"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <ReporteVencidosFechasCortePage />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/ReporteAnexosVencidosRangosPersonalizadosPage"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <ReporteAnexosVencidosRangosPersonalizadosPage />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/ReporteAnexosPorVencerDolarMonLocalPage"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <ReporteAnexosPorVencerDolarMonLocalPage />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/ReporteAnexosVencidosDolarMonLocalPage"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <ReporteAnexosVencidosDolarMonLocalPage />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/ConsultaAnexosPorNitPage"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <ConsultaAnexosPorNitPage />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/ConsultaAnexosDobleMonedaPage"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <ConsultaAnexosDobleMonedaPage />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/module-viewer"
         element={
           <ProtectedRoute>
             <MainLayout>
               <ModuleViewer />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/AuditLogViewer"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <AuditLogViewer />
             </MainLayout>
           </ProtectedRoute>
         }
@@ -462,7 +571,6 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
-      {/* NotFound también protegido */}
       <Route
         path="*"
         element={
@@ -482,13 +590,6 @@ const App = () => {
   const navigate = useNavigate()
 
   useAutoLogout(logout, 30 * 60 * 1000)
-
-  // Usar useEffect después del <BrowserRouter> en el árbol para que useNavigate funcione
-  useEffect(() => {
-    if (!user) {
-      navigate("/login")
-    }
-  }, [user, navigate])
 
   return (
     <QueryClientProvider client={queryClient}>

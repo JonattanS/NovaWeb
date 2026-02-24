@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -30,7 +30,7 @@ import {
 } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 
-export const mencod = '010310';
+export const mencod = '011602';
 
 const getColumnDescription = (key: string): string => {
   const col = schemaService.getTableColumns().find((c) => c.name === key)
@@ -67,15 +67,11 @@ const ConsultaSaldoPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [page, setPage] = useState(1);
-  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+  const [isFiltersOpen, setIsFiltersOpen] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState(0);
 
   const ROWS_PER_PAGE = 100;
-
-  useEffect(() => {
-    handleSubmit(new Event("submit") as unknown as React.FormEvent)
-  }, [])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -123,7 +119,10 @@ const ConsultaSaldoPage = () => {
       
       // Consultar con_his para movimientos del año
       const fechaIni = `${año}-01-01`;
-      const fechaFin = filtros.doc_fec;
+      //const fechaFin = filtros.doc_fec;
+      const fechaFin = new Date(filtros.doc_fec + 'T23:59:59.999');
+      fechaFin.setDate(fechaFin.getDate() );
+      console.log('fechaFin:', fechaFin);
       
       const filtrosHis = {
         fuente: 'con_his',
@@ -159,6 +158,7 @@ const ConsultaSaldoPage = () => {
     const año = new Date(fechaCorte).getFullYear();
     const mesCorte = new Date(fechaCorte).getMonth() + 1;
     const fechaLimite = new Date(fechaCorte);
+    fechaLimite.setHours(23, 59, 59, 999); // Poner al final del día
     fechaLimite.setDate(fechaLimite.getDate() + 1); // Día siguiente
     
     const meses = [
@@ -199,13 +199,30 @@ const ConsultaSaldoPage = () => {
         item.clc_cod !== 'SI'
       );
       
+      console.log('Total movimientos cuenta:', movimientosCuenta.length);
+      console.log('Fecha límite:', fechaLimite);
+      console.log('Filtros aplicados:', {
+        cta_cod: filtros.cta_cod,
+        año: año,
+        fechaCorte: fechaCorte
+      });
+
       movimientosCuenta.forEach((item) => {
+        /*const fechaDoc = new Date(item.doc_fec);
+        const mesDoc = fechaDoc.getMonth() + 1;
+        const diaDoc = fechaDoc.getDate();*/
+        
         const fechaDoc = new Date(item.doc_fec);
+        const fechaDocSolo = new Date(fechaDoc.getFullYear(), fechaDoc.getMonth(), fechaDoc.getDate());
+        const fechaLimiteSolo = new Date(fechaLimite.getFullYear(), fechaLimite.getMonth(), fechaLimite.getDate());
+        
         const mesDoc = fechaDoc.getMonth() + 1;
         const diaDoc = fechaDoc.getDate();
+        const añoDoc = fechaDoc.getFullYear();
+        const movVal = parseFloat(item.mov_val || 0);
         
         // Solo incluir si la fecha es menor al día siguiente
-        if (fechaDoc < fechaLimite) {
+        if (fechaDocSolo <= fechaLimiteSolo) {
           const movVal = parseFloat(item.mov_val || 0);
           
           if (mesDoc >= 1 && mesDoc <= 12) {
@@ -217,6 +234,8 @@ const ConsultaSaldoPage = () => {
           }
         }
       });
+      console.log('Movimientos procesados - Débito total:', movimientosPorMes[1].debito);
+      console.log('Movimientos procesados - Crédito total:', movimientosPorMes[1].credito);
     }
     
     // Crear resultado
@@ -243,7 +262,7 @@ const ConsultaSaldoPage = () => {
       const credito = movimientosPorMes[i].credito;
       
       // El saldo se calcula: saldo anterior + débitos - créditos
-      saldoAcumulado = saldoAcumulado + debito - credito;
+      saldoAcumulado = saldoAcumulado + debito + credito;
       
       resultado.push({
         suc_cod: suc_cod,
@@ -269,7 +288,7 @@ const ConsultaSaldoPage = () => {
       mes: `TOTAL ${año}`,
       credito: totalCredito,
       debito: totalDebito,
-      saldo: saldoInicial + totalDebito - totalCredito
+      saldo: saldoInicial + totalDebito + totalCredito
     });
     
     return resultado;
@@ -358,7 +377,6 @@ const ConsultaSaldoPage = () => {
                     {/* Filtros Básicos */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <Building className="h-4 w-4" />
                         <span>Información Básica</span>
                         <span className="text-red-500 text-xs">(Cuenta es obligatoria)</span>
                       </div>
@@ -392,7 +410,6 @@ const ConsultaSaldoPage = () => {
                     {/* Filtro NIT con Toggle */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <User className="h-4 w-4" />
                         <span>Filtro por NIT</span>
                       </div>
                       <div className="space-y-3">
@@ -420,7 +437,6 @@ const ConsultaSaldoPage = () => {
                     {/* Filtro Centro con Toggle */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <Target className="h-4 w-4" />
                         <span>Filtro por Centro</span>
                       </div>
                       <div className="space-y-3">
@@ -448,7 +464,6 @@ const ConsultaSaldoPage = () => {
                     {/* Filtro Actividad con Toggle */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <Activity className="h-4 w-4" />
                         <span>Filtro por Actividad</span>
                       </div>
                       <div className="space-y-3">

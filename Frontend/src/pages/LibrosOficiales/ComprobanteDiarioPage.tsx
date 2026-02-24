@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -57,15 +57,11 @@ const ComprobanteDiarioPage = () => {
   const [error, setError] = useState('');
   const [page, setPage] = useState(1);
   const [inputPage, setInputPage] = useState('1');
-  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+  const [isFiltersOpen, setIsFiltersOpen] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState(0);
 
   const ROWS_PER_PAGE = 100;
-
-  useEffect(() => {
-    handleSubmit(new Event("submit") as unknown as React.FormEvent)
-  }, [])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -182,7 +178,6 @@ const ComprobanteDiarioPage = () => {
                     {/* Información General */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <Building className="h-4 w-4" />
                         <span>Información General</span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -199,7 +194,6 @@ const ComprobanteDiarioPage = () => {
                     {/* Rango de Comprobantes */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <FileText className="h-4 w-4" />
                         <span>Rango de Comprobantes</span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">

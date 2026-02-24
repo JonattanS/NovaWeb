@@ -3,7 +3,7 @@ const cors = require('cors');
 require('dotenv').config();
 
 const app = express();
-const port = process.env.PORT || 3004;
+const port = process.env.PORT || 3002;
 
 app.use(cors());
 app.use(express.json());
@@ -30,6 +30,10 @@ app.use('/api/nov-modules', novModulesRoutes);
 // Importa y registra la ruta de logs de auditoría
 const auditLogsRouter = require('./routes/auditLogs');
 app.use('/api', auditLogsRouter);
+
+// Rutas de administración de usuarios
+const usersRouter = require('./routes/users');
+app.use('/api/users', usersRouter);
 
 // Endpoint para ejecutar queries con configuración dinámica (pool temporal)
 

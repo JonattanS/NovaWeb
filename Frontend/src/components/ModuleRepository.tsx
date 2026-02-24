@@ -2,16 +2,15 @@
 
 import type React from "react"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   Folder,
-  Plus,
   Search,
   Zap,
   Database,
@@ -30,7 +29,7 @@ import { getModulesByPortfolio, type NovModule } from "@/services/novModulesApi"
 import { useUser } from "@/contexts/UserContext"
 import { useToast } from "@/hooks/use-toast"
 import { useNavigate, useLocation } from "react-router-dom"
-import { routesByMencod } from '../routesByMencod'
+import { routesByMencod } from "../routesByMencod"
 
 interface ModuleRepositoryProps {
   onClose: () => void
@@ -62,6 +61,8 @@ export const ModuleRepository = ({ onClose }: ModuleRepositoryProps) => {
   const [subModules, setSubModules] = useState<NovModule[]>([])
   const [expandedCardContent, setExpandedCardContent] = useState<Set<number>>(new Set())
   const [expandedCards, setExpandedCards] = useState<Record<number, boolean>>({})
+  const portfolioStateApplied = useRef(false)
+  const moduleStateApplied = useRef(false)
 
   // Combina módulos evitando duplicados por id
   const mergeModulesWithoutDuplicates = (
@@ -99,7 +100,7 @@ export const ModuleRepository = ({ onClose }: ModuleRepositoryProps) => {
       setFolders(allFolders.filter((f) => portafoliosPermitidos.includes(f.porcod ?? -1)))
 
       const hardcodedModules = moduleService.getAllModules()
-      const backendModules = await getUserModules(user.token)
+      const backendModules = await getUserModules(user.token, user.id)
 
       const combined = mergeModulesWithoutDuplicates(hardcodedModules, backendModules)
       setModules(combined)
@@ -131,59 +132,79 @@ export const ModuleRepository = ({ onClose }: ModuleRepositoryProps) => {
     }
   }, [selectedPortafolio, user, loadSystemModules])
 
-  // Detectar si viene del sidebar y establecer portafolio automáticamente
+  // 1. Detectar si viene del sidebar y establecer portafolio
   useEffect(() => {
-    if (location.state?.selectedPortfolio) {
-      const portfolio = folders.find(
-        (f) => f.porcod === location.state.selectedPortfolio.porcod
-      )
-      if (portfolio) {
-        setSelectedPortafolio(portfolio)
-        
-        // Si viene del sidebar, mostrar módulos del sistema
-        if (location.state?.showSystemModules) {
-          setShowingSystemModules(true)
+    if (!portfolioStateApplied.current && folders.length > 0) {
+      if (location.state?.selectedPortfolio) {
+        const portfolio = folders.find((f) => f.porcod === location.state.selectedPortfolio.porcod)
+        if (portfolio) {
+          setSelectedPortafolio(portfolio)
+          setShowingSystemModules(!!location.state?.showSystemModules)
+          portfolioStateApplied.current = true
         }
-        
-        // Si especifica un módulo, expandirlo
-        if (location.state?.selectedModuleCode) {
-          setExpandedModuleCode(location.state.selectedModuleCode)
-          
-          // Encontrar el módulo padre y expandir su card
-          const parentModule = novModules.find(
-            (m) => m.mencod === location.state.selectedModuleCode && !m.menter
-          )
-          if (parentModule) {
-            setExpandedCards((prev) => ({
-              ...prev,
-              [parentModule.id]: true,
-            }))
-            const children = novModules.filter(
-              (m2) => m2.menter && m2.mencodpad === parentModule.mencod
-            )
-            setSubModules(children)
-          }
-        }
+      } else if (!selectedPortafolio) {
+        // Auto-seleccionar primer portafolio si no hay nada seleccionado ni viene del state
+        setSelectedPortafolio(folders[0])
+        setShowingSystemModules(false)
       }
     }
-  }, [location.state, folders, novModules])
+  }, [location.state, folders, selectedPortafolio])
+
+  // 2. Expandir módulos solo cuando novModules esté cargado
+  useEffect(() => {
+    if (!moduleStateApplied.current && novModules.length > 0 && selectedPortafolio) {
+      if (location.state?.selectedModuleCode) {
+        setExpandedModuleCode(location.state.selectedModuleCode)
+
+        const parentModule = novModules.find((m) => m.mencod === location.state.selectedModuleCode && !m.menter)
+        if (parentModule) {
+          setExpandedCards((prev) => ({
+            ...prev,
+            [parentModule.id]: true,
+          }))
+          const children = novModules.filter((m2) => m2.menter && m2.mencodpad === parentModule.mencod)
+          setSubModules(children)
+        }
+      } else {
+        // Si no hay código seleccionado (ej: clic en raíz de portafolio), limpiar expansiones previas de sidebar
+        setExpandedModuleCode(null)
+        setSubModules([])
+        setExpandedCards({})
+      }
+      moduleStateApplied.current = true
+    }
+  }, [location.state, novModules, selectedPortafolio])
+
+  // Reset flags when location key changes (each new navigation/click)
+  useEffect(() => {
+    portfolioStateApplied.current = false
+    moduleStateApplied.current = false
+  }, [location.key])
 
   // Filtrado por portafolio y búsqueda
   const filteredModules = selectedPortafolio
     ? modules.filter(
-        (m) =>
-          m.porcod === selectedPortafolio.porcod &&
-          (m.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            m.description.toLowerCase().includes(searchTerm.toLowerCase())),
-      )
+      (m) =>
+        m.porcod === selectedPortafolio.porcod &&
+        (m.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          m.description.toLowerCase().includes(searchTerm.toLowerCase())),
+    )
     : []
 
   const filteredSystemModules = novModules
     .filter((m) => !m.menter)
     .filter(
-      (m) =>
-        m.mennom.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        m.mencod.toLowerCase().includes(searchTerm.toLowerCase()),
+      (m) => {
+        const matchesSearch = m.mennom.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          m.mencod.toLowerCase().includes(searchTerm.toLowerCase());
+
+        // Si hay una selección del sidebar y NO hay búsqueda activa, filtrar solo por ese módulo
+        if (expandedModuleCode && !searchTerm) {
+          return m.mencod === expandedModuleCode;
+        }
+
+        return matchesSearch;
+      }
     )
 
   // Manejo creación de nuevas carpetas
@@ -317,109 +338,38 @@ export const ModuleRepository = ({ onClose }: ModuleRepositoryProps) => {
   if (loading) return <div>Cargando módulos...</div>
   if (error) return <div>{error}</div>
   if (modules.length === 0 && !selectedPortafolio) return <div>No hay módulos guardados para este usuario.</div>
-  
+
   // Renderizado principal
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
-      <div className="container mx-auto px-4 py-8 space-y-8">
-        {/* Header visual destacado */}
-        <div className="relative overflow-hidden rounded-3xl bg-[#F7722F] p-8 text-white shadow-2xl">
-          <div className="absolute inset-0 bg-black/10"></div>
-          <div className="relative z-10">
-            <div className="flex items-center justify-between">
-              <div className="space-y-2">
-                <div className="flex items-center space-x-3">
-                  <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-sm">
-                    <FolderOpen className="h-8 w-8" />
-                  </div>
-                  <div>
-                    <h1 className="text-4xl font-bold tracking-tight">
-                      {selectedPortafolio ? selectedPortafolio.name : "Portafolios Disponibles"}
-                    </h1>
-                    <p className="text-indigo-100 text-lg">
-                      {selectedPortafolio 
-                        ? showingSystemModules
-                          ? `${filteredSystemModules.length} Módulos del Portafolio disponibles`
-                          : `${filteredModules.length} módulos de usuario disponibles`
-                        : `${folders.length} portafolios para explorar`}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 py-8">
+      <div className="w-full px-6 space-y-8">
+
+
+        <div className="flex items-center justify-between">
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={() => navigate("/")}
+            className="hover:bg-brand-primary/150 hover:border-brand-accent hover:text-brand-accent transition-all duration-200"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Volver al inicio
+          </Button>
         </div>
 
-        {!selectedPortafolio ? (
-          // Vista Portafolios
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <Button
-                variant="outline"
-                size="lg"
-                onClick={() => navigate("/")}
-                className="hover:bg-blue-50 hover:border-blue-200 transition-all duration-200"
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Volver al inicio
-              </Button>
-            </div>
-
-            {folders.length ? (
-              <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {folders.map((folder) => (
-                  <Card
-                    key={folder.id}
-                    className="group cursor-pointer transition-all duration-300 hover:shadow-2xl hover:scale-105 hover:-translate-y-2 bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:bg-white"
-                    onClick={() => setSelectedPortafolio(folder)}
-                  >
-                    <CardHeader className="pb-4">
-                      <div className="flex items-center space-x-4">
-                        <div className="p-4 bg-gradient-to-br from-blue-500 to-[#F7722F] rounded-2xl text-white group-hover:from-[#F7722F] group-hover:to-blue-500 transition-all duration-300">
-                          <Folder className="h-8 w-8" />
-                        </div>
-                        <div className="flex-1">
-                          <CardTitle className="text-xl font-bold text-slate-800 group-hover:text-[#F7722F] transition-colors">
-                            {folder.name}
-                          </CardTitle>
-                          <p className="text-sm text-slate-500 mt-1">Portafolio de módulos</p>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex items-center justify-between text-sm text-slate-600">
-                        <span>Explorar contenido</span>
-                        <ArrowLeft className="h-4 w-4 rotate-180 group-hover:translate-x-1 transition-transform" />
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              <Card className="p-12 text-center bg-white/50 backdrop-blur-sm border-dashed border-2 border-slate-300">
-                <div className="space-y-4">
-                  <div className="p-4 bg-slate-100 rounded-full w-fit mx-auto">
-                    <FolderOpen className="h-8 w-8 text-slate-400" />
-                  </div>
-                  <p className="text-lg text-slate-600">No tienes portafolios disponibles.</p>
-                  <p className="text-sm text-slate-500">Contacta al administrador para obtener acceso.</p>
-                </div>
-              </Card>
-            )}
-          </div>
-        ) : (
+        {selectedPortafolio && (
           // Vista Módulos del portafolio seleccionado
           <div className="space-y-6">
             {/* Barra de herramientas */}
             <div className="flex flex-col sm:flex-row gap-4 p-6 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border-0">
-              <Button
-                variant="outline"
-                onClick={() => setSelectedPortafolio(null)}
-                className="hover:bg-blue-50 hover:border-blue-200 transition-all duration-200"
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Volver a portafolios
-              </Button>
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <FolderOpen className="h-5 w-5 text-blue-600" />
+                </div>
+                <div className="font-semibold text-slate-700">
+                  {selectedPortafolio.name}
+                </div>
+              </div>
 
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
@@ -436,7 +386,7 @@ export const ModuleRepository = ({ onClose }: ModuleRepositoryProps) => {
                   variant={!showingSystemModules ? "default" : "outline"}
                   onClick={() => setShowingSystemModules(false)}
                   size="sm"
-                  className={!showingSystemModules ? "bg-[#F7722F] hover:bg-[#78B437]" : ""}
+                  className={!showingSystemModules ? "bg-brand-accent hover:bg-[#78B437]" : ""}
                 >
                   <Database className="h-4 w-4 mr-2" />
                   Usuario ({filteredModules.length})
@@ -445,7 +395,7 @@ export const ModuleRepository = ({ onClose }: ModuleRepositoryProps) => {
                   variant={showingSystemModules ? "default" : "outline"}
                   onClick={() => setShowingSystemModules(true)}
                   size="sm"
-                  className={showingSystemModules ? "bg-[#F7722F] hover:bg-[#78B437]" : ""}
+                  className={showingSystemModules ? "bg-brand-accent hover:bg-[#78B437]" : ""}
                 >
                   <Settings className="h-4 w-4 mr-2" />
                   Modulos del Portafolio ({filteredSystemModules.length})
@@ -475,11 +425,10 @@ export const ModuleRepository = ({ onClose }: ModuleRepositoryProps) => {
                       <CardHeader className="pb-3">
                         <div className="flex items-center space-x-3">
                           <div
-                            className={`p-3 rounded-xl transition-all duration-300 ${
-                              mod.isMainFunction
-                                ? "bg-gradient-to-br from-purple-500 to-pink-600 text-white group-hover:from-purple-600 group-hover:to-pink-700"
-                                : "bg-gradient-to-br from-emerald-500 to-teal-600 text-white group-hover:from-emerald-600 group-hover:to-teal-700"
-                            }`}
+                            className={`p-3 rounded-xl transition-all duration-300 ${mod.isMainFunction
+                              ? "bg-gradient-to-br from-purple-500 to-pink-600 text-white group-hover:from-purple-600 group-hover:to-pink-700"
+                              : "bg-gradient-to-br from-emerald-500 to-teal-600 text-white group-hover:from-emerald-600 group-hover:to-teal-700"
+                              }`}
                           >
                             {mod.isMainFunction ? <Zap className="h-5 w-5" /> : <Database className="h-5 w-5" />}
                           </div>
@@ -489,11 +438,10 @@ export const ModuleRepository = ({ onClose }: ModuleRepositoryProps) => {
                             </CardTitle>
                             <Badge
                               variant={mod.isMainFunction ? "default" : "secondary"}
-                              className={`mt-1 ${
-                                mod.isMainFunction
-                                  ? "bg-purple-100 text-purple-800 hover:bg-purple-200"
-                                  : "bg-emerald-100 text-emerald-800 hover:bg-emerald-200"
-                              } transition-colors`}
+                              className={`mt-1 ${mod.isMainFunction
+                                ? "bg-purple-100 text-purple-800 hover:bg-purple-200"
+                                : "bg-emerald-100 text-emerald-800 hover:bg-emerald-200"
+                                } transition-colors`}
                             >
                               {mod.isMainFunction ? "Función Principal" : "Módulo Personal"}
                             </Badge>
@@ -523,7 +471,7 @@ export const ModuleRepository = ({ onClose }: ModuleRepositoryProps) => {
                         <div className="flex space-x-2">
                           <Button
                             size="sm"
-                            className="flex-1 bg-[#F7722F] hover:bg-[#78B437] text-white transition-all duration-200"
+                            className="flex-1 bg-brand-accent hover:bg-brand-primary text-white transition-all duration-200"
                             onClick={() => handleModuleClick(mod)}
                           >
                             <Play className="h-4 w-4 mr-1" />
@@ -578,15 +526,13 @@ export const ModuleRepository = ({ onClose }: ModuleRepositoryProps) => {
                         className="group cursor-pointer hover:shadow-2xl transition-all duration-300 hover:scale-102 bg-white/90 backdrop-blur-sm border-0 shadow-lg overflow-hidden"
                         onClick={(e) => {
                           e.stopPropagation()
-                          setExpandedCards(prev => ({
+                          setExpandedCards((prev) => ({
                             ...prev,
-                            [mod.id]: !prev[mod.id]
+                            [mod.id]: !prev[mod.id],
                           }))
-                          
+
                           if (!expandedCards[mod.id]) {
-                            const children = novModules.filter(
-                              (m2) => m2.menter && m2.mencodpad === mod.mencod
-                            )
+                            const children = novModules.filter((m2) => m2.menter && m2.mencodpad === mod.mencod)
                             setSubModules(children)
                             setExpandedModuleCode(mod.mencod)
                           } else {

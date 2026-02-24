@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -14,6 +14,9 @@ import {ArrowLeft,Search,Download,FileText,Filter,ChevronDown,ChevronUp,Table,Ca
 import { useNavigate } from "react-router-dom"
 import jsPDF from "jspdf"
 import autoTable from "jspdf-autotable"
+
+// Definición estática del código de módulo
+export const mencod = '010912';
 
 const getColumnDescription = (key: string): string => {
   const col = schemaService.getTableColumns().find((c) => c.name === key)
@@ -44,13 +47,9 @@ const ConsultaBalanceComprobacionPage = () => {
   const [error, setError] = useState("")
   const [page, setPage] = useState(1)
   const [inputPage, setInputPage] = useState("1")
-  const [isFiltersOpen, setIsFiltersOpen] = useState(false)
+  const [isFiltersOpen, setIsFiltersOpen] = useState(true)
   const [pdfProgress, setPdfProgress] = useState(0)
   const [isPdfGenerating, setIsPdfGenerating] = useState(false)
-
-  useEffect(() => {
-    handleSubmit(new Event("submit") as unknown as React.FormEvent)
-  }, [])
 
   const exportToCSV = () => {
     if (resultado.length === 0) return
@@ -420,7 +419,6 @@ const ConsultaBalanceComprobacionPage = () => {
                   <div className="grid gap-6">
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <Building className="h-4 w-4" />
                         <span>Información General</span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -436,7 +434,6 @@ const ConsultaBalanceComprobacionPage = () => {
 
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <Calendar className="h-4 w-4" />
                         <span>Rango de Fechas</span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -461,7 +458,6 @@ const ConsultaBalanceComprobacionPage = () => {
 
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <CreditCard className="h-4 w-4" />
                         <span>Rango de Cuentas</span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">

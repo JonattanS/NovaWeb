@@ -1,16 +1,13 @@
 "use client"
 
-import type React from "react"
+import React from "react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Switch } from "@/components/ui/switch"
-import { Label } from "@/components/ui/label"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { databaseService } from "@/services/database"
-import { formatCellValue } from "@/utils/formatters"
 import { schemaService } from "@/services/schemaService"
 import { DataPagination } from "@/components/DataPagination"
 import { ExcelExporter } from "@/components/ExcelExporter"
@@ -20,16 +17,15 @@ import {
   Filter,
   ChevronDown,
   ChevronUp,
-  Table,
+  FileText,
   Calendar,
   Building,
-  FileText,
-  ToggleLeft,
+  CreditCard,
   Users,
 } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 
-export const mencod = '011802';
+export const mencod = '011805';
 
 const getColumnDescription = (key: string): string => {
   const col = schemaService.getTableColumns().find((c) => c.name === key)
@@ -38,26 +34,32 @@ const getColumnDescription = (key: string): string => {
 
 type Filtros = {
   suc_cod: string
-  anx_cod_ini: string
-  anx_cod_fin: string
+  cta_cod: string
+  anf_cod: string
   ter_nit_ini: string
   ter_nit_fin: string
-  fecha_corte: string  
-  detallado: boolean
-  alfabetico: boolean
+  fecha1: string
+  fecha2: string
+  fecha3: string
+  fecha4: string
+  fecha5: string
+  fecha6: string
 }
 
-const ReporteEstadoDeMultiplesAnexosPage = () => {
+const ReporteVencidosFechasCortePage = () => {
   const navigate = useNavigate()
   const [filtros, setFiltros] = useState<Filtros>({
     suc_cod: "",
-    anx_cod_ini: "",
-    anx_cod_fin: "",
+    cta_cod: "",
+    anf_cod: "",
     ter_nit_ini: "",
     ter_nit_fin: "",
-    fecha_corte: "",
-    detallado: true,
-    alfabetico: true,
+    fecha1: "",
+    fecha2: "",
+    fecha3: "",
+    fecha4: "",
+    fecha5: "",
+    fecha6: "",
   });
 
   const [resultado, setResultado] = useState<any[]>([]);
@@ -75,44 +77,49 @@ const ReporteEstadoDeMultiplesAnexosPage = () => {
     setFiltros((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleToggleChange = (name: string) => (checked: boolean) => {
-    setFiltros((prev) => ({ ...prev, [name]: checked }));
+  const validateFechas = (): string | null => {
+    const fechas = [filtros.fecha1, filtros.fecha2, filtros.fecha3, filtros.fecha4, filtros.fecha5, filtros.fecha6].filter(f => f);
+    
+    for (let i = 1; i < fechas.length; i++) {
+      if (new Date(fechas[i]) < new Date(fechas[i - 1])) {
+        return `La fecha ${i + 1} no puede ser menor que la fecha ${i}`;
+      }
+    }
+    return null;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    const errorValidacion = validateFechas();
+    if (errorValidacion) {
+      setError(errorValidacion);
+      return;
+    }
+
     setLoading(true);
     setError("");
     setPage(1);
 
     try {
-      // Consultar movimientos de anexos
       const filtrosConsulta = {
         fuente: 'anf_con',
         suc_cod: filtros.suc_cod,
-        anf_cod_ini: filtros.anx_cod_ini,
-        anf_cod_fin: filtros.anx_cod_fin,
+        cta_cod_ini: filtros.cta_cod,
+        cta_cod_fin: filtros.cta_cod,
+        anf_cod_ini: filtros.anf_cod,
+        anf_cod_fin: filtros.anf_cod,
         ter_nit_ini: filtros.ter_nit_ini,
         ter_nit_fin: filtros.ter_nit_fin,
+        fecha_ini: filtros.fecha1 || filtros.fecha2 || filtros.fecha3 || filtros.fecha4 || filtros.fecha5 || filtros.fecha6,
+        fecha_fin: filtros.fecha6 || filtros.fecha5 || filtros.fecha4 || filtros.fecha3 || filtros.fecha2 || filtros.fecha1,
       };
       
-      const responseAnf = await databaseService.consultaDocumentos(filtrosConsulta);
-      
-      // Procesar datos según modo
-      let datosProcessados = filtros.detallado 
-        ? responseAnf || [] // Detallado: muestra agrupado por tercero y anexo (como viene del backend)
-        : procesarResumido(responseAnf || []); // Resumido: agrupa solo por tercero
-      
-      // Aplicar ordenamiento
-      if (filtros.alfabetico) {
-        datosProcessados.sort((a, b) => (a.ter_raz || '').localeCompare(b.ter_raz || ''));
-      } else {
-        datosProcessados.sort((a, b) => (a.ter_nit || '').localeCompare(b.ter_nit || ''));
-      }
-      
+      const response = await databaseService.consultaDocumentos(filtrosConsulta);
+      const datosProcessados = procesarReporteVencidosFechasCorte(response || []);
       setResultado(datosProcessados);
     } catch (err: any) {
+      console.error("Error en consulta:", err);
       setError(err.message || "Error al consultar los datos");
       setResultado([]);
     } finally {
@@ -120,76 +127,73 @@ const ReporteEstadoDeMultiplesAnexosPage = () => {
     }
   };
 
-
-
-  const getActiveFiltersCount = () => {
-    let count = 0;
-    if (filtros.suc_cod.trim()) count++;
-    if (filtros.anx_cod_ini.trim()) count++;
-    if (filtros.anx_cod_fin.trim()) count++;
-    if (filtros.ter_nit_ini.trim()) count++;
-    if (filtros.ter_nit_fin.trim()) count++;
-    if (filtros.detallado) count++;
-    if (filtros.alfabetico) count++;
-    return count;
-  }
-
-  // Función para procesar datos en modo resumido (agrupar por NIT)
-  const procesarResumido = (datos: any[]) => {
-    const agrupados = datos.reduce((acc, item) => {
-      const key = item.ter_nit;
-      
-      if (!acc[key]) {
-        acc[key] = {
-          ter_nit: item.ter_nit,
-          ter_raz: item.ter_raz,
-          valor_inicial: 0,
-          debitos: 0,
-          creditos: 0,
-          saldo: 0
+  const procesarReporteVencidosFechasCorte = (datos: any[]) => {
+    const datosAnexo = datos.filter(item => item.anx_cod || item.anf_cod);
+    const fechas = [filtros.fecha1, filtros.fecha2, filtros.fecha3, filtros.fecha4, filtros.fecha5, filtros.fecha6].filter(f => f);
+    
+    const agrupado: { [key: string]: any } = {};
+    
+    datosAnexo.forEach(item => {
+      const nit = item.ter_nit || '';
+      if (!agrupado[nit]) {
+        agrupado[nit] = {
+          ter_nit: nit,
+          ter_raz: item.ter_raz || '',
+          fecha1: 0,
+          fecha2: 0,
+          fecha3: 0,
+          fecha4: 0,
+          fecha5: 0,
+          fecha6: 0,
         };
       }
       
-      acc[key].valor_inicial += parseFloat(item.valor_inicial) || 0;
-      acc[key].debitos += parseFloat(item.debitos) || 0;
-      acc[key].creditos += parseFloat(item.creditos) || 0;
-      acc[key].saldo += parseFloat(item.saldo) || 0;
+      const valor = parseFloat(item.mov_val || 0);
+      const fechaVcto = item.anf_vcto ? new Date(item.anf_vcto) : null;
       
-      return acc;
-    }, {});
+      if (fechaVcto) {
+        fechas.forEach((fecha, index) => {
+          const fechaCorte = new Date(fecha);
+          const diasVencidos = Math.floor((fechaCorte.getTime() - fechaVcto.getTime()) / (1000 * 60 * 60 * 24));
+          
+          if (diasVencidos >= 0) {
+            agrupado[nit][`fecha${index + 1}`] += valor;
+          }
+        });
+      }
+    });
     
-    return Object.values(agrupados);
+    const resultado = Object.values(agrupado).map(item => ({
+      ...item,
+      total: item.fecha1 + item.fecha2 + item.fecha3 + item.fecha4 + item.fecha5 + item.fecha6
+    }));
+    
+    resultado.sort((a, b) => a.ter_nit.localeCompare(b.ter_nit));
+    return resultado;
   };
 
-  // Columnas dinámicas según modo
-  const getColumns = () => {
-    if (filtros.detallado) {
-      return [
-        { key: 'ter_nit', label: 'Nit' },
-        { key: 'ter_raz', label: 'Tercero' },
-        { key: 'anf_cod', label: 'Anf.' },
-        { key: 'doc_num', label: 'Documento' },
-        { key: 'valor_inicial', label: 'Valor Inicial' },
-        { key: 'debitos', label: 'Débitos' },
-        { key: 'creditos', label: 'Créditos' },
-        { key: 'saldo', label: 'Saldo' }
-      ];
-    } else {
-      return [
-        { key: 'ter_nit', label: 'Nit' },
-        { key: 'ter_raz', label: 'Tercero' },
-        { key: 'valor_inicial', label: 'Valor Inicial' },
-        { key: 'debitos', label: 'Débitos' },
-        { key: 'creditos', label: 'Créditos' },
-        { key: 'saldo', label: 'Saldo' }
-      ];
-    }
+  const getActiveFiltersCount = () => {
+    let count = 0;
+    Object.values(filtros).forEach(value => {
+      if (value && value.toString().trim()) count++;
+    });
+    return count;
+  }
+
+  const getFechasActivas = () => {
+    return [
+      { label: 'Fecha 1', value: filtros.fecha1 },
+      { label: 'Fecha 2', value: filtros.fecha2 },
+      { label: 'Fecha 3', value: filtros.fecha3 },
+      { label: 'Fecha 4', value: filtros.fecha4 },
+      { label: 'Fecha 5', value: filtros.fecha5 },
+      { label: 'Fecha 6', value: filtros.fecha6 },
+    ].filter(f => f.value);
   };
 
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       <div className="max-w-7xl mx-auto py-6 px-4 space-y-6">
-        {/* Header */}
         <div className="flex justify-between items-center">
           <div className="flex items-center space-x-4">
             <Button variant="ghost" size="sm" onClick={() => navigate("/")} className="hover:bg-white/80">
@@ -199,7 +203,7 @@ const ReporteEstadoDeMultiplesAnexosPage = () => {
             <div className="h-6 w-px bg-gray-300" />
             <h1 className="text-2xl font-bold text-gray-900 flex items-center">
               <FileText className="h-6 w-6 mr-2 text-blue-600" />
-              Reporte Estado de Múltiples Anexos
+              Reporte Vencidos Fechas Corte
             </h1>
           </div>
 
@@ -207,8 +211,8 @@ const ReporteEstadoDeMultiplesAnexosPage = () => {
             <div className="flex gap-2">
               <ExcelExporter
                 data={resultado}
-                filename={`reporte_multiples_anexos_CSV_${new Date().toISOString().split("T")[0]}`}
-                sheetName="Reporte Múltiples Anexos"
+                filename={`reporte_vencidos_fechas_corte_CSV_${new Date().toISOString().split("T")[0]}`}
+                sheetName="Reporte Vencidos Fechas Corte"
                 format="csv"
                 onProgressChange={(progress) => setExportProgress(progress)}
                 onGeneratingChange={(generating) => setIsExporting(generating)}
@@ -216,8 +220,8 @@ const ReporteEstadoDeMultiplesAnexosPage = () => {
               />
               <ExcelExporter
                 data={resultado}
-                filename={`reporte_multiples_anexos_${new Date().toISOString().split("T")[0]}`}
-                sheetName="Reporte Múltiples Anexos"
+                filename={`reporte_vencidos_fechas_corte_${new Date().toISOString().split("T")[0]}`}
+                sheetName="Reporte Vencidos Fechas Corte"
                 format="xlsx"
                 onProgressChange={(progress) => setExportProgress(progress)}
                 onGeneratingChange={(generating) => setIsExporting(generating)}
@@ -227,7 +231,6 @@ const ReporteEstadoDeMultiplesAnexosPage = () => {
           )}
         </div>
 
-        {/* Filtros Colapsables */}
         <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
           <Collapsible open={isFiltersOpen} onOpenChange={setIsFiltersOpen}>
             <CollapsibleTrigger asChild>
@@ -255,66 +258,51 @@ const ReporteEstadoDeMultiplesAnexosPage = () => {
               <CardContent className="pt-0">
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="grid gap-6">
-                    {/* Información General */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <span>Información General</span>
+                        <Building className="h-4 w-4" />
+                        <span>Sucursal</span>
                       </div>
-                      <div className="grid grid-cols-1 gap-3">
-                        <Input
-                          name="suc_cod"
-                          placeholder="Sucursal"
-                          value={filtros.suc_cod}
-                          onChange={handleChange}
-                          className="bg-white"
-                        />
-                      </div>
+                      <Input
+                        name="suc_cod"
+                        placeholder="Código de Sucursal"
+                        value={filtros.suc_cod}
+                        onChange={handleChange}
+                        className="bg-white"
+                      />
                     </div>
 
-                    {/* Rango de Anexos */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <span>Rango de Anexos</span>
+                        <CreditCard className="h-4 w-4" />
+                        <span>Cuenta Contable</span>
                       </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <Input
-                          name="anx_cod_ini"
-                          placeholder="Anexo Inicial"
-                          value={filtros.anx_cod_ini}
-                          onChange={handleChange}
-                          className="bg-white"
-                        />
-                        <Input
-                          name="anx_cod_fin"
-                          placeholder="Anexo Final"
-                          value={filtros.anx_cod_fin}
-                          onChange={handleChange}
-                          className="bg-white"
-                        />
-                      </div>
+                      <Input
+                        name="cta_cod"
+                        placeholder="Código de Cuenta"
+                        value={filtros.cta_cod}
+                        onChange={handleChange}
+                        className="bg-white"
+                      />
                     </div>
 
-
-                    {/* Fecha de Corte */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <span>Fecha de Corte</span>
+                        <FileText className="h-4 w-4" />
+                        <span>Anexo Financiero</span>
                       </div>
-                      <div className="grid grid-cols-1 gap-3">
-                        <Input
-                          type="date"
-                          name="fecha_corte"
-                          placeholder="Fecha de Corte"
-                          value={filtros.fecha_corte}
-                          onChange={handleChange}
-                          className="bg-white"
-                        />
-                      </div>
+                      <Input
+                        name="anf_cod"
+                        placeholder="Código de Anexo Financiero"
+                        value={filtros.anf_cod}
+                        onChange={handleChange}
+                        className="bg-white"
+                      />
                     </div>
-                    
-                    {/* Rango de NITs */}
+
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+                        <Users className="h-4 w-4" />
                         <span>Rango de NITs</span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -335,32 +323,65 @@ const ReporteEstadoDeMultiplesAnexosPage = () => {
                       </div>
                     </div>
 
-                    {/* Opciones */}
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <span>Opciones</span>
+                        <Calendar className="h-4 w-4" />
+                        <span>Fechas de Corte (cada fecha debe ser mayor o igual a la anterior)</span>
                       </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="flex items-center space-x-2">
-                          <Switch
-                            id="detallado"
-                            checked={filtros.detallado}
-                            onCheckedChange={handleToggleChange('detallado')}
-                          />
-                          <Label htmlFor="detallado" className="text-sm">
-                            Detallado
-                          </Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Switch
-                            id="alfabetico"
-                            checked={filtros.alfabetico}
-                            onCheckedChange={handleToggleChange('alfabetico')}
-                          />
-                          <Label htmlFor="alfabetico" className="text-sm">
-                            Orden Alfabético
-                          </Label>
-                        </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                        <Input
+                          type="date"
+                          name="fecha1"
+                          placeholder="Fecha 1"
+                          value={filtros.fecha1}
+                          onChange={handleChange}
+                          className="bg-white"
+                        />
+                        <Input
+                          type="date"
+                          name="fecha2"
+                          placeholder="Fecha 2"
+                          value={filtros.fecha2}
+                          onChange={handleChange}
+                          className="bg-white"
+                          min={filtros.fecha1}
+                        />
+                        <Input
+                          type="date"
+                          name="fecha3"
+                          placeholder="Fecha 3"
+                          value={filtros.fecha3}
+                          onChange={handleChange}
+                          className="bg-white"
+                          min={filtros.fecha2}
+                        />
+                        <Input
+                          type="date"
+                          name="fecha4"
+                          placeholder="Fecha 4"
+                          value={filtros.fecha4}
+                          onChange={handleChange}
+                          className="bg-white"
+                          min={filtros.fecha3}
+                        />
+                        <Input
+                          type="date"
+                          name="fecha5"
+                          placeholder="Fecha 5"
+                          value={filtros.fecha5}
+                          onChange={handleChange}
+                          className="bg-white"
+                          min={filtros.fecha4}
+                        />
+                        <Input
+                          type="date"
+                          name="fecha6"
+                          placeholder="Fecha 6"
+                          value={filtros.fecha6}
+                          onChange={handleChange}
+                          className="bg-white"
+                          min={filtros.fecha5}
+                        />
                       </div>
                     </div>
                   </div>
@@ -403,7 +424,6 @@ const ReporteEstadoDeMultiplesAnexosPage = () => {
           </Card>
         )}
 
-        {/* Error */}
         {error && (
           <Card className="border-red-200 bg-red-50">
             <CardContent className="pt-6">
@@ -412,14 +432,13 @@ const ReporteEstadoDeMultiplesAnexosPage = () => {
           </Card>
         )}
 
-        {/* Resultados */}
         {resultado.length > 0 && (
           <Card className="shadow-lg border-0 bg-white/90 backdrop-blur-sm">
             <CardHeader className="bg-gradient-to-r from-[#F7722F] to-[#00264D] text-white rounded-t-lg">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-xl flex items-center">
                   <FileText className="h-5 w-5 mr-2" />
-                  Reporte Estado de Múltiples Anexos {filtros.detallado ? '(Detallado)' : '(Resumido)'} - anf_con
+                  Reporte Vencidos Fechas Corte
                 </CardTitle>
                 <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
                   {resultado.length} registros
@@ -431,27 +450,29 @@ const ReporteEstadoDeMultiplesAnexosPage = () => {
                 <table className="w-full text-sm">
                   <thead className="bg-gray-50 border-b-2 border-gray-200 sticky top-0 z-10">
                     <tr>
-                      {getColumns().map((col) => (
-                        <th key={col.key} className="px-4 py-3 font-semibold text-left text-gray-700 whitespace-nowrap">
-                          {col.label}
+                      <th className="px-4 py-3 font-semibold text-left text-gray-700 whitespace-nowrap">NIT</th>
+                      <th className="px-4 py-3 font-semibold text-left text-gray-700 whitespace-nowrap">Razón Social</th>
+                      {getFechasActivas().map((fecha, index) => (
+                        <th key={index} className="px-4 py-3 font-semibold text-right text-gray-700 whitespace-nowrap">
+                          {fecha.value}
                         </th>
                       ))}
+                      <th className="px-4 py-3 font-semibold text-right text-gray-700 whitespace-nowrap">Total</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
                     {resultado.slice((page - 1) * ROWS_PER_PAGE, page * ROWS_PER_PAGE).map((row, i) => (
-                      <tr key={i} className="hover:bg-blue-50/50 transition-colors">
-                        {getColumns().map((col) => (
-                          <td key={col.key} className="px-4 py-3 text-gray-900 whitespace-nowrap">
-                            {['valor_inicial', 'debitos', 'creditos', 'saldo'].includes(col.key) ? (
-                              <span className="text-right block">
-                                {new Intl.NumberFormat('es-CO', { minimumFractionDigits: 2 }).format(row[col.key] || 0)}
-                              </span>
-                            ) : (
-                              row[col.key] || ''
-                            )}
+                      <tr key={row.ter_nit} className="hover:bg-blue-50/50 transition-colors">
+                        <td className="px-4 py-3 text-gray-900 whitespace-nowrap">{row.ter_nit}</td>
+                        <td className="px-4 py-3 text-gray-900 whitespace-nowrap">{row.ter_raz}</td>
+                        {getFechasActivas().map((_, index) => (
+                          <td key={index} className="px-4 py-3 text-gray-900 whitespace-nowrap text-right">
+                            {new Intl.NumberFormat('es-CO', { minimumFractionDigits: 2 }).format(row[`fecha${index + 1}`] || 0)}
                           </td>
                         ))}
+                        <td className="px-4 py-3 text-gray-900 whitespace-nowrap text-right font-semibold">
+                          {new Intl.NumberFormat('es-CO', { minimumFractionDigits: 2 }).format(row.total)}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -474,4 +495,4 @@ const ReporteEstadoDeMultiplesAnexosPage = () => {
   )
 }
 
-export default ReporteEstadoDeMultiplesAnexosPage
+export default ReporteVencidosFechasCortePage

@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { formatCellValue } from '@/utils/formatters';
 import { getColumnDescription } from '@/utils/formatters';
+import { DataPagination } from "@/components/DataPagination";
 
 interface ResultsTableProps {
   results: any[];
@@ -13,7 +12,6 @@ const ROWS_PER_PAGE = 100;
 
 export const ResultsTable = ({ results }: ResultsTableProps) => {
   const [page, setPage] = useState(1);
-  const [inputPage, setInputPage] = useState('1');
 
   if (!results || results.length === 0) return null;
 
@@ -24,59 +22,33 @@ export const ResultsTable = ({ results }: ResultsTableProps) => {
   const endIndex = Math.min(startIndex + ROWS_PER_PAGE, results.length);
   const pageResults = results.slice(startIndex, endIndex);
 
-  // Controla el input de página
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInputPage(e.target.value.replace(/[^0-9]/g, ''));
-  };
-
-  // Al presionar Enter o perder el foco, navega a la página indicada
-  const goToInputPage = () => {
-    let newPage = parseInt(inputPage, 10);
-    if (isNaN(newPage) || newPage < 1) newPage = 1;
-    if (newPage > totalPages) newPage = totalPages;
-    setPage(newPage);
-    setInputPage(newPage.toString());
-  };
-
-  // Navegación con botones
-  const goToPrev = () => {
-    if (page > 1) {
-      setPage(page - 1);
-      setInputPage((page - 1).toString());
-    }
-  };
-
-  const goToNext = () => {
-    if (page < totalPages) {
-      setPage(page + 1);
-      setInputPage((page + 1).toString());
-    }
-  };
-
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>
-          Resultados ({results.length} registros)
+    <Card className="shadow-lg border-0 bg-white/90 backdrop-blur-sm">
+      <CardHeader className="bg-gradient-to-r from-[#F7722F] to-[#00264D] text-white rounded-t-lg">
+        <CardTitle className="text-xl flex items-center justify-between">
+          <span>Resultados de la Consulta</span>
+          <span className="text-sm font-normal bg-white/20 px-2 py-1 rounded">
+            {results.length} registros
+          </span>
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm border-collapse border border-gray-300">
-            <thead>
-              <tr className="bg-gray-50">
+      <CardContent className="p-0">
+        <div className="relative overflow-x-auto" style={{ maxHeight: "70vh", overflowY: "auto" }}>
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50 border-b-2 border-gray-200 sticky top-0 z-10">
+              <tr>
                 {Object.keys(results[0]).map((key) => (
-                  <th key={key} className="border border-gray-300 px-4 py-2 text-left font-medium">
+                  <th key={key} className="px-4 py-3 font-semibold text-left text-gray-700 whitespace-nowrap bg-gray-50">
                     {getColumnDescription(key)}
                   </th>
                 ))}
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-gray-200">
               {pageResults.map((row, index) => (
-                <tr key={startIndex + index} className="hover:bg-gray-50">
+                <tr key={startIndex + index} className="hover:bg-blue-50/50 transition-colors">
                   {Object.keys(row).map((col, cellIndex) => (
-                    <td key={cellIndex} className="border border-gray-300 px-4 py-2">
+                    <td key={cellIndex} className="px-4 py-3 text-gray-900 whitespace-nowrap">
                       {formatCellValue(col, row[col])}
                     </td>
                   ))}
@@ -87,29 +59,14 @@ export const ResultsTable = ({ results }: ResultsTableProps) => {
         </div>
 
         {/* Paginación */}
-        <div className="flex items-center justify-between mt-4 gap-2 flex-wrap">
-          <Button variant="outline" size="sm" onClick={goToPrev} disabled={page === 1}>
-            Anterior
-          </Button>
-          <span>
-            Página{' '}
-            <Input
-              value={inputPage}
-              onChange={handleInputChange}
-              onBlur={goToInputPage}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') goToInputPage();
-              }}
-              className="w-16 inline-block text-center"
-              type="text"
-              inputMode="numeric"
-              pattern="[0-9]*"
-            />{' '}
-            de {totalPages}
-          </span>
-          <Button variant="outline" size="sm" onClick={goToNext} disabled={page === totalPages}>
-            Siguiente
-          </Button>
+        <div className="border-t bg-gray-50">
+          <DataPagination
+            currentPage={page}
+            totalPages={totalPages}
+            recordsPerPage={ROWS_PER_PAGE}
+            totalRecords={results.length}
+            onPageChange={setPage}
+          />
         </div>
       </CardContent>
     </Card>

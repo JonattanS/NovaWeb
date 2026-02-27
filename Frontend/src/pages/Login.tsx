@@ -33,6 +33,11 @@ const Login: React.FC<{ onLogin: (token: string) => void }> = ({ onLogin }) => {
       const data = await response.json()
 
       if (data.success) {
+        // Mostrar datos del menú en la consola del navegador
+        if (data.menu) {
+          console.log('[MENU DATA]', data.menu);
+        }
+        
         onLogin(data.user) // Guarda el usuario
         navigate("/") // Redirige a la página principal
       } else {
@@ -126,7 +131,32 @@ const Login: React.FC<{ onLogin: (token: string) => void }> = ({ onLogin }) => {
             {/* Footer Links */}
             <div className="space-y-3 pt-4">
               <div className="text-center">
-                <button type="button" className="text-gray-400 ">
+                <button 
+                  type="button" 
+                  onClick={async () => {
+                    if (!usrcod.trim()) {
+                      setError('Por favor ingresa tu usuario primero');
+                      return;
+                    }
+                    
+                    try {
+                      const response = await fetch(`${BACKEND_URL}/api/notifications/send-auth`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ type: 'recuperacion', userId: usrcod })
+                      });
+                      const data = await response.json();
+                      if (data.success) {
+                        alert('Se ha enviado un correo con tu nueva contraseña');
+                      } else {
+                        alert(data.error || 'Error al procesar la solicitud');
+                      }
+                    } catch (err) {
+                      alert('Error de conexión');
+                    }
+                  }}
+                  className="text-gray-400 hover:text-gray-600"
+                >
                   ¿Olvidaste tu contraseña?
                 </button>
               </div>

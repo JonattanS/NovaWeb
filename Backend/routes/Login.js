@@ -3,6 +3,7 @@ const router = express.Router();
 const pool = require('../db'); // pool global con conexión a PostgreSQL
 const jwt = require('jsonwebtoken');
 const { logLoginSuccess, logLoginFailure } = require('./audit');
+const axios = require('axios');
 
 const JWT_SECRET = 'clave_secreta_super_segura';
 
@@ -55,6 +56,7 @@ router.post('/login', async (req, res) => {
     const token = jwt.sign(
       {
         id: user.id,
+        adm_usrid: user.id,
         adm_ciaid: user.adm_ciaid,
         usrcod: user.usrcod,
         usrnom: user.usrnom,
@@ -71,6 +73,26 @@ router.post('/login', async (req, res) => {
     console.log(`[LOGIN SUCCESS] Usuario: ${usrcod} (${user.id})`);
     await logLoginSuccess(user.adm_ciaid, user.id, usrcod, user.usrnom);
 
+    // Llamar al microservicio de menú
+    let menuData = null;
+    try {
+      console.log('[MENU SERVICE] Intentando conectar a: http://10.11.11.246:8888/menu');
+      const menuResponse = await axios.get('http://10.11.11.246:8888/menu', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        timeout: 5000
+      });
+      menuData = menuResponse.data;
+      console.log('[MENU SERVICE] Respuesta exitosa:', menuData);
+    } catch (menuError) {
+      console.error('[MENU SERVICE ERROR]', {
+        message: menuError.message,
+        code: menuError.code,
+        url: 'http://10.11.11.246:8888/menu'
+      });
+    }
+
     // Devolver datos del usuario y token
     return res.status(200).json({
       success: true,
@@ -86,7 +108,8 @@ router.post('/login', async (req, res) => {
         rolcod: rol.rolcod,
         roldes: rol.roldes,
         portafolios // <- array de porcod habilitados
-      }
+      },
+      menu: menuData
     });
   } catch (error) {
     console.error('[LOGIN ERROR]', error);
